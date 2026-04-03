@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="bn" dir="ltr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="theme-color" content="#0A0E1A"/>
+<title>FutFul Admin Panel</title>
+<link rel="stylesheet" href="/assets/css/glass.css"/>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+<style>
+/* ========== ADMIN LAYOUT ========== */
+#admin-auth {
+  position: fixed; inset: 0;
+  background: var(--bg-deep);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+#admin-app {
+  display: none;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 260px;
+  background: var(--bg-mid);
+  border-right: 1px solid var(--border-glass);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 50;
+  transition: transform 0.3s;
+}
+
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .admin-content { margin-left: 0 !important; }
+}
+
+.sidebar-logo {
+  padding: 24px 20px;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.sidebar-logo h1 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sidebar-logo p {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 12px;
+  overflow-y: auto;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+  border: none;
+  background: none;
+  width: 100%;
+  font-family: var(--font-bengali);
+  text-align: left;
+}
+
+.nav-item:hover { background: var(--bg-glass); color: var(--text-primary); }
+.nav-item.active { background: linear-gradient(135deg,rgba(108,99,255,0.2),rgba(255,107,157,0.1)); color: var(--primary-light); border: 1px solid rgba(108,99,255,0.2); }
+.nav-item .nav-icon { font-size: 1.2rem; }
+
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid var(--border-glass);
+}
+
+/* Main Content */
+.admin-content {
+  margin-left: 260px;
+  flex: 1;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+.admin-topbar {
+  padding: 16px 24px;
+  background: rgba(10,14,26,0.9);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-glass);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.menu-toggle {
+  display: none;
+  width: 38px; height: 38px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 10px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+  .menu-toggle { display: flex; }
+}
+
+.admin-page-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Pages */
+.admin-panel { display: none; padding: 24px; }
+.admin-panel.active { display: block; }
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.stat-card .stat-icon { font-size: 2rem; margin-bottom: 8px; }
+.stat-card .stat-val { font-size: 2rem; font-weight: 800; color: var(--text-primary); }
+.stat-card .stat-label { font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px; }
+
+/* Data Table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  text-align: left;
+  padding: 12px 14px;
+  background: var(--bg-glass);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.data-table td {
+  padding: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  font-size: 0.85rem;
+  vertical-align: middle;
+}
+
+.data-table tr:hover td { background: var(--bg-glass); }
+
+/* Form Panel */
+.form-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.form-panel h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 600px) {
+  .form-row { grid-template-columns: 1fr; }
+}
+
+.table-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  overflow-x: auto;
+}
+
+/* Image preview */
+.img-preview {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  margin-top: 10px;
+  display: none;
+}
+
+/* Gift Card Preview */
+.gift-preview-card {
+  background: linear-gradient(135deg, rgba(255,179,71,0.15), rgba(255,71,87,0.1));
+  border: 1px solid rgba(255,179,71,0.3);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.gift-preview-img {
+  width: 64px; height: 64px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  background: var(--bg-glass);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.online-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--success);
+}
+</style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+
+<!-- ADMIN AUTH -->
+<div id="admin-auth">
+  <div class="glass-card" style="width:100%;max-width:380px;padding:36px 28px;">
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="width:70px;height:70px;background:linear-gradient(135deg,var(--primary),var(--secondary));border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 14px;">🛡️</div>
+      <h1 style="font-size:1.5rem;font-weight:800;" class="gradient-text">Admin Panel</h1>
+      <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:6px;">FutFul নিয়ন্ত্রণ কক্ষ</p>
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">Admin ইমেইল</label>
+      <input type="email" class="input-field" id="admin-email" placeholder="admin@futful.com"/>
+    </div>
+    <div class="form-group" style="margin-bottom:20px;">
+      <label class="form-label">পাসওয়ার্ড</label>
+      <input type="password" class="input-field" id="admin-password" placeholder="পাসওয়ার্ড লিখুন"/>
+    </div>
+    <button class="btn btn-primary" style="width:100%;" onclick="adminLogin()">প্রবেশ করুন</button>
+    <p style="font-size:0.78rem;color:var(--text-muted);text-align:center;margin-top:12px;">শুধুমাত্র অনুমোদিত Admin-এর জন্য</p>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="admin-app">
+  <div class="admin-layout">
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <h1>🍼 FutFul</h1>
+        <p>Admin Dashboard</p>
+      </div>
+      <div class="sidebar-nav">
+        <button class="nav-item active" onclick="showPanel('panel-dashboard',this)">
+          <span class="nav-icon">📊</span> ড্যাশবোর্ড
+        </button>
+        <button class="nav-item" onclick="showPanel('panel-banners',this)">
+          <span class="nav-icon">🖼️</span> ব্যানার
+        </button>
+        <button class="nav-item" onclick="showPanel('panel-gifts',this)">
+          <span class="nav-icon">🎁</span> গিফট ও অফার
+        </button>
+        <button class="nav-item" onclick="showPanel('panel-users',this)">
+          <span class="nav-icon">👥</span> ব্যবহারকারী
+        </button>
+      </div>
+      <div class="sidebar-footer">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <div class="avatar" id="admin-avatar" style="width:36px;height:36px;font-size:0.9rem;">A</div>
+          <div>
+            <div id="admin-name" style="font-size:0.88rem;font-weight:600;">Admin</div>
+            <div class="online-indicator">🟢 সক্রিয়</div>
+          </div>
+        </div>
+        <button class="btn btn-secondary" style="width:100%;padding:10px;" onclick="adminLogout()">🚪 লগআউট</button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="admin-content">
+      <div class="admin-topbar">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</div>
+          <div class="admin-page-title" id="page-title">ড্যাশবোর্ড</div>
+        </div>
+        <div style="font-size:0.8rem;color:var(--text-secondary);" id="current-time"></div>
+      </div>
+
+      <!-- DASHBOARD -->
+      <div id="panel-dashboard" class="admin-panel active">
+        <div class="stats-grid">
+          <div class="stat-card glass-card" style="background:linear-gradient(135deg,rgba(108,99,255,0.15),rgba(139,131,255,0.08));">
+            <div class="stat-icon">👥</div>
+            <div class="stat-val" id="stat-users">—</div>
+            <div class="stat-label">মোট ব্যবহারকারী</div>
+          </div>
+          <div class="stat-card glass-card" style="background:linear-gradient(135deg,rgba(255,107,157,0.15),rgba(255,71,87,0.08));">
+            <div class="stat-icon">🖼️</div>
+            <div class="stat-val" id="stat-banners">—</div>
+            <div class="stat-label">সক্রিয় ব্যানার</div>
+          </div>
+          <div class="stat-card glass-card" style="background:linear-gradient(135deg,rgba(255,179,71,0.15),rgba(0,212,170,0.08));">
+            <div class="stat-icon">🎁</div>
+            <div class="stat-val" id="stat-gifts">—</div>
+            <div class="stat-label">গিফট/অফার</div>
+          </div>
+        </div>
+
+        <div class="form-panel">
+          <h3>📋 সাম্প্রতিক কার্যক্রম</h3>
+          <div id="recent-users-list">
+            <p style="color:var(--text-muted);font-size:0.85rem;">লোড হচ্ছে...</p>
+          </div>
+        </div>
+
+        <div class="form-panel" style="background:linear-gradient(135deg,rgba(108,99,255,0.1),rgba(255,107,157,0.05));">
+          <h3>⚡ দ্রুত কাজ</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <button class="btn btn-primary" onclick="showPanel('panel-banners',null)">➕ নতুন ব্যানার</button>
+            <button class="btn btn-secondary" onclick="showPanel('panel-gifts',null)">🎁 গিফট যোগ</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BANNERS -->
+      <div id="panel-banners" class="admin-panel">
+        <div class="form-panel">
+          <h3>➕ নতুন ব্যানার যোগ করুন</h3>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">ব্যানার শিরোনাম</label>
+            <input type="text" class="input-field" id="banner-title" placeholder="ব্যানারের শিরোনাম লিখুন"/>
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">ছবির লিংক (URL)</label>
+            <input type="url" class="input-field" id="banner-img" placeholder="https://..." oninput="previewImg('banner-img','banner-img-preview')"/>
+            <img id="banner-img-preview" class="img-preview" alt="Preview"/>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:14px;">
+              <label class="form-label">ক্লিক করলে কোথায় যাবে (Link)</label>
+              <input type="url" class="input-field" id="banner-link" placeholder="https://..."/>
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label class="form-label">ক্রম নম্বর</label>
+              <input type="number" class="input-field" id="banner-order" placeholder="1" min="1"/>
+            </div>
+          </div>
+          <div class="toggle-wrap" style="margin-bottom:20px;">
+            <label class="toggle">
+              <input type="checkbox" id="banner-active" checked/>
+              <div class="toggle-slider"></div>
+            </label>
+            <span style="font-size:0.88rem;color:var(--text-secondary);">সক্রিয় রাখুন</span>
+          </div>
+          <button class="btn btn-primary" onclick="addBanner()">💾 ব্যানার সংরক্ষণ করুন</button>
+        </div>
+
+        <div class="form-panel">
+          <h3>🖼️ সব ব্যানার</h3>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ছবি</th>
+                  <th>শিরোনাম</th>
+                  <th>ক্রম</th>
+                  <th>অবস্থা</th>
+                  <th>কার্যক্রম</th>
+                </tr>
+              </thead>
+              <tbody id="banners-tbody">
+                <tr><td colspan="5" style="color:var(--text-muted);text-align:center;padding:20px;">লোড হচ্ছে...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- GIFTS -->
+      <div id="panel-gifts" class="admin-panel">
+        <div class="form-panel">
+          <h3>➕ নতুন গিফট / অফার যোগ করুন</h3>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">গিফটের শিরোনাম</label>
+            <input type="text" class="input-field" id="gift-title" placeholder="যেমন: বিশেষ অফার — বিনামূল্যে পরামর্শ"/>
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">বিবরণ (ব্যবহারকারী কী পাবে, কীভাবে পাবে)</label>
+            <textarea class="input-field" id="gift-desc" rows="3" placeholder="এখানে বিস্তারিত লিখুন — ব্যবহারকারীরা এটি দেখতে পাবে..."></textarea>
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">ছবির লিংক (URL) — ব্যবহারকারীরা যে ছবি দেখবে</label>
+            <input type="url" class="input-field" id="gift-img" placeholder="https://..." oninput="previewImg('gift-img','gift-img-preview')"/>
+            <img id="gift-img-preview" class="img-preview" alt="Gift Image Preview"/>
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">গিফট লিংক (ক্লিক করলে কোথায় যাবে)</label>
+            <input type="url" class="input-field" id="gift-link" placeholder="https://..."/>
+          </div>
+          <div class="toggle-wrap" style="margin-bottom:20px;">
+            <label class="toggle">
+              <input type="checkbox" id="gift-active" checked/>
+              <div class="toggle-slider"></div>
+            </label>
+            <span style="font-size:0.88rem;color:var(--text-secondary);">সক্রিয় রাখুন</span>
+          </div>
+          <button class="btn btn-primary" onclick="addGift()">🎁 গিফট সংরক্ষণ করুন</button>
+        </div>
+
+        <!-- Preview -->
+        <div class="form-panel" style="background:rgba(255,179,71,0.05);">
+          <h3>👁️ ব্যবহারকারীর কাছে যেভাবে দেখাবে</h3>
+          <div class="gift-preview-card">
+            <div class="gift-preview-img" id="gift-preview-thumb">🎁</div>
+            <div>
+              <h4 style="font-size:0.9rem;font-weight:700;">গিফটের শিরোনাম</h4>
+              <p style="font-size:0.78rem;color:var(--text-secondary);">বিবরণ এখানে দেখাবে</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-panel">
+          <h3>🎁 সব গিফট ও অফার</h3>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ছবি</th>
+                  <th>শিরোনাম</th>
+                  <th>লিংক</th>
+                  <th>অবস্থা</th>
+                  <th>কার্যক্রম</th>
+                </tr>
+              </thead>
+              <tbody id="gifts-tbody">
+                <tr><td colspan="5" style="color:var(--text-muted);text-align:center;padding:20px;">লোড হচ্ছে...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- USERS -->
+      <div id="panel-users" class="admin-panel">
+        <div class="form-panel">
+          <h3>👥 সব ব্যবহারকারী</h3>
+          <div style="display:flex;gap:10px;margin-bottom:16px;">
+            <input type="text" class="input-field" id="user-search" placeholder="নাম বা ইমেইল দিয়ে খুঁজুন..." oninput="filterUsers(this.value)" style="flex:1;"/>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ব্যবহারকারী</th>
+                  <th>ইমেইল</th>
+                  <th>ভূমিকা</th>
+                  <th>নিবন্ধনের তারিখ</th>
+                  <th>কার্যক্রম</th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody">
+                <tr><td colspan="5" style="color:var(--text-muted);text-align:center;padding:20px;">লোড হচ্ছে...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container"></div>
+
+<script src="/assets/js/store.js"></script>
+<script>
+// ============================================================
+// ADMIN CONTROLLER
+// ============================================================
+let adminUser = null;
+let allUsers = [];
+
+// Time
+function updateTime() {
+  const el = document.getElementById('current-time');
+  if (el) el.textContent = new Date().toLocaleString('bn-BD', { weekday:'long', hour:'2-digit', minute:'2-digit' });
+}
+setInterval(updateTime, 60000);
+updateTime();
+
+// Init
+window.addEventListener('DOMContentLoaded', () => {
+  initFirebase();
+  AuthStore.onAuthChange(async user => {
+    if (user) {
+      const isAdmin = await AdminStore.isAdmin(user.uid);
+      if (!isAdmin) {
+        await AuthStore.logout();
+        showToast('আপনার Admin অ্যাক্সেস নেই', 'error');
+        return;
+      }
+      adminUser = user;
+      const name = user.displayName || 'Admin';
+      document.getElementById('admin-name').textContent = name;
+      document.getElementById('admin-avatar').textContent = name.charAt(0).toUpperCase();
+      document.getElementById('admin-auth').style.display = 'none';
+      document.getElementById('admin-app').style.display = 'block';
+      loadDashboard();
+      loadBannersPanel();
+      loadGiftsPanel();
+      loadUsersPanel();
+    } else {
+      adminUser = null;
+      document.getElementById('admin-auth').style.display = 'flex';
+      document.getElementById('admin-app').style.display = 'none';
+    }
+  });
+  AuthStore.init();
+
+  // Gift live preview
+  document.getElementById('gift-title').addEventListener('input', updateGiftPreview);
+  document.getElementById('gift-desc').addEventListener('input', updateGiftPreview);
+  document.getElementById('gift-img').addEventListener('input', updateGiftPreview);
+});
+
+// ---- Auth ----
+async function adminLogin() {
+  const email = document.getElementById('admin-email').value;
+  const password = document.getElementById('admin-password').value;
+  if (!email || !password) return showToast('ইমেইল ও পাসওয়ার্ড দিন','error');
+  try {
+    await AuthStore.login(email, password);
+  } catch(e) {
+    showToast('লগইন ব্যর্থ: ' + e.message,'error');
+  }
+}
+
+async function adminLogout() {
+  await AuthStore.logout();
+}
+
+// ---- Panel Navigation ----
+function showPanel(panelId, navEl) {
+  document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(panelId).classList.add('active');
+
+  const titles = {
+    'panel-dashboard': 'ড্যাশবোর্ড',
+    'panel-banners': 'ব্যানার ব্যবস্থাপনা',
+    'panel-gifts': 'গিফট ও অফার',
+    'panel-users': 'ব্যবহারকারী'
+  };
+  document.getElementById('page-title').textContent = titles[panelId] || '';
+
+  if (navEl) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    navEl.classList.add('active');
+  }
+
+  // Close sidebar on mobile
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+// ---- Dashboard ----
+async function loadDashboard() {
+  try {
+    const stats = await AdminStore.getStats();
+    document.getElementById('stat-users').textContent = stats.totalUsers;
+    document.getElementById('stat-banners').textContent = stats.totalBanners;
+    document.getElementById('stat-gifts').textContent = stats.totalGifts;
+
+    const users = await AdminStore.getAllUsers();
+    const el = document.getElementById('recent-users-list');
+    el.innerHTML = users.slice(0,5).map(u => `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-glass);">
+        <div class="avatar" style="width:36px;height:36px;font-size:0.85rem;">${(u.displayName||'U').charAt(0).toUpperCase()}</div>
+        <div style="flex:1;">
+          <div style="font-size:0.88rem;font-weight:600;">${escHtml(u.displayName||'')}</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">${escHtml(u.email||'')}</div>
+        </div>
+        <span class="badge ${u.role==='admin'?'badge-danger':'badge-primary'}">${u.role==='admin'?'Admin':'User'}</span>
+      </div>
+    `).join('');
+  } catch(e) { console.error(e); }
+}
+
+// ---- Banners ----
+async function addBanner() {
+  const title = document.getElementById('banner-title').value;
+  const imageUrl = document.getElementById('banner-img').value;
+  const link = document.getElementById('banner-link').value;
+  const order = parseInt(document.getElementById('banner-order').value) || 1;
+  const active = document.getElementById('banner-active').checked;
+
+  if (!title) return showToast('ব্যানার শিরোনাম দিন','error');
+
+  try {
+    await BannerStore.addBanner({ title, imageUrl, link, order, active });
+    showToast('ব্যানার যোগ করা হয়েছে ✓','success');
+    document.getElementById('banner-title').value = '';
+    document.getElementById('banner-img').value = '';
+    document.getElementById('banner-link').value = '';
+    document.getElementById('banner-img-preview').style.display = 'none';
+    loadBannersPanel();
+    const stats = await AdminStore.getStats();
+    document.getElementById('stat-banners').textContent = stats.totalBanners;
+  } catch(e) { showToast('সমস্যা হয়েছে','error'); }
+}
+
+async function loadBannersPanel() {
+  try {
+    const banners = await BannerStore.getAllBanners();
+    const tbody = document.getElementById('banners-tbody');
+    if (!banners.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-muted);text-align:center;padding:20px;">কোনো ব্যানার নেই</td></tr>';
+      return;
+    }
+    tbody.innerHTML = banners.map(b => `
+      <tr>
+        <td>
+          ${b.imageUrl ? `<img src="${escHtml(b.imageUrl)}" style="width:60px;height:36px;object-fit:cover;border-radius:8px;"/>` : '🖼️'}
+        </td>
+        <td style="max-width:200px;">${escHtml(b.title||'')}</td>
+        <td>${b.order||1}</td>
+        <td>
+          <span class="badge ${b.active?'badge-success':'badge-danger'}">${b.active?'সক্রিয়':'নিষ্ক্রিয়'}</span>
+        </td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-secondary" style="padding:6px 10px;font-size:0.75rem;" onclick="toggleBannerActive('${b.id}',${!b.active})">
+              ${b.active?'বন্ধ':'চালু'}
+            </button>
+            <button class="btn btn-danger" style="padding:6px 10px;font-size:0.75rem;" onclick="deleteBanner('${b.id}')">🗑️</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) {}
+}
+
+async function toggleBannerActive(id, val) {
+  try {
+    await BannerStore.updateBanner(id, { active: val });
+    showToast(val?'ব্যানার সক্রিয়':'ব্যানার নিষ্ক্রিয়','success');
+    loadBannersPanel();
+  } catch(e) {}
+}
+
+async function deleteBanner(id) {
+  if (!confirm('এই ব্যানারটি মুছে ফেলবেন?')) return;
+  try {
+    await BannerStore.deleteBanner(id);
+    showToast('ব্যানার মুছে ফেলা হয়েছে','info');
+    loadBannersPanel();
+  } catch(e) {}
+}
+
+// ---- Gifts ----
+function updateGiftPreview() {
+  const title = document.getElementById('gift-title').value || 'গিফটের শিরোনাম';
+  const desc = document.getElementById('gift-desc').value || 'বিবরণ এখানে দেখাবে';
+  const img = document.getElementById('gift-img').value;
+
+  const thumb = document.getElementById('gift-preview-thumb');
+  if (img) {
+    thumb.innerHTML = `<img src="${escHtml(img)}" style="width:64px;height:64px;object-fit:cover;border-radius:12px;"/>`;
+  } else {
+    thumb.innerHTML = '🎁';
+    thumb.style.cssText = '';
+  }
+
+  const card = thumb.closest('.gift-preview-card');
+  card.querySelector('h4').textContent = title;
+  card.querySelector('p').textContent = desc.slice(0,80) + (desc.length > 80 ? '...' : '');
+}
+
+async function addGift() {
+  const title = document.getElementById('gift-title').value;
+  const description = document.getElementById('gift-desc').value;
+  const imageUrl = document.getElementById('gift-img').value;
+  const link = document.getElementById('gift-link').value;
+  const active = document.getElementById('gift-active').checked;
+
+  if (!title) return showToast('গিফটের শিরোনাম দিন','error');
+
+  try {
+    await GiftStore.addGift({ title, description, imageUrl, link, active });
+    showToast('গিফট যোগ করা হয়েছে 🎉','success');
+    document.getElementById('gift-title').value = '';
+    document.getElementById('gift-desc').value = '';
+    document.getElementById('gift-img').value = '';
+    document.getElementById('gift-link').value = '';
+    document.getElementById('gift-img-preview').style.display = 'none';
+    updateGiftPreview();
+    loadGiftsPanel();
+  } catch(e) { showToast('সমস্যা হয়েছে','error'); }
+}
+
+async function loadGiftsPanel() {
+  try {
+    const gifts = await GiftStore.getAllGifts();
+    const tbody = document.getElementById('gifts-tbody');
+    if (!gifts.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-muted);text-align:center;padding:20px;">কোনো গিফট নেই</td></tr>';
+      return;
+    }
+    tbody.innerHTML = gifts.map(g => `
+      <tr>
+        <td>
+          ${g.imageUrl ? `<img src="${escHtml(g.imageUrl)}" style="width:50px;height:50px;object-fit:cover;border-radius:10px;"/>` : '<div style="font-size:1.5rem;">🎁</div>'}
+        </td>
+        <td style="max-width:180px;">
+          <div style="font-weight:600;font-size:0.85rem;">${escHtml(g.title||'')}</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">${escHtml((g.description||'').slice(0,50))}...</div>
+        </td>
+        <td>
+          ${g.link ? `<a href="${escHtml(g.link)}" target="_blank" style="color:var(--primary-light);font-size:0.78rem;">🔗 লিংক</a>` : '<span style="color:var(--text-muted);font-size:0.78rem;">নেই</span>'}
+        </td>
+        <td>
+          <span class="badge ${g.active?'badge-success':'badge-danger'}">${g.active?'সক্রিয়':'নিষ্ক্রিয়'}</span>
+        </td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-secondary" style="padding:6px 10px;font-size:0.75rem;" onclick="toggleGiftActive('${g.id}',${!g.active})">
+              ${g.active?'বন্ধ':'চালু'}
+            </button>
+            <button class="btn btn-danger" style="padding:6px 10px;font-size:0.75rem;" onclick="deleteGift('${g.id}')">🗑️</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) {}
+}
+
+async function toggleGiftActive(id, val) {
+  try {
+    await GiftStore.updateGift(id, { active: val });
+    showToast(val?'গিফট সক্রিয়':'গিফট নিষ্ক্রিয়','success');
+    loadGiftsPanel();
+  } catch(e) {}
+}
+
+async function deleteGift(id) {
+  if (!confirm('এই গিফটটি মুছে ফেলবেন?')) return;
+  try {
+    await GiftStore.deleteGift(id);
+    showToast('গিফট মুছে ফেলা হয়েছে','info');
+    loadGiftsPanel();
+  } catch(e) {}
+}
+
+// ---- Users ----
+async function loadUsersPanel() {
+  try {
+    allUsers = await AdminStore.getAllUsers();
+    renderUsersTable(allUsers);
+  } catch(e) {}
+}
+
+function renderUsersTable(users) {
+  const tbody = document.getElementById('users-tbody');
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-muted);text-align:center;padding:20px;">কোনো ব্যবহারকারী নেই</td></tr>';
+    return;
+  }
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="avatar" style="width:36px;height:36px;font-size:0.85rem;">${(u.displayName||'U').charAt(0).toUpperCase()}</div>
+          <span style="font-size:0.88rem;font-weight:600;">${escHtml(u.displayName||'—')}</span>
+        </div>
+      </td>
+      <td style="font-size:0.82rem;color:var(--text-secondary);">${escHtml(u.email||'')}</td>
+      <td>
+        <select onchange="changeUserRole('${u.id}',this.value)" style="background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:8px;padding:4px 8px;color:var(--text-primary);font-family:var(--font-bengali);font-size:0.78rem;">
+          <option value="user" ${u.role==='user'?'selected':''}>User</option>
+          <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
+        </select>
+      </td>
+      <td style="font-size:0.78rem;color:var(--text-muted);">
+        ${u.createdAt ? new Date(u.createdAt.seconds*1000).toLocaleDateString('bn-BD') : '—'}
+      </td>
+      <td>
+        <button class="btn btn-danger" style="padding:6px 10px;font-size:0.75rem;" onclick="deleteUser('${u.id}')">🗑️</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterUsers(query) {
+  const q = query.toLowerCase();
+  const filtered = allUsers.filter(u =>
+    (u.displayName||'').toLowerCase().includes(q) ||
+    (u.email||'').toLowerCase().includes(q)
+  );
+  renderUsersTable(filtered);
+}
+
+async function changeUserRole(uid, role) {
+  try {
+    await AdminStore.updateUserRole(uid, role);
+    showToast('ভূমিকা পরিবর্তন করা হয়েছে','success');
+  } catch(e) { showToast('সমস্যা হয়েছে','error'); }
+}
+
+async function deleteUser(uid) {
+  if (uid === adminUser?.uid) return showToast('নিজেকে মুছতে পারবেন না','error');
+  if (!confirm('এই ব্যবহারকারীকে মুছে ফেলবেন?')) return;
+  try {
+    await AdminStore.deleteUser(uid);
+    showToast('ব্যবহারকারী মুছে ফেলা হয়েছে','info');
+    loadUsersPanel();
+    loadDashboard();
+  } catch(e) { showToast('সমস্যা হয়েছে','error'); }
+}
+
+// ---- Utils ----
+function previewImg(inputId, previewId) {
+  const val = document.getElementById(inputId).value;
+  const preview = document.getElementById(previewId);
+  if (val) {
+    preview.src = val;
+    preview.style.display = 'block';
+    preview.onerror = () => { preview.style.display = 'none'; };
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
