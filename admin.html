@@ -306,8 +306,8 @@ tr:last-child td{border-bottom:none}
         <h3>👥 সব ব্যবহারকারী</h3>
         <div class="fg" style="margin-bottom:16px"><input class="fi" id="usrq" placeholder="🔍 নাম বা ইমেইল দিয়ে খুঁজুন..." oninput="fltrUsr(this.value)"/></div>
         <div class="tw"><table>
-          <thead><tr><th>ব্যবহারকারী</th><th>ইমেইল</th><th>ভূমিকা</th><th>তারিখ</th><th>কার্যক্রম</th></tr></thead>
-          <tbody id="utb"><tr><td colspan="5" style="color:var(--t3);text-align:center;padding:18px">লোড হচ্ছে...</td></tr></tbody>
+          <thead><tr><th>ব্যবহারকারী</th><th>ইমেইল</th><th>📱 WhatsApp</th><th>📘 Facebook</th><th>ভূমিকা</th><th>কার্যক্রম</th></tr></thead>
+          <tbody id="utb"><tr><td colspan="6" style="color:var(--t3);text-align:center;padding:18px">লোড হচ্ছে...</td></tr></tbody>
         </table></div>
       </div>
     </div>
@@ -322,13 +322,12 @@ tr:last-child td{border-bottom:none}
 // ║   FIREBASE CONFIG — আপনার কনফিগ দিন      ║
 // ╚═══════════════════════════════════════════╝
 const FB_CFG = {
-  apiKey: "AIzaSyAzd17RdhVyyZIsGtcitOxVUO2TqM8NJxg",
-  authDomain: "futful.firebaseapp.com",
-  projectId: "futful",
-  storageBucket: "futful.firebasestorage.app",
-  messagingSenderId: "435987261629",
-  appId: "1:435987261629:web:e8f489ba52163663836fd4",
-  measurementId: "G-CB5Z8XBDLG"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
 let db, fbAuth, AU = null, allUsrs = [];
@@ -517,16 +516,25 @@ function renderUsr(usrs) {
   Q('#utb').innerHTML = usrs.length ? usrs.map(u=>`<tr>
     <td><div style="display:flex;align-items:center;gap:9px">
       <div class="rav" style="width:32px;height:32px;font-size:.82rem">${(u.displayName||'U').charAt(0).toUpperCase()}</div>
-      <span style="font-weight:600;font-size:.83rem">${esc(u.displayName||'—')}</span>
+      <div><div style="font-weight:600;font-size:.83rem">${esc(u.displayName||'—')}</div><div style="font-size:.7rem;color:var(--t3)">${u.createdAt?new Date(u.createdAt.seconds*1000).toLocaleDateString('bn-BD'):'—'}</div></div>
     </div></td>
-    <td style="font-size:.78rem;color:var(--t2)">${esc(u.email||'')}</td>
+    <td style="font-size:.76rem;color:var(--t2)">${esc(u.email||'')}</td>
+    <td style="font-size:.78rem">
+      ${u.whatsapp
+        ? `<a href="https://wa.me/${(u.whatsapp||'').replace(/[^0-9]/g,'')}" target="_blank" style="color:#25D366;font-weight:600;text-decoration:none">📱 ${esc(u.whatsapp)}</a>`
+        : '<span style="color:var(--t3)">—</span>'}
+    </td>
+    <td style="font-size:.76rem">
+      ${u.facebook
+        ? `<a href="https://${esc(u.facebook)}" target="_blank" style="color:#4E8FFF;text-decoration:none">📘 ${esc(u.facebook)}</a>`
+        : '<span style="color:var(--t3)">—</span>'}
+    </td>
     <td><select onchange="chgRole('${u.id}',this.value)" style="background:var(--gc);border:1px solid var(--br);border-radius:8px;padding:4px 8px;color:var(--t1);font-family:var(--fn);font-size:.75rem;cursor:pointer">
       <option value="user" ${u.role==='user'?'selected':''}>User</option>
       <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
     </select></td>
-    <td style="font-size:.75rem;color:var(--t3)">${u.createdAt?new Date(u.createdAt.seconds*1000).toLocaleDateString('bn-BD'):'—'}</td>
     <td><button class="btn bd" style="padding:5px 9px;font-size:.72rem" onclick="delUsr('${u.id}')">🗑️</button></td>
-  </tr>`).join('') : '<tr><td colspan="5" style="color:var(--t3);text-align:center;padding:16px">কেউ নেই</td></tr>';
+  </tr>`).join('') : '<tr><td colspan="6" style="color:var(--t3);text-align:center;padding:16px">কেউ নেই</td></tr>';
 }
 
 function fltrUsr(q) {
