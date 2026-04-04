@@ -354,7 +354,9 @@ window.addEventListener('DOMContentLoaded', () => {
       // Check admin role
       try {
         const doc = await db.collection('users').doc(u.uid).get();
-        if (!doc.exists || doc.data().role !== 'admin') {
+        const d = doc.data();
+        const isAdmin = d && (d.role === 'admin' || d.userType === 'admin');
+        if (!doc.exists || !isAdmin) {
           await fbAuth.signOut();
           toast('Admin অ্যাক্সেস নেই','e');
           return;
@@ -413,7 +415,7 @@ async function loadDash() {
       <div class="ritem">
         <div class="rav">${(u.displayName||'U').charAt(0).toUpperCase()}</div>
         <div style="flex:1"><div style="font-size:.85rem;font-weight:600">${esc(u.displayName||'—')}</div><div style="font-size:.73rem;color:var(--t3)">${esc(u.email||'')}</div></div>
-        <span class="bdg ${u.role==='admin'?'bgd':'bgp'}">${u.role==='admin'?'Admin':'User'}</span>
+        <span class="bdg ${(u.role==='admin'||u.userType==='admin')?'bgd':'bgp'}">${(u.role==='admin'||u.userType==='admin')?'Admin':'User'}</span>
       </div>`).join('') : '<p style="color:var(--t3);font-size:.83rem">কেউ নেই</p>';
   } catch(e) {}
 }
@@ -531,8 +533,8 @@ function renderUsr(usrs) {
         : '<span style="color:var(--t3)">—</span>'}
     </td>
     <td><select onchange="chgRole('${u.id}',this.value)" style="background:var(--gc);border:1px solid var(--br);border-radius:8px;padding:4px 8px;color:var(--t1);font-family:var(--fn);font-size:.75rem;cursor:pointer">
-      <option value="user" ${u.role==='user'?'selected':''}>User</option>
-      <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
+      <option value="user" ${(u.role==='user'&&u.userType!=='admin')?'selected':(!u.role&&u.userType!=='admin'?'selected':'')}>User</option>
+      <option value="admin" ${(u.role==='admin'||u.userType==='admin')?'selected':''}>Admin</option>
     </select></td>
     <td><button class="btn bd" style="padding:5px 9px;font-size:.72rem" onclick="delUsr('${u.id}')">🗑️</button></td>
   </tr>`).join('') : '<tr><td colspan="6" style="color:var(--t3);text-align:center;padding:16px">কেউ নেই</td></tr>';
@@ -544,7 +546,11 @@ function fltrUsr(q) {
 }
 
 async function chgRole(uid, role) {
-  try { await db.collection('users').doc(uid).update({role}); toast('ভূমিকা পরিবর্তিত','s'); } catch(e) {}
+  try {
+    await db.collection('users').doc(uid).update({ role: role, userType: role });
+    toast('ভূমিকা পরিবর্তিত ✓','s');
+    loadUsrs();
+  } catch(e) { toast('সমস্যা হয়েছে','e'); }
 }
 async function delUsr(uid) {
   if (uid===AU?.uid) return toast('নিজেকে মুছতে পারবেন না','e');
