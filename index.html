@@ -579,7 +579,7 @@ const FB_CFG = {
 };
 
 // Gemini API Key (Google AI Studio থেকে পান)
-const GEMINI_KEY = "YOUR_GEMINI_API_KEY";
+const GEMINI_KEY = "YOUR_GEMINI_API_KEY"; // ← Google AI Studio থেকে key নিন: aistudio.google.com
 
 // ─── Firebase Init ───
 let db, fbAuth;
@@ -679,18 +679,33 @@ async function doLogin() {
 }
 
 async function doReg() {
-  const name = Q('#rname').value, e = Q('#remail').value, p = Q('#rpass').value;
-  if (!name||!e||!p) return toast('সব তথ্য পূরণ করুন','e');
-  if (p.length<6) return toast('পাসওয়ার্ড ৬+ অক্ষর','e');
+  const name = Q('#rname').value.trim();
+  const e = Q('#remail').value.trim();
+  const p = Q('#rpass').value;
+  const wa = Q('#rwa').value.trim();
+  const fb = Q('#rfb').value.trim();
+  if (!name) return toast('নাম লিখুন','e');
+  if (!e) return toast('ইমেইল দিন','e');
+  if (!p || p.length<6) return toast('পাসওয়ার্ড ৬+ অক্ষর হতে হবে','e');
+  if (!wa) return toast('WhatsApp নম্বর দিন','e');
+  if (!/^01[3-9]\d{8}$/.test(wa)) return toast('সঠিক নম্বর দিন — 01XXXXXXXXX','e');
   try {
-    const c = await fbAuth.createUserWithEmailAndPassword(e, p);
-    await c.user.updateProfile({displayName: name});
-    await db.collection('users').doc(c.user.uid).set({
-      uid:c.user.uid, email:e, displayName:name, role:'user',
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    const cr = await fbAuth.createUserWithEmailAndPassword(e, p);
+    await cr.user.updateProfile({displayName: name});
+    await db.collection('users').doc(cr.user.uid).set({
+      uid: cr.user.uid,
+      email: e,
+      displayName: name,
+      whatsapp: '+880' + wa,
+      facebook: fb ? 'fb.com/' + fb : '',
+      role: 'user',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     toast('নিবন্ধন সফল! স্বাগতম 🎉','s');
-  } catch(err) { toast('সমস্যা: '+err.message,'e'); }
+  } catch(err) {
+    if (err.code==='auth/email-already-in-use') toast('এই ইমেইল আগে থেকেই নিবন্ধিত','e');
+    else toast('সমস্যা: '+err.message,'e');
+  }
 }
 
 async function doLogout() {
@@ -771,8 +786,9 @@ function nAge(el, age) {
 // ═══════════════════════════════════
 async function loadBanners() {
   try {
-    const snap = await db.collection('banners').where('active','==',true).orderBy('order').get();
+    const snap = await db.collection('banners').where('active','==',true).get();
     banners = snap.docs.map(d=>({id:d.id,...d.data()}));
+    banners.sort((a,b)=>(a.order||0)-(b.order||0));
     if (!banners.length) return;
     const track = Q('#strack'), dots = Q('#sdots');
     track.innerHTML = banners.map(b=>`
@@ -798,8 +814,8 @@ function moveBanner() {
 async function loadHomeGifts() {
   const el = Q('#hgifts');
   try {
-    const snap = await db.collection('gifts').where('active','==',true).orderBy('createdAt','desc').get();
-    const gifts = snap.docs.map(d=>({id:d.id,...d.data()}));
+    const snap = await db.collection('gifts').where('active','==',true).get();
+    const gifts = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
     el.innerHTML = gifts.length ? gifts.slice(0,3).map(gCard).join('') : '<p style="color:var(--t3);font-size:.83rem">কোনো গিফট নেই</p>';
   } catch(e) { el.innerHTML='<p style="color:var(--t3);font-size:.83rem">লোড করতে পারছে না</p>'; }
 }
@@ -808,8 +824,8 @@ async function loadGiftsPage() {
   const el = Q('#glist');
   el.innerHTML = '<div class="spin"></div>';
   try {
-    const snap = await db.collection('gifts').where('active','==',true).orderBy('createdAt','desc').get();
-    const gifts = snap.docs.map(d=>({id:d.id,...d.data()}));
+    const snap = await db.collection('gifts').where('active','==',true).get();
+    const gifts = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
     el.innerHTML = gifts.length ? gifts.map(gCard).join('') : '<p style="color:var(--t3);font-size:.83rem">কোনো গিফট নেই</p>';
   } catch(e) { el.innerHTML='<p style="color:var(--t3);font-size:.83rem">লোড করতে পারছে না</p>'; }
 }
