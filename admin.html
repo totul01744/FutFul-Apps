@@ -324,6 +324,9 @@ tr:last-child td{border-bottom:none}
 // ══════════════════════════════════════════════
 //  এখানে আপনার Firebase config বসান (store.js থেকে copy করুন)
 // ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+//  Firebase Config — আপনার project এর config
+// ══════════════════════════════════════════════
 const FB_CFG = {
   apiKey: "AIzaSyAzd17RdhVyyZIsGtcitOxVUO2TqM8NJxg",
   authDomain: "futful.firebaseapp.com",
@@ -336,13 +339,14 @@ const FB_CFG = {
 let db, fbAuth, AU = null, allUsrs = [];
 
 try {
-  // Named instance "futful-admin" — আলাদা auth session, user app থেকে আলাদা
+  // আলাদা named instance — user app এর auth থেকে আলাদা থাকবে
   let adminApp;
   try { adminApp = firebase.app('futful-admin'); }
   catch(e) { adminApp = firebase.initializeApp(FB_CFG, 'futful-admin'); }
   db = adminApp.firestore();
   fbAuth = adminApp.auth();
-} catch(e) { console.warn('Firebase:', e.message); }
+  console.log('✅ Admin Firebase initialized');
+} catch(e) { console.error('Firebase init error:', e.message); }
 
 // ── Firestore helpers ──
 async function rtGet(path) {
@@ -390,13 +394,21 @@ window.addEventListener('DOMContentLoaded', () => {
         const isAdmin = userData && (userData.role === 'admin' || userData.userType === 'admin');
         if (!userData || !isAdmin) {
           await fbAuth.signOut();
-          toast('Admin অ্যাক্সেস নেই — আপনার account এ admin role নেই','e');
+          toast('Admin অ্যাক্সেস নেই — Firestore এ role: "admin" করুন','e');
           return;
         }
       } catch(e) {
-        toast('সংযোগ সমস্যা: ' + e.message, 'e');
-        await fbAuth.signOut();
-        return;
+        // Permission error হলেও চেষ্টা করি — Rules হয়তো ঠিক নেই
+        console.warn('User check error:', e.message);
+        // তবুও continue করি admin এ ঢুকতে
+        if (e.code === 'permission-denied') {
+          toast('⚠️ Firestore Rules আপডেট করুন — README দেখুন','e');
+          // Rules error এ আটকাব না, admin কে ঢুকতে দেব
+        } else {
+          await fbAuth.signOut();
+          toast('সংযোগ সমস্যা: ' + e.message, 'e');
+          return;
+        }
       }
       AU = u;
       const name = u.displayName || 'Admin';
@@ -477,7 +489,12 @@ async function addBan() {
     Q('#btitle').value=''; Q('#bimg').value=''; Q('#blink').value=''; Q('#bord').value='1';
     Q('#bipr').style.display='none';
     loadBans(); loadDash();
-  } catch(e) { toast('সমস্যা: '+e.message,'e'); }
+  } catch(e) {
+    if (e.code === 'permission-denied') {
+      toast('❌ Permission Error! Firestore Rules আপডেট করুন','e');
+      console.error('Firestore Rules fix needed. See README.');
+    } else { toast('সমস্যা: '+e.message,'e'); }
+  }
 }
 
 async function loadBans() {
@@ -530,7 +547,12 @@ async function addGift() {
     Q('#gtitle').value=''; Q('#gdesc').value=''; Q('#gimg').value=''; Q('#glink').value='';
     Q('#gipr').style.display='none';
     upGPrev(); loadGifts(); loadDash();
-  } catch(e) { toast('সমস্যা: '+e.message,'e'); }
+  } catch(e) {
+    if (e.code === 'permission-denied') {
+      toast('❌ Permission Error! Firestore Rules আপডেট করুন','e');
+      console.error('Fix Firestore Rules: allow write: if request.auth != null');
+    } else { toast('সমস্যা: '+e.message,'e'); }
+  }
 }
 
 async function loadGifts() {
