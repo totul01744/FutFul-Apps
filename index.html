@@ -3,343 +3,342 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<meta name="theme-color" content="#070B18"/>
+<meta name="theme-color" content="#060A15"/>
 <title>FutFul – মা ও শিশু যত্ন</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-
-<!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
-
 <style>
-/* =============================================
-   FUTFUL USER APP – COMPLETE STYLES
-   ============================================= */
+/* ===== ROOT VARS ===== */
 :root{
-  --p:#7C6EFA; --p2:#A89BFF; --p3:#4A3FCC;
-  --s:#FF6B9D; --a:#00D4AA; --w:#FFB347; --d:#FF4757;
-  --bg0:#070B18; --bg1:#0D1225; --bg2:#141930;
-  --bg3:#1A2040; --gc:rgba(255,255,255,.06);
-  --gb:rgba(255,255,255,.09); --gbo:rgba(255,255,255,.12);
-  --t1:#EEF2FF; --t2:rgba(238,242,255,.68); --t3:rgba(238,242,255,.38);
-  --br:rgba(255,255,255,.08); --ba:rgba(124,110,250,.35);
+  --p:#7C6EFA;--p2:#A89BFF;--p3:#4A3FCC;
+  --s:#FF6B9D;--a:#00D4AA;--w:#FFB347;--d:#FF4757;--g:#2ED573;
+  --bg0:#060A15;--bg1:#0C1020;--bg2:#131828;--bg3:#192038;
+  --gc:rgba(255,255,255,.055);--gb:rgba(255,255,255,.09);
+  --t1:#EEF2FF;--t2:rgba(238,242,255,.68);--t3:rgba(238,242,255,.36);
+  --br:rgba(255,255,255,.08);--ba:rgba(124,110,250,.38);
   --r1:10px;--r2:16px;--r3:22px;--r4:30px;--rf:9999px;
-  --sh:0 8px 32px rgba(0,0,0,.45); --sg:0 0 28px rgba(124,110,250,.28);
-  --fn:'Hind Siliguri',sans-serif; --tr:all .28s cubic-bezier(.4,0,.2,1);
+  --fn:'Hind Siliguri',sans-serif;--tr:all .28s cubic-bezier(.4,0,.2,1);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{font-size:16px;scroll-behavior:smooth}
+html{font-size:16px}
 body{font-family:var(--fn);background:var(--bg0);color:var(--t1);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg1)}::-webkit-scrollbar-thumb{background:var(--p);border-radius:2px}
-
-/* ---- BG ORBS ---- */
+/* BG ORBS */
 .orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
-.orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.18;animation:drift 12s ease-in-out infinite}
-.orb1{width:55vw;height:55vw;background:var(--p);top:-15%;left:-10%;animation-delay:0s}
-.orb2{width:45vw;height:45vw;background:var(--s);bottom:-10%;right:-10%;animation-delay:-5s}
-.orb3{width:30vw;height:30vw;background:var(--a);top:40%;left:40%;animation-delay:-8s}
-@keyframes drift{0%,100%{transform:translate(0,0)}33%{transform:translate(4%,3%)}66%{transform:translate(-3%,5%)}}
-
-/* ---- LAYOUT ---- */
+.orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.15;animation:drift 12s ease-in-out infinite}
+.o1{width:55vw;height:55vw;background:var(--p);top:-15%;left:-10%}
+.o2{width:45vw;height:45vw;background:var(--s);bottom:-10%;right:-10%;animation-delay:-5s}
+.o3{width:30vw;height:30vw;background:var(--a);top:40%;left:40%;animation-delay:-8s}
+@keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(4%,4%)}}
+/* LAYOUT */
 #wrap{min-height:100vh;position:relative;z-index:1}
-.page{display:none;animation:fadeUp .35s ease}
-.page.on{display:block}
-@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-
-/* ---- AUTH OVERLAY ---- */
-#auth{position:fixed;inset:0;background:rgba(7,11,24,.96);backdrop-filter:blur(12px);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px}
-.auth-box{width:100%;max-width:390px;background:var(--bg2);border:1px solid var(--br);border-radius:var(--r4);padding:36px 28px;box-shadow:var(--sh)}
-.auth-logo{text-align:center;margin-bottom:28px}
-.auth-logo .ico{width:72px;height:72px;background:linear-gradient(135deg,var(--p),var(--s));border-radius:24px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:2rem;box-shadow:0 8px 28px rgba(124,110,250,.4)}
-.auth-logo h1{font-size:1.7rem;font-weight:800;background:linear-gradient(135deg,var(--p2),var(--s));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.auth-logo p{font-size:.82rem;color:var(--t3);margin-top:5px}
-.auth-tabs{display:flex;background:var(--gc);border-radius:var(--r2);padding:4px;margin-bottom:22px;border:1px solid var(--br)}
-.atab{flex:1;padding:10px;text-align:center;border-radius:12px;cursor:pointer;font-size:.88rem;font-weight:600;transition:var(--tr);color:var(--t3)}
-.atab.on{background:linear-gradient(135deg,var(--p),var(--p3));color:#fff;box-shadow:0 4px 16px rgba(124,110,250,.35)}
-
-/* ---- INPUTS ---- */
-.fg{margin-bottom:14px}
-.fl{display:block;font-size:.8rem;color:var(--t2);margin-bottom:7px;font-weight:500}
-.fi{width:100%;padding:13px 16px;background:rgba(255,255,255,.05);border:1px solid var(--br);border-radius:var(--r2);color:var(--t1);font-family:var(--fn);font-size:.9rem;outline:none;transition:var(--tr)}
-.fi:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(124,110,250,.18);background:rgba(255,255,255,.07)}
+.page{display:none}
+.page.on{display:block;animation:fu .3s ease}
+@keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+/* AUTH */
+#auth{position:fixed;inset:0;background:rgba(6,10,21,.97);backdrop-filter:blur(16px);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.abox{width:100%;max-width:400px;background:var(--bg2);border:1px solid var(--br);border-radius:var(--r4);padding:30px 24px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.alo{text-align:center;margin-bottom:22px}
+.ali{width:66px;height:66px;background:linear-gradient(135deg,var(--p),var(--s));border-radius:22px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:1.85rem;box-shadow:0 8px 28px rgba(124,110,250,.4)}
+.alo h1{font-size:1.55rem;font-weight:800;background:linear-gradient(135deg,var(--p2),var(--s));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.alo p{font-size:.78rem;color:var(--t3);margin-top:4px}
+.atabs{display:flex;background:var(--gc);border-radius:var(--r2);padding:4px;margin-bottom:18px;border:1px solid var(--br)}
+.atab{flex:1;padding:10px;text-align:center;border-radius:12px;cursor:pointer;font-size:.84rem;font-weight:600;transition:var(--tr);color:var(--t3)}
+.atab.on{background:linear-gradient(135deg,var(--p),var(--p3));color:#fff}
+/* SAVED CREDS POPUP */
+.cp{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg3);border:1px solid var(--ba);border-radius:var(--r2);padding:8px;z-index:20;display:none;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.cp.show{display:block}
+.ci{padding:10px 12px;border-radius:10px;background:var(--gc);cursor:pointer;transition:var(--tr)}
+.ci:hover{background:var(--gb)}
+.ci-em{font-size:.84rem;font-weight:600;color:var(--t1)}
+.ci-pw{font-size:.72rem;color:var(--t3);margin-top:2px}
+/* INPUTS */
+.fg{margin-bottom:12px;position:relative}
+.fl{display:block;font-size:.77rem;color:var(--t2);margin-bottom:6px;font-weight:500}
+.fi{width:100%;padding:12px 14px;background:rgba(255,255,255,.05);border:1.5px solid var(--br);border-radius:var(--r2);color:var(--t1);font-family:var(--fn);font-size:.87rem;outline:none;transition:var(--tr)}
+.fi:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(124,110,250,.15);background:rgba(255,255,255,.07)}
 .fi::placeholder{color:var(--t3)}
 select.fi{cursor:pointer}
 textarea.fi{resize:none}
-
-/* ---- BUTTONS ---- */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 22px;border:none;border-radius:var(--rf);font-family:var(--fn);font-size:.9rem;font-weight:700;cursor:pointer;transition:var(--tr);text-decoration:none;white-space:nowrap}
-.btn:active{transform:scale(.96)}
-.bp{background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;box-shadow:0 4px 20px rgba(124,110,250,.38)}
-.bp:hover{box-shadow:0 6px 28px rgba(124,110,250,.52);transform:translateY(-1px)}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:12px 20px;border:none;border-radius:var(--rf);font-family:var(--fn);font-size:.87rem;font-weight:700;cursor:pointer;transition:var(--tr);text-decoration:none;white-space:nowrap;flex-shrink:0}
+.btn:active{transform:scale(.95)}
+.bp{background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;box-shadow:0 4px 18px rgba(124,110,250,.35)}
 .bs{background:var(--gc);color:var(--t1);border:1px solid var(--br)}
-.bs:hover{background:var(--gb);border-color:var(--ba)}
 .bd{background:linear-gradient(135deg,var(--d),#FF6B8A);color:#fff}
-.bw{width:100%;margin-top:8px}
-
-/* ---- HEADER ---- */
-.hd{padding:14px 18px 11px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(7,11,24,.88);backdrop-filter:blur(18px);z-index:50;border-bottom:1px solid var(--br)}
-.hlogo{font-size:1.25rem;font-weight:800;background:linear-gradient(135deg,var(--p2),var(--s));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hright{display:flex;align-items:center;gap:10px}
-.ic-btn{width:36px;height:36px;background:var(--gc);border:1px solid var(--br);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;transition:var(--tr)}
-.ic-btn:hover{background:var(--gb);border-color:var(--ba)}
-.av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--s));display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:700;color:#fff;cursor:pointer;flex-shrink:0}
-
-/* ---- PAGE CONTENT ---- */
-.pc{padding:16px 16px 88px}
-
-/* ---- BANNER SLIDER ---- */
-.slider{margin-bottom:22px;border-radius:var(--r3);overflow:hidden;position:relative;height:155px;background:var(--bg2)}
+.bg{background:linear-gradient(135deg,var(--g),#00B894);color:#fff}
+.bw{width:100%;margin-top:6px}
+/* HEADER */
+.hd{padding:12px 15px 10px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(6,10,21,.9);backdrop-filter:blur(18px);z-index:50;border-bottom:1px solid var(--br)}
+.hlogo{font-size:1.2rem;font-weight:800;background:linear-gradient(135deg,var(--p2),var(--s));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hr{display:flex;align-items:center;gap:8px}
+.ib{width:34px;height:34px;background:var(--gc);border:1px solid var(--br);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.9rem;transition:var(--tr)}
+.ib:hover{background:var(--gb);border-color:var(--ba)}
+.av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--s));display:flex;align-items:center;justify-content:center;font-size:.88rem;font-weight:700;color:#fff;cursor:pointer;flex-shrink:0}
+/* PAGE */
+.pc{padding:14px 15px 88px}
+/* BANNER */
+.slider{margin-bottom:18px;border-radius:var(--r3);overflow:hidden;position:relative;height:144px;background:var(--bg2)}
 .strack{display:flex;height:100%;transition:transform .5s cubic-bezier(.4,0,.2,1)}
-.slide{min-width:100%;height:100%;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.slide{min-width:100%;height:100%;position:relative;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .slide img{width:100%;height:100%;object-fit:cover}
-.slide .stxt{position:absolute;bottom:0;left:0;right:0;padding:14px 16px;background:linear-gradient(transparent,rgba(0,0,0,.72));font-size:.88rem;font-weight:600}
-.slide-ph{background:linear-gradient(135deg,#1A2040,#221848);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:1rem;font-weight:600;color:var(--t2)}
-.sdots{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:2}
-.dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35);cursor:pointer;transition:var(--tr)}
-.dot.on{background:#fff;width:16px;border-radius:3px}
-
-/* ---- GREETING ---- */
-.greet{margin-bottom:18px}
-.greet h2{font-size:1.2rem;font-weight:700}
-.greet p{font-size:.8rem;color:var(--t2);margin-top:3px}
-
-/* ---- CHATBOT HIGHLIGHT ---- */
-.chat-hl{background:linear-gradient(135deg,rgba(124,110,250,.18),rgba(255,107,157,.12));border:1px solid rgba(124,110,250,.32);border-radius:var(--r3);padding:18px;margin-bottom:22px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:var(--tr);position:relative;overflow:hidden}
-.chat-hl::after{content:'';position:absolute;top:-40%;right:-10%;width:120px;height:120px;background:radial-gradient(circle,rgba(255,107,157,.18),transparent);pointer-events:none}
-.chat-hl:hover{border-color:rgba(124,110,250,.55);box-shadow:var(--sg)}
-.chat-hl:active{transform:scale(.97)}
-.chi{width:54px;height:54px;background:linear-gradient(135deg,var(--p),var(--s));border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;box-shadow:0 4px 18px rgba(124,110,250,.4)}
-.cht h3{font-size:.95rem;font-weight:700}
-.cht p{font-size:.76rem;color:var(--t2);margin-top:3px}
-.ai-badge{position:absolute;top:10px;right:10px;background:var(--s);color:#fff;font-size:.62rem;font-weight:800;padding:3px 8px;border-radius:var(--rf)}
-
-/* ---- SECTION TITLE ---- */
-.stitle{font-size:1rem;font-weight:700;color:var(--t1);margin-bottom:13px;display:flex;align-items:center;gap:8px}
-
-/* ---- FEATURE GRID ---- */
-.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:22px}
-.fc{padding:16px 13px;border-radius:var(--r3);cursor:pointer;transition:var(--tr);min-height:120px;display:flex;flex-direction:column;justify-content:space-between;border:1px solid transparent}
-.fc:active{transform:scale(.95)}
-.fc .fic{font-size:1.9rem;margin-bottom:8px}
-.fc h3{font-size:.83rem;font-weight:700;line-height:1.3}
-.fc p{font-size:.7rem;color:var(--t2);margin-top:3px}
-.fc1{background:linear-gradient(135deg,rgba(0,212,170,.16),rgba(46,213,115,.08));border-color:rgba(0,212,170,.22)}
-.fc2{background:linear-gradient(135deg,rgba(255,179,71,.16),rgba(255,107,157,.08));border-color:rgba(255,179,71,.22)}
-.fc3{background:linear-gradient(135deg,rgba(124,110,250,.16),rgba(168,155,255,.08));border-color:rgba(124,110,250,.22)}
-.fc4{background:linear-gradient(135deg,rgba(0,212,170,.12),rgba(0,180,148,.08));border-color:rgba(0,212,170,.18)}
-
-/* ---- GLASS CARD ---- */
-.gc-card{background:var(--gc);border:1px solid var(--br);border-radius:var(--r3);transition:var(--tr)}
-.gc-card:hover{background:var(--gb);border-color:var(--ba)}
-
-/* ---- GIFT CARDS ---- */
-.gift-c{display:flex;align-items:center;gap:13px;padding:14px;border-radius:var(--r2);background:linear-gradient(135deg,rgba(255,179,71,.13),rgba(255,71,87,.07));border:1px solid rgba(255,179,71,.25);margin-bottom:9px;cursor:pointer;transition:var(--tr);position:relative}
-.gift-c:hover{border-color:rgba(255,179,71,.45);transform:translateX(3px)}
-.gift-c:active{transform:scale(.98)}
-.gthumb{width:60px;height:60px;border-radius:12px;object-fit:cover;background:var(--gc);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.8rem}
-.gi h4{font-size:.88rem;font-weight:700}
-.gi p{font-size:.75rem;color:var(--t2);margin-top:3px}
-.garr{position:absolute;right:12px;color:var(--w);font-size:1rem}
-
-/* ---- BOTTOM TAB BAR ---- */
-.tbar{position:fixed;bottom:0;left:0;right:0;background:rgba(13,18,37,.95);backdrop-filter:blur(20px);border-top:1px solid var(--br);display:flex;padding:7px 0 max(7px,env(safe-area-inset-bottom));z-index:100}
-.ti{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 4px;cursor:pointer;transition:var(--tr);font-size:.65rem;color:var(--t3);border:none;background:none;font-family:var(--fn)}
-.ti .tic{font-size:1.35rem;transition:var(--tr)}
+.stxt{position:absolute;bottom:0;left:0;right:0;padding:11px 13px;background:linear-gradient(transparent,rgba(0,0,0,.72));font-size:.84rem;font-weight:600}
+.sph{background:linear-gradient(135deg,#192038,#221848);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;font-size:.9rem;font-weight:600;color:var(--t2)}
+.sdots{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:2}
+.dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.35);cursor:pointer;transition:var(--tr)}
+.dot.on{background:#fff;width:15px;border-radius:3px}
+/* GREETING */
+.greet{margin-bottom:15px}
+.greet h2{font-size:1.12rem;font-weight:700}
+.greet p{font-size:.77rem;color:var(--t2);margin-top:3px}
+/* CHAT HIGHLIGHT */
+.chl{background:linear-gradient(135deg,rgba(124,110,250,.18),rgba(255,107,157,.12));border:1px solid rgba(124,110,250,.3);border-radius:var(--r3);padding:15px;margin-bottom:18px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:var(--tr);position:relative;overflow:hidden}
+.chl:active{transform:scale(.97)}
+.chi{width:48px;height:48px;background:linear-gradient(135deg,var(--p),var(--s));border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+.cht h3{font-size:.9rem;font-weight:700}
+.cht p{font-size:.73rem;color:var(--t2);margin-top:3px}
+.aibdg{position:absolute;top:8px;right:8px;background:var(--s);color:#fff;font-size:.6rem;font-weight:800;padding:2px 7px;border-radius:var(--rf)}
+/* SECTION TITLE */
+.stitle{font-size:.95rem;font-weight:700;margin-bottom:11px;display:flex;align-items:center;gap:7px}
+/* FEATURE GRID */
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px}
+.fc{padding:14px 12px;border-radius:var(--r3);cursor:pointer;transition:var(--tr);min-height:112px;display:flex;flex-direction:column;justify-content:space-between;border:1px solid transparent}
+.fc:active{transform:scale(.94)}
+.fic{font-size:1.75rem;margin-bottom:6px}
+.fc h3{font-size:.8rem;font-weight:700;line-height:1.3}
+.fc p{font-size:.68rem;color:var(--t2);margin-top:2px}
+.c1{background:linear-gradient(135deg,rgba(0,212,170,.15),rgba(46,213,115,.07));border-color:rgba(0,212,170,.2)}
+.c2{background:linear-gradient(135deg,rgba(255,179,71,.15),rgba(255,107,157,.07));border-color:rgba(255,179,71,.2)}
+.c3{background:linear-gradient(135deg,rgba(124,110,250,.15),rgba(168,155,255,.07));border-color:rgba(124,110,250,.2)}
+.c4{background:linear-gradient(135deg,rgba(0,212,170,.12),rgba(0,180,148,.07));border-color:rgba(0,212,170,.17)}
+.c5{background:linear-gradient(135deg,rgba(255,107,157,.15),rgba(255,71,87,.07));border-color:rgba(255,107,157,.2)}
+.c6{background:linear-gradient(135deg,rgba(255,179,71,.15),rgba(255,165,2,.07));border-color:rgba(255,179,71,.2)}
+/* GIFT */
+.gc2{display:flex;align-items:center;gap:11px;padding:12px;border-radius:var(--r2);background:linear-gradient(135deg,rgba(255,179,71,.12),rgba(255,71,87,.06));border:1px solid rgba(255,179,71,.24);margin-bottom:8px;cursor:pointer;transition:var(--tr);position:relative}
+.gc2:hover{border-color:rgba(255,179,71,.45);transform:translateX(3px)}
+.gth{width:56px;height:56px;border-radius:11px;object-fit:cover;background:var(--gc);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.6rem}
+.gi h4{font-size:.84rem;font-weight:700}
+.gi p{font-size:.72rem;color:var(--t2);margin-top:2px}
+/* BOTTOM TAB */
+.tbar{position:fixed;bottom:0;left:0;right:0;background:rgba(12,16,32,.97);backdrop-filter:blur(20px);border-top:1px solid var(--br);display:flex;padding:6px 0 max(6px,env(safe-area-inset-bottom));z-index:100}
+.ti{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;cursor:pointer;transition:var(--tr);font-size:.6rem;color:var(--t3);border:none;background:none;font-family:var(--fn)}
+.tic{font-size:1.25rem;transition:var(--tr)}
 .ti.on{color:var(--p2)}
 .ti.on .tic{filter:drop-shadow(0 0 7px rgba(124,110,250,.6))}
-
-/* ---- PAGE HEADER ---- */
-.phd{padding:14px 16px 11px;background:rgba(7,11,24,.88);backdrop-filter:blur(18px);border-bottom:1px solid var(--br);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
-.phd h2{font-size:1.05rem;font-weight:700;flex:1}
-.back{width:34px;height:34px;background:var(--gc);border:1px solid var(--br);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.05rem;flex-shrink:0;transition:var(--tr)}
-.back:hover{background:var(--gb)}
-
-/* ---- SUB TABS ---- */
-.stabs{display:flex;gap:7px;overflow-x:auto;padding-bottom:3px;margin-bottom:18px;scrollbar-width:none}
+/* PAGE HEADER */
+.phd{padding:12px 15px 10px;background:rgba(6,10,21,.9);backdrop-filter:blur(18px);border-bottom:1px solid var(--br);display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50}
+.phd h2{font-size:1rem;font-weight:700;flex:1}
+.back{width:32px;height:32px;background:var(--gc);border:1px solid var(--br);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.95rem;flex-shrink:0;transition:var(--tr)}
+/* SUB TABS */
+.stabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:14px;scrollbar-width:none}
 .stabs::-webkit-scrollbar{display:none}
-.stab{padding:8px 15px;border-radius:var(--rf);background:var(--gc);border:1px solid var(--br);color:var(--t3);font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:var(--tr);font-family:var(--fn)}
+.stab{padding:7px 13px;border-radius:var(--rf);background:var(--gc);border:1px solid var(--br);color:var(--t3);font-size:.74rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:var(--tr);font-family:var(--fn)}
 .stab.on{background:var(--p);border-color:var(--p);color:#fff}
-
-/* ---- CHILD SELECTOR ---- */
-.csel{padding:14px 16px 10px;display:flex;gap:10px;overflow-x:auto;scrollbar-width:none}
+/* CHILD CHIPS */
+.csel{padding:11px 15px 8px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
 .csel::-webkit-scrollbar{display:none}
-.cchip{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex-shrink:0}
-.cav{width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--a));display:flex;align-items:center;justify-content:center;font-size:1.3rem;border:2.5px solid transparent;transition:var(--tr)}
-.cchip.on .cav{border-color:var(--p2);box-shadow:0 0 14px rgba(124,110,250,.45)}
-.cchip .cn{font-size:.67rem;color:var(--t3)}
-.add-c .cav{background:var(--gc);border:2px dashed var(--br);color:var(--t3);font-size:1.4rem}
-
-/* ---- VACCINE ---- */
-.vi{display:flex;align-items:center;gap:12px;padding:13px;border-radius:var(--r2);background:var(--gc);border:1px solid var(--br);margin-bottom:9px;transition:var(--tr)}
-.vi:hover{background:var(--gb)}
-.vck{width:26px;height:26px;border-radius:50%;border:2px solid var(--br);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:var(--tr);font-size:.8rem}
+.cchip{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;flex-shrink:0}
+.cav2{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--a));display:flex;align-items:center;justify-content:center;font-size:1.2rem;border:2.5px solid transparent;transition:var(--tr)}
+.cchip.on .cav2{border-color:var(--p2);box-shadow:0 0 13px rgba(124,110,250,.45)}
+.cn{font-size:.63rem;color:var(--t3)}
+.addc .cav2{background:var(--gc);border:2px dashed var(--br);color:var(--t3);font-size:1.25rem}
+/* CARDS */
+.card{background:var(--gc);border:1px solid var(--br);border-radius:var(--r3);padding:14px;margin-bottom:9px;transition:var(--tr)}
+/* VACCINE */
+.vi{display:flex;align-items:center;gap:10px;padding:11px;border-radius:var(--r2);background:var(--gc);border:1px solid var(--br);margin-bottom:7px}
+.vck{width:24px;height:24px;border-radius:50%;border:2px solid var(--br);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:var(--tr);font-size:.76rem}
 .vck.ok{background:var(--a);border-color:var(--a);color:#fff}
-.vin{flex:1}
-.vin h4{font-size:.87rem;font-weight:600}
-.vin p{font-size:.74rem;color:var(--t3)}
-.bdg{display:inline-flex;align-items:center;padding:3px 10px;border-radius:var(--rf);font-size:.7rem;font-weight:700}
-.bg-ok{background:rgba(0,212,170,.18);color:var(--a)}
-.bg-w{background:rgba(255,179,71,.18);color:var(--w)}
-.bg-p{background:rgba(124,110,250,.18);color:var(--p2)}
-.bg-d{background:rgba(255,71,87,.18);color:var(--d)}
-
-/* ---- GROWTH ---- */
-.ginp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-.chart-box{background:var(--gc);border:1px solid var(--br);border-radius:var(--r2);padding:14px}
-
-/* ---- ILLNESS ---- */
-.ill{padding:15px;border-radius:var(--r2);background:var(--gc);border:1px solid var(--br);margin-bottom:9px}
-.ill h4{font-size:.9rem;font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:8px}
-.ill ul{list-style:none;display:flex;flex-direction:column;gap:5px}
-.ill ul li{font-size:.8rem;color:var(--t2);padding-left:14px;position:relative}
-.ill ul li::before{content:'›';position:absolute;left:0;color:var(--a);font-weight:700}
-
-/* ---- FOOD GRID ---- */
-.fgd{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}
-.fi2{background:rgba(255,255,255,.04);border-radius:var(--r1);padding:10px 6px;text-align:center;font-size:.72rem;color:var(--t2);border:1px solid var(--br)}
-.fem{font-size:1.4rem;display:block;margin-bottom:3px}
-
-/* ---- MILESTONE ---- */
-.mgt{font-size:.78rem;font-weight:700;color:var(--p2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px}
-.mit{display:flex;align-items:center;gap:11px;padding:11px 13px;background:var(--gc);border:1px solid var(--br);border-radius:var(--r2);margin-bottom:7px;transition:var(--tr)}
+.vin h4{font-size:.83rem;font-weight:600}
+.vin p{font-size:.7rem;color:var(--t3)}
+.bdg{display:inline-flex;align-items:center;padding:2px 9px;border-radius:var(--rf);font-size:.67rem;font-weight:700}
+.bok{background:rgba(0,212,170,.18);color:var(--a)}
+.bw2{background:rgba(255,179,71,.18);color:var(--w)}
+.bp2{background:rgba(124,110,250,.18);color:var(--p2)}
+.bd2{background:rgba(255,71,87,.18);color:var(--d)}
+/* MILESTONE */
+.mgt{font-size:.74rem;font-weight:700;color:var(--p2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+.mit{display:flex;align-items:center;gap:9px;padding:10px 11px;background:var(--gc);border:1px solid var(--br);border-radius:var(--r2);margin-bottom:5px;transition:var(--tr)}
 .mit.ok{background:rgba(0,212,170,.08);border-color:rgba(0,212,170,.28)}
-.mck{width:24px;height:24px;border-radius:50%;border:2px solid var(--br);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:var(--tr);font-size:.78rem}
+.mck{width:22px;height:22px;border-radius:50%;border:2px solid var(--br);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:var(--tr);font-size:.74rem}
 .mck.ok{background:var(--a);border-color:var(--a);color:#fff}
-.mck.ok::after{content:'✓'}
-
-/* ---- SCHEDULE ---- */
-.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:18px}
-.si{background:var(--gc);border:1px solid var(--br);border-radius:var(--r2);padding:14px 8px;text-align:center;cursor:pointer;transition:var(--tr)}
-.si:active{transform:scale(.94)}
+/* SCHEDULE */
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px}
+.si{background:var(--gc);border:1px solid var(--br);border-radius:var(--r2);padding:12px 6px;text-align:center;cursor:pointer;transition:var(--tr)}
+.si:active{transform:scale(.93)}
 .si:hover{background:var(--gb);border-color:var(--ba)}
-.sic{font-size:1.7rem;display:block;margin-bottom:5px}
-.slb{font-size:.7rem;color:var(--t2)}
-.stm{font-size:.78rem;font-weight:700;color:var(--t1);margin-top:3px}
-.litem{display:flex;align-items:center;gap:11px;padding:12px 13px;background:var(--gc);border:1px solid var(--br);border-radius:var(--r2);margin-bottom:7px}
-
-/* ---- CHAT PAGE ---- */
+.sic{font-size:1.55rem;display:block;margin-bottom:4px}
+.slb{font-size:.67rem;color:var(--t2)}
+.stm{font-size:.74rem;font-weight:700;margin-top:3px}
+.litem{display:flex;align-items:center;gap:10px;padding:10px 11px;background:var(--gc);border:1px solid var(--br);border-radius:var(--r2);margin-bottom:6px}
+/* FOOD GRID */
+.fgd{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.fi2{background:rgba(255,255,255,.04);border-radius:var(--r1);padding:8px 5px;text-align:center;font-size:.68rem;color:var(--t2);border:1px solid var(--br)}
+.fem{font-size:1.3rem;display:block;margin-bottom:2px}
+/* CHAT PAGE */
 #pg-chat{position:fixed;inset:0;z-index:200;background:var(--bg0);display:none;flex-direction:column}
 #pg-chat.on{display:flex}
-.chd{padding:13px 16px;background:rgba(7,11,24,.95);backdrop-filter:blur(18px);border-bottom:1px solid var(--br);display:flex;align-items:center;gap:12px;flex-shrink:0}
-.chd .bot-i{width:38px;height:38px;background:linear-gradient(135deg,var(--p),var(--s));border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0}
-.bi h3{font-size:.95rem;font-weight:700}
-.bi p{font-size:.72rem;color:var(--t2)}
-.odot{width:7px;height:7px;background:#2ED573;border-radius:50%;display:inline-block;margin-right:4px}
-.cmsgs{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:11px}
-.cm{display:flex;gap:9px;align-items:flex-end}
+.chd{padding:11px 14px;background:rgba(6,10,21,.95);backdrop-filter:blur(18px);border-bottom:1px solid var(--br);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.boti{width:36px;height:36px;background:linear-gradient(135deg,var(--p),var(--s));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.bi h3{font-size:.9rem;font-weight:700}
+.bi p{font-size:.68rem;color:var(--t2)}
+.odot{width:6px;height:6px;background:#2ED573;border-radius:50%;display:inline-block;margin-right:4px}
+.cmsgs{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:9px}
+.cm{display:flex;gap:8px;align-items:flex-end}
 .cm.u{flex-direction:row-reverse}
-.cav2{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0}
+.ca2{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0}
 .bav{background:linear-gradient(135deg,var(--p),var(--s))}
 .uav{background:linear-gradient(135deg,var(--a),#00B894)}
-.bbl{max-width:78%;padding:11px 15px;border-radius:17px;font-size:.85rem;line-height:1.65}
+.bbl{max-width:80%;padding:10px 13px;border-radius:16px;font-size:.82rem;line-height:1.65}
 .cm.bot .bbl{background:var(--bg3);border:1px solid var(--br);border-bottom-left-radius:4px}
 .cm.u .bbl{background:linear-gradient(135deg,var(--p),var(--p3));border-bottom-right-radius:4px;color:#fff}
-.cinp{padding:11px 14px;background:rgba(7,11,24,.98);backdrop-filter:blur(18px);border-top:1px solid var(--br);display:flex;gap:9px;align-items:flex-end;flex-shrink:0}
-.cinp textarea{flex:1;background:rgba(255,255,255,.07);border:1.5px solid rgba(124,110,250,.4);border-radius:17px;padding:12px 16px;color:var(--t1);font-family:var(--fn);font-size:.9rem;resize:none;outline:none;max-height:100px;line-height:1.5;min-height:44px}
-.cinp textarea:focus{border-color:var(--p);background:rgba(255,255,255,.09);box-shadow:0 0 0 3px rgba(124,110,250,.15)}
-.sbtn{width:44px;height:44px;background:linear-gradient(135deg,var(--p),var(--p2));border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.05rem;flex-shrink:0;transition:var(--tr);box-shadow:0 4px 14px rgba(124,110,250,.38)}
-.sbtn:hover{transform:scale(1.05)}
-.sbtn:active{transform:scale(.9)}
-.tdot{width:7px;height:7px;background:var(--p);border-radius:50%;animation:td 1.4s infinite}
-.tdot:nth-child(2){animation-delay:.2s}
-.tdot:nth-child(3){animation-delay:.4s}
+.cinp{padding:9px 12px;background:rgba(6,10,21,.98);border-top:1px solid var(--br);display:flex;gap:8px;align-items:flex-end;flex-shrink:0}
+.cinp textarea{flex:1;background:rgba(255,255,255,.07);border:1.5px solid rgba(124,110,250,.4);border-radius:15px;padding:10px 13px;color:var(--t1);font-family:var(--fn);font-size:.85rem;resize:none;outline:none;max-height:86px;line-height:1.5}
+.cinp textarea:focus{border-color:var(--p)}
+.sbtn{width:40px;height:40px;background:linear-gradient(135deg,var(--p),var(--p2));border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.95rem;flex-shrink:0;transition:var(--tr)}
+.sbtn:active{transform:scale(.88)}
+.tdot{width:6px;height:6px;background:var(--p);border-radius:50%;animation:td 1.4s infinite}
+.tdot:nth-child(2){animation-delay:.2s}.tdot:nth-child(3){animation-delay:.4s}
 @keyframes td{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-7px);opacity:1}}
-.ti-wrap{display:flex;gap:5px;padding:10px 14px}
-
-/* ---- PROFILE ---- */
-.prh{padding:28px 16px 18px;text-align:center;border-bottom:1px solid var(--br)}
-.prav{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--s));display:flex;align-items:center;justify-content:center;font-size:1.9rem;font-weight:700;color:#fff;margin:0 auto 13px;border:3px solid var(--ba);box-shadow:var(--sg)}
-.prn{font-size:1.15rem;font-weight:700}
-.pre{font-size:.82rem;color:var(--t3);margin-top:3px}
-.pm{padding:14px 16px}
-.mi{display:flex;align-items:center;gap:13px;padding:14px 13px;background:var(--gc);border:1px solid var(--br);border-radius:var(--r2);margin-bottom:7px;cursor:pointer;transition:var(--tr)}
+.tiw{display:flex;gap:4px;padding:8px 12px}
+/* COMMUNITY */
+.post-card{background:var(--gc);border:1px solid var(--br);border-radius:var(--r3);padding:14px;margin-bottom:9px}
+.post-hd{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.pav{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--a));display:flex;align-items:center;justify-content:center;font-size:.88rem;font-weight:700;color:#fff;flex-shrink:0}
+.pnm{font-size:.83rem;font-weight:700}
+.ptm{font-size:.68rem;color:var(--t3)}
+.pimg{width:100%;border-radius:var(--r2);margin:9px 0;object-fit:cover;max-height:220px}
+.ptxt{font-size:.82rem;color:var(--t2);line-height:1.65;margin-bottom:10px}
+.pact{display:flex;gap:13px}
+.pa{display:flex;align-items:center;gap:4px;font-size:.76rem;color:var(--t3);cursor:pointer;transition:var(--tr);background:none;border:none;font-family:var(--fn);padding:0}
+.pa.liked{color:var(--s)}
+.pa:hover{color:var(--p2)}
+.npost{background:var(--gc);border:1px solid var(--br);border-radius:var(--r3);padding:13px;margin-bottom:13px}
+.npost textarea{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--br);border-radius:var(--r2);padding:10px 12px;color:var(--t1);font-family:var(--fn);font-size:.83rem;resize:none;outline:none;min-height:68px}
+/* SHOP */
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.pcard{background:var(--gc);border:1px solid var(--br);border-radius:var(--r3);overflow:hidden;cursor:pointer;transition:var(--tr)}
+.pcard:hover{border-color:var(--ba)}
+.pimg2{width:100%;height:125px;object-fit:cover;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:2.4rem}
+.pinf{padding:10px}
+.pnm2{font-size:.81rem;font-weight:700;margin-bottom:3px}
+.ppr{font-size:.88rem;font-weight:800;color:var(--a)}
+.pop{font-size:.72rem;color:var(--t3);text-decoration:line-through}
+.ctabs{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin-bottom:13px;padding-bottom:2px}
+.ctabs::-webkit-scrollbar{display:none}
+/* EARN */
+.ehero{background:linear-gradient(135deg,rgba(255,179,71,.2),rgba(255,107,157,.12));border:1px solid rgba(255,179,71,.28);border-radius:var(--r3);padding:20px;text-align:center;margin-bottom:14px}
+.epts{font-size:2.7rem;font-weight:900;background:linear-gradient(135deg,var(--w),var(--s));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.elbl{font-size:.78rem;color:var(--t2)}
+.estr{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:7px;font-size:.8rem;color:var(--w)}
+.bbtn{background:linear-gradient(135deg,var(--w),#FF9500);color:#fff;border:none;border-radius:var(--rf);padding:12px 26px;font-family:var(--fn);font-size:.88rem;font-weight:700;cursor:pointer;transition:var(--tr);margin-top:11px;width:100%}
+.bbtn:disabled{opacity:.5;cursor:not-allowed}
+.botc{background:var(--gc);border:1px solid var(--br);border-radius:var(--r3);padding:15px;margin-bottom:9px;display:flex;gap:12px;align-items:center}
+.botic{width:48px;height:48px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0}
+.bi1{background:linear-gradient(135deg,#229ED9,#1A7CB8)}
+.bi2{background:linear-gradient(135deg,#FF6B35,#FF4500)}
+/* TOOLS */
+.tc2{background:var(--gc);border:1px solid var(--br);border-radius:var(--r3);padding:14px;margin-bottom:9px;cursor:pointer;transition:var(--tr);display:flex;align-items:center;gap:12px}
+.tc2:hover{background:var(--gb);border-color:var(--ba)}
+.tci{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
+.tinf h4{font-size:.86rem;font-weight:700}
+.tinf p{font-size:.72rem;color:var(--t2);margin-top:2px}
+.hl2{background:var(--gc);border:1px solid var(--br);border-radius:var(--r2);padding:11px;display:flex;align-items:center;gap:11px;margin-bottom:7px}
+.hlnum{font-size:1.1rem;font-weight:800;color:var(--a)}
+.crbox{background:linear-gradient(135deg,rgba(0,212,170,.1),rgba(124,110,250,.08));border:1px solid rgba(0,212,170,.25);border-radius:var(--r2);padding:13px;margin-top:9px;text-align:center}
+.crv{font-size:1.5rem;font-weight:800;color:var(--a)}
+.crl{font-size:.76rem;color:var(--t2);margin-top:3px}
+/* PROFILE */
+.prh{padding:24px 15px 15px;text-align:center;border-bottom:1px solid var(--br)}
+.prav{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--s));display:flex;align-items:center;justify-content:center;font-size:1.75rem;font-weight:700;color:#fff;margin:0 auto 11px;border:3px solid var(--ba);box-shadow:0 0 20px rgba(124,110,250,.28)}
+.prn{font-size:1.08rem;font-weight:700}
+.pre2{font-size:.78rem;color:var(--t3);margin-top:2px}
+.ptsbdg{display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,rgba(255,179,71,.2),rgba(255,107,157,.1));border:1px solid rgba(255,179,71,.3);border-radius:var(--rf);padding:5px 13px;font-size:.78rem;font-weight:700;color:var(--w);margin-top:7px}
+.pm{padding:12px 15px}
+.mi{display:flex;align-items:center;gap:11px;padding:12px 11px;background:var(--gc);border:1px solid var(--br);border-radius:var(--r2);margin-bottom:6px;cursor:pointer;transition:var(--tr)}
 .mi:hover{background:var(--gb);border-color:var(--ba)}
-.mic{font-size:1.2rem}
-.ml{flex:1;font-size:.9rem;font-weight:500}
-.mar{color:var(--t3);font-size:.82rem}
-
-/* ---- MODALS ---- */
-.mo{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);z-index:800;display:flex;align-items:center;justify-content:center;padding:18px;opacity:0;pointer-events:none;transition:var(--tr)}
+/* ILLNESS */
+.ill{padding:13px;border-radius:var(--r2);background:var(--gc);border:1px solid var(--br);margin-bottom:7px}
+.ill h4{font-size:.86rem;font-weight:700;display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.ill ul{list-style:none;display:flex;flex-direction:column;gap:4px}
+.ill li{font-size:.77rem;color:var(--t2);padding-left:12px;position:relative}
+.ill li::before{content:'›';position:absolute;left:0;color:var(--a);font-weight:700}
+/* MENTAL */
+.mntl{padding:14px;border-radius:var(--r3);background:linear-gradient(135deg,rgba(255,107,157,.13),rgba(124,110,250,.08));border:1px solid rgba(255,107,157,.22);margin-bottom:9px}
+.mntl h4{font-size:.9rem;font-weight:700;color:var(--s);margin-bottom:6px}
+/* MODALS */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);z-index:800;display:flex;align-items:center;justify-content:center;padding:15px;opacity:0;pointer-events:none;transition:var(--tr)}
 .mo.on{opacity:1;pointer-events:all}
-.mb{background:var(--bg2);border:1px solid var(--br);border-radius:var(--r4);padding:26px;width:100%;max-width:440px;max-height:88vh;overflow-y:auto;transform:scale(.9) translateY(18px);transition:var(--tr)}
+.mb{background:var(--bg2);border:1px solid var(--br);border-radius:var(--r4);padding:22px;width:100%;max-width:420px;max-height:88vh;overflow-y:auto;transform:scale(.9) translateY(15px);transition:var(--tr)}
 .mo.on .mb{transform:scale(1) translateY(0)}
-.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
-.mh h3{font-size:1.05rem;font-weight:700}
-.mclose{cursor:pointer;font-size:1.2rem;color:var(--t3);width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--gc)}
-
-/* ---- TOAST ---- */
-.tc{position:fixed;bottom:86px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:7px;pointer-events:none}
-.t{background:var(--bg2);border:1px solid var(--br);border-radius:var(--r2);padding:12px 18px;font-size:.85rem;animation:tin .3s ease,tout .3s ease 2.7s forwards;white-space:nowrap}
-.t.s{border-color:var(--a);color:var(--a)}
-.t.e{border-color:var(--d);color:var(--d)}
-.t.i{border-color:var(--p);color:var(--p2)}
-@keyframes tin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.mh h3{font-size:.97rem;font-weight:700}
+.mcl{cursor:pointer;font-size:1.1rem;color:var(--t3);width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--gc)}
+/* TOAST */
+.tc{position:fixed;bottom:82px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.t{background:var(--bg2);border:1px solid var(--br);border-radius:var(--r2);padding:10px 16px;font-size:.82rem;animation:tin .3s ease,tout .3s ease 2.7s forwards;white-space:nowrap}
+.t.s{border-color:var(--a);color:var(--a)}.t.e{border-color:var(--d);color:var(--d)}.t.i{border-color:var(--p);color:var(--p2)}
+@keyframes tin{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes tout{to{opacity:0}}
-
-/* ---- GIFT DETAIL ---- */
-.gdi{width:100%;border-radius:var(--r2);aspect-ratio:16/9;object-fit:cover;margin-bottom:14px;background:var(--gc)}
-.gdl{display:block;padding:13px;background:var(--gc);border:1px solid var(--br);border-radius:var(--r2);font-size:.82rem;color:var(--p2);text-decoration:none;word-break:break-all;margin-top:11px}
-
-/* ---- NUTRITION CARD ---- */
-.ncrd{padding:16px;border-radius:var(--r3);background:var(--gc);border:1px solid var(--br);margin-bottom:11px}
-.ncrd h4{font-size:.95rem;font-weight:700;margin-bottom:9px;display:flex;align-items:center;gap:7px}
-
-/* ---- EMERGENCY ---- */
-.emb{background:linear-gradient(135deg,rgba(255,71,87,.18),rgba(255,107,157,.08));border:1px solid rgba(255,71,87,.38);border-radius:var(--r2);padding:13px 14px;display:flex;align-items:center;gap:11px;margin-bottom:14px}
-
-/* ---- MENTAL ---- */
-.mntl{padding:16px;border-radius:var(--r3);background:linear-gradient(135deg,rgba(255,107,157,.13),rgba(124,110,250,.08));border:1px solid rgba(255,107,157,.22);margin-bottom:11px}
-.mntl h4{font-size:.95rem;font-weight:700;color:var(--s);margin-bottom:7px}
-
-/* ---- SPINNER ---- */
-.spin{width:22px;height:22px;border:3px solid var(--br);border-top-color:var(--p);border-radius:50%;animation:sp .7s linear infinite;margin:0 auto}
+.spin{width:20px;height:20px;border:3px solid var(--br);border-top-color:var(--p);border-radius:50%;animation:sp .7s linear infinite;margin:20px auto}
 @keyframes sp{to{transform:rotate(360deg)}}
+/* EMERGENCY */
+.emb{background:linear-gradient(135deg,rgba(255,71,87,.16),rgba(255,107,157,.07));border:1px solid rgba(255,71,87,.35);border-radius:var(--r2);padding:11px 12px;display:flex;align-items:center;gap:9px;margin-bottom:11px}
+/* GIFT DETAIL */
+.gdi{width:100%;border-radius:var(--r2);aspect-ratio:16/9;object-fit:cover;margin-bottom:11px;background:var(--gc)}
+.gdl{display:block;padding:11px;background:var(--gc);border:1px solid var(--br);border-radius:var(--r2);font-size:.79rem;color:var(--p2);text-decoration:none;word-break:break-all;margin-top:9px}
+/* POINTS LOG */
+.plog{background:var(--gc);border:1px solid var(--br);border-radius:var(--r2);padding:9px 11px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
 </style>
 </head>
 <body>
-<div class="orbs"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
+<div class="orbs"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
 
-<!-- ══════════════ AUTH ══════════════ -->
+<!-- ══ AUTH ══ -->
 <div id="auth">
-  <div class="auth-box">
-    <div class="auth-logo">
-      <div class="ico">🍼</div>
+  <div class="abox">
+    <div class="alo">
+      <div class="ali">🍼</div>
       <h1>FutFul</h1>
       <p>মা ও শিশু যত্নের বিশ্বস্ত সঙ্গী</p>
     </div>
-    <div class="auth-tabs">
-      <div class="atab on" id="tab-login" onclick="swTab('login')">লগইন</div>
-      <div class="atab" id="tab-reg" onclick="swTab('reg')">নিবন্ধন</div>
+    <div class="atabs">
+      <div class="atab on" id="tl" onclick="swTab('l')">লগইন</div>
+      <div class="atab" id="tr" onclick="swTab('r')">নিবন্ধন</div>
     </div>
-    <!-- Login -->
-    <div id="fLogin">
-      <div class="fg"><label class="fl">ইমেইল</label><input class="fi" id="lemail" type="email" placeholder="আপনার ইমেইল"/></div>
-      <div class="fg"><label class="fl">পাসওয়ার্ড</label><input class="fi" id="lpass" type="password" placeholder="পাসওয়ার্ড"/></div>
+    <div id="fL">
+      <div class="fg">
+        <label class="fl">ইমেইল</label>
+        <input class="fi" id="le" type="email" placeholder="ইমেইল দিন" autocomplete="email" onfocus="showCP()" onblur="hideCP()" oninput="hideCP()"/>
+        <div class="cp" id="credPop">
+          <div class="ci" onmousedown="fillCreds(event)">
+            <div class="ci-em" id="sEmail">—</div>
+            <div class="ci-pw">•••••••• (সংরক্ষিত পাসওয়ার্ড) — ক্লিক করুন</div>
+          </div>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">পাসওয়ার্ড</label><input class="fi" id="lp" type="password" placeholder="পাসওয়ার্ড" autocomplete="current-password"/></div>
       <button class="btn bp bw" onclick="doLogin()">লগইন করুন</button>
     </div>
-    <!-- Register -->
-    <div id="fReg" style="display:none">
-      <div class="fg"><label class="fl">আপনার নাম ✱</label><input class="fi" id="rname" placeholder="পুরো নাম লিখুন"/></div>
-      <div class="fg"><label class="fl">ইমেইল ✱</label><input class="fi" id="remail" type="email" placeholder="আপনার ইমেইল"/></div>
-      <div class="fg"><label class="fl">পাসওয়ার্ড ✱ (৬+ অক্ষর)</label><input class="fi" id="rpass" type="password" placeholder="পাসওয়ার্ড দিন"/></div>
+    <div id="fR" style="display:none">
+      <div class="fg"><label class="fl">পুরো নাম ✱</label><input class="fi" id="rn" placeholder="আপনার নাম লিখুন"/></div>
+      <div class="fg"><label class="fl">ইমেইল ✱</label><input class="fi" id="re" type="email" placeholder="ইমেইল"/></div>
+      <div class="fg"><label class="fl">পাসওয়ার্ড ✱ (৬+ অক্ষর)</label><input class="fi" id="rp" type="password" placeholder="পাসওয়ার্ড"/></div>
       <div class="fg">
         <label class="fl">📱 WhatsApp নম্বর ✱</label>
-        <div style="display:flex;gap:8px;align-items:center">
-          <span style="padding:13px 11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:16px;font-size:.84rem;color:rgba(238,242,255,.65);white-space:nowrap;flex-shrink:0">+880</span>
+        <div style="display:flex;gap:7px;align-items:center">
+          <span style="padding:12px 10px;background:rgba(255,255,255,.05);border:1.5px solid var(--br);border-radius:var(--r2);font-size:.8rem;color:var(--t2);white-space:nowrap;flex-shrink:0">+880</span>
           <input class="fi" id="rwa" type="tel" placeholder="01XXXXXXXXX" style="flex:1"/>
         </div>
-        <div style="font-size:.7rem;color:rgba(238,242,255,.35);margin-top:5px">গিফট ও আপডেট পাওয়ার জন্য WhatsApp নম্বর দিন</div>
+        <div style="font-size:.67rem;color:var(--t3);margin-top:4px">গিফট ও আপডেট পেতে দিন</div>
       </div>
       <div class="fg">
-        <label class="fl">📘 Facebook Username <span style="font-size:.7rem;color:rgba(238,242,255,.38)">(ঐচ্ছিক)</span></label>
-        <div style="display:flex;gap:8px;align-items:center">
-          <span style="padding:13px 9px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:16px;font-size:.78rem;color:rgba(238,242,255,.65);white-space:nowrap;flex-shrink:0">fb.com/</span>
-          <input class="fi" id="rfb" placeholder="আপনার username" style="flex:1"/>
+        <label class="fl">📘 Facebook <span style="color:var(--t3);font-size:.67rem">(ঐচ্ছিক)</span></label>
+        <div style="display:flex;gap:7px;align-items:center">
+          <span style="padding:12px 9px;background:rgba(255,255,255,.05);border:1.5px solid var(--br);border-radius:var(--r2);font-size:.75rem;color:var(--t2);white-space:nowrap;flex-shrink:0">fb.com/</span>
+          <input class="fi" id="rfb" placeholder="username" style="flex:1"/>
         </div>
       </div>
       <button class="btn bp bw" style="margin-top:4px" onclick="doReg()">নিবন্ধন করুন →</button>
@@ -347,270 +346,439 @@ textarea.fi{resize:none}
   </div>
 </div>
 
-<!-- ══════════════ APP ══════════════ -->
+<!-- ══ APP ══ -->
 <div id="wrap" style="display:none">
 
-  <!-- ── HOME ── -->
-  <div id="pg-home" class="page on">
-    <div class="hd">
-      <div class="hlogo">🍼 FutFul</div>
-      <div class="hright">
-        <div class="ic-btn" onclick="nav('pg-gifts')">🎁</div>
-        <div class="av" id="uav">ম</div>
-      </div>
-    </div>
-    <div class="csel" id="csel">
-      <div class="cchip add-c" onclick="openMo('mo-child')">
-        <div class="cav">＋</div>
-        <span class="cn">শিশু যোগ</span>
-      </div>
-    </div>
-    <div class="pc">
-      <div class="greet"><h2 id="gtext">স্বাগতম! 👋</h2><p id="gsub">আপনার শিশুর সেরা যত্নে FutFul</p></div>
-
-      <!-- Banner Slider -->
-      <div class="slider" id="slider">
-        <div class="strack" id="strack">
-          <div class="slide slide-ph">🍼<span>FutFul-এ স্বাগতম</span></div>
-        </div>
-        <div class="sdots" id="sdots"><div class="dot on"></div></div>
-      </div>
-
-      <!-- AI Chatbot CTA -->
-      <div class="chat-hl" onclick="nav('pg-chat')">
-        <div class="chi">🤖</div>
-        <div class="cht"><h3>FutFul Help Desk</h3><p>AI চ্যাটবট — বাংলায় ২৪/৭ শিশু যত্ন পরামর্শ</p></div>
-        <div class="ai-badge">AI</div>
-      </div>
-
-      <!-- Feature Cards -->
-      <div class="stitle">⭐ মূল ফিচার</div>
-      <div class="fgrid">
-        <div class="fc fc1" onclick="nav('pg-health')"><div class="fic">🏥</div><div><h3>স্বাস্থ্য কেন্দ্র</h3><p>টিকা · বৃদ্ধি · রোগ পরামর্শ</p></div></div>
-        <div class="fc fc2" onclick="nav('pg-nutr')"><div class="fic">🥗</div><div><h3>পুষ্টি গাইড</h3><p>খাদ্য পরিকল্পনা · রেসিপি</p></div></div>
-        <div class="fc fc3" onclick="nav('pg-dev')"><div class="fic">🧠</div><div><h3>বিকাশ ট্র্যাকার</h3><p>মাইলস্টোন · খেলাধুলা</p></div></div>
-        <div class="fc fc4" onclick="nav('pg-daily')"><div class="fic">📅</div><div><h3>দৈনিক রুটিন</h3><p>সময়সূচি · মনস্বাস্থ্য</p></div></div>
-      </div>
-
-      <!-- Gifts -->
-      <div class="stitle">🎁 বিশেষ গিফট ও অফার</div>
-      <div id="hgifts"><div class="spin"></div></div>
+<!-- HOME -->
+<div id="pg-home" class="page on">
+  <div class="hd">
+    <div class="hlogo">🍼 FutFul</div>
+    <div class="hr">
+      <div class="ib" onclick="nav('pg-earn')">🪙</div>
+      <div class="ib" onclick="nav('pg-gifts')">🎁</div>
+      <div class="av" id="uav" onclick="nav('pg-profile')">ম</div>
     </div>
   </div>
-
-  <!-- ── CHAT ── -->
-  <div id="pg-chat" class="page">
-    <div class="chd">
-      <div class="back" onclick="goBack()">←</div>
-      <div class="bot-i">🤖</div>
-      <div class="bi"><h3>FutFul Help Desk</h3><p><span class="odot"></span>সক্রিয় · বাংলা AI</p></div>
-      <div class="ic-btn" onclick="clrChat()" style="margin-left:auto" title="চ্যাট মুছুন">🗑️</div>
-    </div>
-    <div class="cmsgs" id="cmsgs">
-      <div class="cm bot"><div class="cav2 bav">🏥</div><div class="bbl">আস-সালামু আলাইকুম! আমি <b>FutFul Help Desk</b> — মা ও শিশু যত্নের বিশেষজ্ঞ সহায়তা কেন্দ্র।<br><br>আপনার শিশুর <b>জ্বর, কাশি, টিকা, খাবার, বৃদ্ধি</b> বা যেকোনো বিষয়ে বাংলায় প্রশ্ন করুন। 😊</div></div>
-    </div>
-    <div class="cinp">
-      <textarea id="cinput" placeholder="✏️ এখানে প্রশ্ন লিখুন..." rows="1" onkeydown="ckEnter(event)"></textarea>
-      <button class="sbtn" onclick="sendMsg()">➤</button>
+  <div class="csel" id="csel">
+    <div class="cchip addc" onclick="openMo('mo-child')">
+      <div class="cav2">＋</div><span class="cn">শিশু যোগ</span>
     </div>
   </div>
-
-  <!-- ── HEALTH ── -->
-  <div id="pg-health" class="page">
-    <div class="phd"><div class="back" onclick="goBack()">←</div><h2>🏥 স্বাস্থ্য কেন্দ্র</h2></div>
-    <div class="pc">
-      <div class="stabs">
-        <div class="stab on" onclick="stab(this,'h','vacc')">💉 টিকা</div>
-        <div class="stab" onclick="stab(this,'h','grw')">📈 বৃদ্ধি</div>
-        <div class="stab" onclick="stab(this,'h','ill')">🤒 রোগ টিপস</div>
-      </div>
-      <!-- Vaccine -->
-      <div id="h-vacc">
-        <div class="emb"><span style="font-size:1.3rem">📍</span><div><b style="font-size:.85rem;color:var(--d)">নিকটস্থ টিকা কেন্দ্র</b><p style="font-size:.76rem;color:var(--t2)">সরকারি স্বাস্থ্য কেন্দ্রে যোগাযোগ করুন</p></div><button class="btn bp" style="padding:8px 11px;font-size:.74rem;margin-left:auto" onclick="window.open('https://maps.google.com/?q=সরকারি+স্বাস্থ্য+কেন্দ্র','_blank')">🗺️</button></div>
-        <div id="vlist"><p style="color:var(--t3);font-size:.83rem">শিশু নির্বাচন করুন</p></div>
-      </div>
-      <!-- Growth -->
-      <div id="h-grw" style="display:none">
-        <div class="ginp">
-          <div class="fg"><label class="fl">ওজন (কেজি)</label><input class="fi" id="winp" type="number" placeholder="৮.৫" step=".1"/></div>
-          <div class="fg"><label class="fl">উচ্চতা (সেমি)</label><input class="fi" id="hinp" type="number" placeholder="৭০" step=".1"/></div>
-        </div>
-        <button class="btn bp bw" style="margin-bottom:16px" onclick="saveGrow()">📊 রেকর্ড সংরক্ষণ</button>
-        <div class="chart-box"><canvas id="gchart"></canvas></div>
-      </div>
-      <!-- Illness -->
-      <div id="h-ill" style="display:none">
-        <div class="ill"><h4>🌡️ জ্বর</h4><ul><li>হালকা পোশাক, কপালে ঠান্ডা কাপড়</li><li>প্রচুর তরল পান করান</li><li>প্যারাসিটামল শিশুর ডোজে দিন</li><li>১০৩°F+ হলে অবিলম্বে ডাক্তার</li></ul></div>
-        <div class="ill"><h4>😮 কাশি ও ঠান্ডা</h4><ul><li>মাথা সামান্য উঁচু করে শোয়ান</li><li>মধু দিন (১ বছরের বেশি হলে)</li><li>গরম পানির বাষ্প নিন (সাবধানে)</li><li>শ্বাসকষ্ট হলে জরুরি ডাক্তার</li></ul></div>
-        <div class="ill"><h4>💧 ডায়রিয়া</h4><ul><li>খাবার স্যালাইন (ORS) দিন</li><li>মায়ের দুধ বন্ধ করবেন না</li><li>জিংক ট্যাবলেট (ডাক্তারের পরামর্শে)</li><li>রক্ত/মিউকাস থাকলে ডাক্তার দেখান</li></ul></div>
-        <div class="ill" style="border-color:rgba(255,71,87,.38);background:rgba(255,71,87,.07)"><h4 style="color:var(--d)">🚨 জরুরি লক্ষণ</h4><ul><li>শ্বাস নিতে কষ্ট হচ্ছে</li><li>অজ্ঞান বা খিঁচুনি</li><li>ঠোঁট/নখ নীল হয়ে যাচ্ছে</li><li>২৪ ঘণ্টা প্রস্রাব নেই</li></ul></div>
-      </div>
+  <div class="pc">
+    <div class="greet"><h2 id="gtext">স্বাগতম! 👋</h2><p id="gsub">আপনার শিশুর সেরা যত্নে FutFul</p></div>
+    <div class="slider">
+      <div class="strack" id="strack"><div class="slide sph">🍼<span style="font-size:.88rem;margin-top:4px">FutFul-এ স্বাগতম</span></div></div>
+      <div class="sdots" id="sdots"><div class="dot on"></div></div>
     </div>
-  </div>
-
-  <!-- ── NUTRITION ── -->
-  <div id="pg-nutr" class="page">
-    <div class="phd"><div class="back" onclick="goBack()">←</div><h2>🥗 পুষ্টি গাইড</h2></div>
-    <div class="pc">
-      <div class="stabs">
-        <div class="stab on" onclick="stab(this,'n','food')">🍽️ খাদ্য গাইড</div>
-        <div class="stab" onclick="stab(this,'n','bf')">🤱 স্তন্যপান</div>
-      </div>
-      <div id="n-food">
-        <div class="stabs" style="margin-bottom:14px">
-          <div class="stab on" onclick="nAge(this,'6m')">৬ মাস</div>
-          <div class="stab" onclick="nAge(this,'12m')">১ বছর</div>
-          <div class="stab" onclick="nAge(this,'24m')">২ বছর</div>
-        </div>
-        <div id="n6m">
-          <div class="ncrd"><h4>🌾 প্রথম খাবার শুরু</h4><p style="font-size:.8rem;color:var(--t2);margin-bottom:8px">৬ মাস পর্যন্ত শুধু মায়ের দুধ। এরপর নরম খাবার শুরু করুন।</p><div class="fgd"><div class="fi2"><span class="fem">🍚</span>নরম ভাত</div><div class="fi2"><span class="fem">🍌</span>কলা</div><div class="fi2"><span class="fem">🥕</span>গাজর পিউরি</div><div class="fi2"><span class="fem">🍠</span>মিষ্টি আলু</div><div class="fi2"><span class="fem">🥦</span>সবজি পিউরি</div><div class="fi2"><span class="fem">🫘</span>ডাল পানি</div></div></div>
-          <div class="ncrd"><h4>📋 মনে রাখুন</h4><ul style="list-style:none;display:flex;flex-direction:column;gap:6px"><li style="font-size:.8rem;color:var(--t2)">✅ একবারে ১টি নতুন খাবার দিন</li><li style="font-size:.8rem;color:var(--t2)">✅ ৩-৪ দিন পর নতুন খাবার যোগ করুন</li><li style="font-size:.8rem;color:var(--t2)">✅ মায়ের দুধ চালু রাখুন</li><li style="font-size:.8rem;color:var(--t2)">❌ লবণ ও চিনি দেবেন না</li></ul></div>
-        </div>
-        <div id="n12m" style="display:none"><div class="ncrd"><h4>🍱 ১ বছরের খাদ্য</h4><div class="fgd"><div class="fi2"><span class="fem">🥚</span>ডিম</div><div class="fi2"><span class="fem">🐟</span>মাছ</div><div class="fi2"><span class="fem">🍗</span>মুরগি</div><div class="fi2"><span class="fem">🥛</span>দই</div><div class="fi2"><span class="fem">🍞</span>রুটি</div><div class="fi2"><span class="fem">🫘</span>ডাল</div></div></div></div>
-        <div id="n24m" style="display:none"><div class="ncrd"><h4>🍴 পারিবারিক খাবার (কম মশলায়)</h4><div class="fgd"><div class="fi2"><span class="fem">🍛</span>ভাত-তরকারি</div><div class="fi2"><span class="fem">🐟</span>মাছের ঝোল</div><div class="fi2"><span class="fem">🥗</span>সবজি</div><div class="fi2"><span class="fem">🍌</span>ফল</div><div class="fi2"><span class="fem">🥛</span>দুধ</div><div class="fi2"><span class="fem">🥜</span>বাদাম</div></div></div></div>
-      </div>
-      <div id="n-bf" style="display:none">
-        <div class="ncrd"><h4>🤱 সঠিক স্তন্যপান</h4><ol style="list-style:none;display:flex;flex-direction:column;gap:9px;padding:0"><li style="font-size:.8rem;color:var(--t2);padding-left:22px;position:relative"><span style="position:absolute;left:0;color:var(--p2);font-weight:700">১.</span>আরামদায়ক অবস্থানে বসুন</li><li style="font-size:.8rem;color:var(--t2);padding-left:22px;position:relative"><span style="position:absolute;left:0;color:var(--p2);font-weight:700">২.</span>শিশুর মুখ সম্পূর্ণ স্তনবৃন্তসহ আনুন</li><li style="font-size:.8rem;color:var(--t2);padding-left:22px;position:relative"><span style="position:absolute;left:0;color:var(--p2);font-weight:700">৩.</span>প্রতি ২-৩ ঘণ্টায় খাওয়ান</li><li style="font-size:.8rem;color:var(--t2);padding-left:22px;position:relative"><span style="position:absolute;left:0;color:var(--p2);font-weight:700">৪.</span>উভয় স্তন থেকে পর্যায়ক্রমে দিন</li></ol></div>
-        <div class="ncrd"><h4>👩 মায়ের পুষ্টি</h4><div class="fgd"><div class="fi2"><span class="fem">🥛</span>দুধ/দই</div><div class="fi2"><span class="fem">🐟</span>মাছ</div><div class="fi2"><span class="fem">🥦</span>সবজি</div><div class="fi2"><span class="fem">💧</span>৮+ গ্লাস পানি</div><div class="fi2"><span class="fem">🫘</span>ডাল</div><div class="fi2"><span class="fem">🥚</span>ডিম</div></div></div>
-      </div>
+    <div class="chl" onclick="nav('pg-chat')">
+      <div class="chi">🏥</div>
+      <div class="cht"><h3>FutFul Help Desk</h3><p>বাংলায় শিশু যত্ন পরামর্শ — ২৪/৭</p></div>
+      <div class="aibdg">সক্রিয়</div>
     </div>
-  </div>
-
-  <!-- ── DEVELOPMENT ── -->
-  <div id="pg-dev" class="page">
-    <div class="phd"><div class="back" onclick="goBack()">←</div><h2>🧠 বিকাশ ট্র্যাকার</h2></div>
-    <div class="pc">
-      <div class="stabs">
-        <div class="stab on" onclick="stab(this,'d','ms')">🎯 মাইলস্টোন</div>
-        <div class="stab" onclick="stab(this,'d','act')">🎮 খেলাধুলা</div>
-      </div>
-      <div id="d-ms"><div id="mslist"><p style="color:var(--t3);font-size:.83rem">শিশু নির্বাচন করুন</p></div></div>
-      <div id="d-act" style="display:none">
-        <div class="ncrd"><h4>🧩 ০–৬ মাস</h4><ul style="list-style:none;display:flex;flex-direction:column;gap:6px"><li style="font-size:.8rem;color:var(--t2)">🔴 কালো-সাদা ছবি দেখান — দৃষ্টিশক্তি বিকাশ</li><li style="font-size:.8rem;color:var(--t2)">🎵 নরম সুরে গান গান</li><li style="font-size:.8rem;color:var(--t2)">🤲 Tummy Time — দিনে কয়েকবার</li></ul></div>
-        <div class="ncrd"><h4>🧸 ৬–১২ মাস</h4><ul style="list-style:none;display:flex;flex-direction:column;gap:6px"><li style="font-size:.8rem;color:var(--t2)">📚 বই দেখান ও নাম বলুন</li><li style="font-size:.8rem;color:var(--t2)">🥄 নিরাপদ খেলনা দিন</li><li style="font-size:.8rem;color:var(--t2)">🪆 Peek-a-boo খেলুন</li></ul></div>
-        <div class="ncrd"><h4>🎨 ১–২ বছর</h4><ul style="list-style:none;display:flex;flex-direction:column;gap:6px"><li style="font-size:.8rem;color:var(--t2)">🖍️ রঙ দিয়ে আঁকতে দিন</li><li style="font-size:.8rem;color:var(--t2)">🏗️ ব্লক দিয়ে তৈরি করুন</li><li style="font-size:.8rem;color:var(--t2)">📖 গল্পের বই পড়ুন একসাথে</li></ul></div>
-      </div>
+    <div class="stitle">⭐ মূল ফিচার</div>
+    <div class="fgrid">
+      <div class="fc c1" onclick="nav('pg-health')"><div class="fic">🏥</div><div><h3>স্বাস্থ্য কেন্দ্র</h3><p>টিকা · বৃদ্ধি · রোগ পরামর্শ</p></div></div>
+      <div class="fc c2" onclick="nav('pg-nutr')"><div class="fic">🥗</div><div><h3>পুষ্টি গাইড</h3><p>খাদ্য পরিকল্পনা · রেসিপি</p></div></div>
+      <div class="fc c3" onclick="nav('pg-dev')"><div class="fic">🧠</div><div><h3>বিকাশ ট্র্যাকার</h3><p>মাইলস্টোন · খেলাধুলা</p></div></div>
+      <div class="fc c4" onclick="nav('pg-daily')"><div class="fic">📅</div><div><h3>দৈনিক রুটিন</h3><p>সময়সূচি · মনস্বাস্থ্য</p></div></div>
+      <div class="fc c5" onclick="nav('pg-shop')"><div class="fic">🛍️</div><div><h3>শপ</h3><p>পণ্য · E-Book · অর্ডার</p></div></div>
+      <div class="fc c6" onclick="nav('pg-comm')"><div class="fic">👥</div><div><h3>কমিউনিটি</h3><p>পোস্ট · আলোচনা · টিপস</p></div></div>
     </div>
-  </div>
-
-  <!-- ── DAILY ── -->
-  <div id="pg-daily" class="page">
-    <div class="phd"><div class="back" onclick="goBack()">←</div><h2>📅 দৈনিক রুটিন</h2></div>
-    <div class="pc">
-      <div class="stabs">
-        <div class="stab on" onclick="stab(this,'l','sch')">⏰ সময়সূচি</div>
-        <div class="stab" onclick="stab(this,'l','mh')">💚 মনস্বাস্থ্য</div>
-      </div>
-      <div id="l-sch">
-        <div class="sgrid">
-          <div class="si" onclick="logAct('feeding','🍼 খাওয়ানো')"><span class="sic">🍼</span><span class="slb">খাওয়ানো</span><div class="stm" id="lt-feeding">লগ করুন</div></div>
-          <div class="si" onclick="logAct('sleep','😴 ঘুম')"><span class="sic">😴</span><span class="slb">ঘুম</span><div class="stm" id="lt-sleep">লগ করুন</div></div>
-          <div class="si" onclick="logAct('diaper','👶 ডায়াপার')"><span class="sic">👶</span><span class="slb">ডায়াপার</span><div class="stm" id="lt-diaper">লগ করুন</div></div>
-        </div>
-        <div class="stitle">📝 আজকের লগ</div>
-        <div id="loglst"><p style="color:var(--t3);font-size:.83rem">কোনো লগ নেই</p></div>
-      </div>
-      <div id="l-mh" style="display:none">
-        <div class="mntl"><h4>💗 আপনি কি একা অনুভব করছেন?</h4><p style="font-size:.8rem;color:var(--t2);line-height:1.7">পোস্টপার্টাম ডিপ্রেশন স্বাভাবিক। আপনি একা নন। লক্ষণ: অতিরিক্ত কান্না, ক্লান্তি, নিজেকে ক্ষতি করার চিন্তা।</p></div>
-        <div class="ncrd"><h4>🧘 স্ট্রেস কমানোর উপায়</h4><ul style="list-style:none;display:flex;flex-direction:column;gap:7px"><li style="font-size:.8rem;color:var(--t2)">🌬️ গভীর শ্বাস — ৪ সেকেন্ড নিন, ৭ ধরুন, ৮ ছাড়ুন</li><li style="font-size:.8rem;color:var(--t2)">🚶 শিশুকে নিয়ে বাইরে হাঁটুন</li><li style="font-size:.8rem;color:var(--t2)">👥 পরিবার ও বন্ধুদের সাথে কথা বলুন</li><li style="font-size:.8rem;color:var(--t2)">💤 শিশু ঘুমালে আপনিও বিশ্রাম নিন</li></ul></div>
-        <div class="ncrd" style="text-align:center"><p style="font-size:.83rem;color:var(--t2);margin-bottom:12px">মানসিক স্বাস্থ্য হেল্পলাইন</p><a href="tel:16000" class="btn bp" style="display:inline-flex">📞 16000</a></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── GIFTS PAGE ── -->
-  <div id="pg-gifts" class="page">
-    <div class="phd"><div class="back" onclick="goBack()">←</div><h2>🎁 গিফট ও অফার</h2></div>
-    <div class="pc"><div id="glist"><div class="spin"></div></div></div>
-  </div>
-
-  <!-- ── PROFILE ── -->
-  <div id="pg-profile" class="page">
-    <div class="prh">
-      <div class="prav" id="prav">ম</div>
-      <div class="prn" id="prn">লোড হচ্ছে...</div>
-      <div class="pre" id="pre"></div>
-    </div>
-    <div class="pm">
-      <div class="stitle" style="margin-top:6px">👶 আমার শিশুরা</div>
-      <div id="pch" style="margin-bottom:16px"></div>
-      <div class="mi" onclick="openMo('mo-child')"><div class="mic">➕</div><div class="ml">নতুন শিশু যোগ</div><div class="mar">›</div></div>
-      <div class="mi" onclick="nav('pg-gifts')"><div class="mic">🎁</div><div class="ml">গিফট ও অফার</div><div class="mar">›</div></div>
-      <div class="mi" onclick="doLogout()" style="margin-top:8px"><div class="mic" style="color:var(--d)">🚪</div><div class="ml" style="color:var(--d)">লগআউট</div><div class="mar">›</div></div>
-    </div>
-  </div>
-
-  <!-- ── BOTTOM TAB BAR ── -->
-  <div class="tbar">
-    <button class="ti on" onclick="nav('pg-home',this)"><span class="tic">🏠</span>হোম</button>
-    <button class="ti" onclick="nav('pg-health',this)"><span class="tic">🏥</span>স্বাস্থ্য</button>
-    <button class="ti" onclick="nav('pg-chat',this)"><span class="tic">🤖</span>AI হেল্প</button>
-    <button class="ti" onclick="nav('pg-daily',this)"><span class="tic">📅</span>রুটিন</button>
-    <button class="ti" onclick="nav('pg-profile',this)"><span class="tic">👤</span>প্রোফাইল</button>
+    <div class="stitle">🎁 গিফট ও অফার</div>
+    <div id="hgifts"><div class="spin"></div></div>
   </div>
 </div>
 
-<!-- ══ MODALS ══ -->
-<!-- Add Child -->
+<!-- CHAT -->
+<div id="pg-chat" class="page">
+  <div class="chd">
+    <div class="back" onclick="goBack()">←</div>
+    <div class="boti">🏥</div>
+    <div class="bi"><h3>FutFul Help Desk</h3><p><span class="odot"></span>সক্রিয় · মা ও শিশু সহায়তা</p></div>
+    <div class="ib" onclick="clrChat()" style="margin-left:auto">🗑️</div>
+  </div>
+  <div class="cmsgs" id="cmsgs">
+    <div class="cm bot"><div class="ca2 bav">🏥</div><div class="bbl">আস-সালামু আলাইকুম! আমি <b>FutFul Help Desk</b>।<br>শিশুর <b>জ্বর, কাশি, টিকা, খাবার, বৃদ্ধি</b> নিয়ে বাংলায় প্রশ্ন করুন। 😊</div></div>
+  </div>
+  <div class="cinp">
+    <textarea id="cinput" placeholder="✏️ এখানে প্রশ্ন লিখুন..." rows="1" onkeydown="ckEnter(event)"></textarea>
+    <button class="sbtn" onclick="sendMsg()">➤</button>
+  </div>
+</div>
+
+<!-- HEALTH -->
+<div id="pg-health" class="page">
+  <div class="phd"><div class="back" onclick="goBack()">←</div><h2>🏥 স্বাস্থ্য কেন্দ্র</h2></div>
+  <div class="pc">
+    <div class="stabs">
+      <div class="stab on" onclick="stab(this,'h','vacc')">💉 টিকা</div>
+      <div class="stab" onclick="stab(this,'h','grw')">📈 বৃদ্ধি</div>
+      <div class="stab" onclick="stab(this,'h','ill')">🤒 রোগ টিপস</div>
+    </div>
+    <div id="h-vacc">
+      <div class="emb"><span style="font-size:1.2rem">📍</span><div style="flex:1"><b style="font-size:.82rem;color:var(--d)">নিকটস্থ টিকা কেন্দ্র</b><p style="font-size:.72rem;color:var(--t2)">সরকারি স্বাস্থ্য কেন্দ্রে বিনামূল্যে টিকা পাওয়া যায়</p></div>
+      <button class="btn bp" style="padding:7px 10px;font-size:.7rem" onclick="window.open('https://maps.google.com/?q=government+health+center+near+me','_blank')">🗺️ খুঁজুন</button></div>
+      <div id="vlist"><p style="color:var(--t3);font-size:.8rem">শিশু নির্বাচন করুন</p></div>
+    </div>
+    <div id="h-grw" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <div class="fg"><label class="fl">ওজন (কেজি)</label><input class="fi" id="winp" type="number" placeholder="৮.৫" step=".1"/></div>
+        <div class="fg"><label class="fl">উচ্চতা (সেমি)</label><input class="fi" id="hinp" type="number" placeholder="৭০" step=".1"/></div>
+      </div>
+      <button class="btn bp bw" style="margin-bottom:13px" onclick="saveGrow()">📊 রেকর্ড সংরক্ষণ</button>
+      <div id="growWarn" style="display:none;margin-bottom:11px"></div>
+      <div style="background:var(--gc);border:1px solid var(--br);border-radius:var(--r2);padding:12px"><canvas id="gchart"></canvas></div>
+    </div>
+    <div id="h-ill" style="display:none">
+      <div class="ill"><h4>🌡️ জ্বর</h4><ul><li>হালকা পোশাক, কপালে ঠান্ডা কাপড়</li><li>প্রচুর তরল পান করান</li><li>বয়স অনুযায়ী প্যারাসিটামল দিন</li><li>১০৩°F+ হলে তাৎক্ষণিক ডাক্তার</li></ul></div>
+      <div class="ill"><h4>😮 কাশি ও সর্দি</h4><ul><li>মাথা সামান্য উঁচু করে শোয়ান</li><li>মধু দিন (১ বছরের বেশি হলে)</li><li>শ্বাসকষ্ট হলে জরুরি ডাক্তার</li></ul></div>
+      <div class="ill"><h4>💧 ডায়রিয়া</h4><ul><li>খাবার স্যালাইন (ORS) বারবার দিন</li><li>মায়ের দুধ বন্ধ করবেন না</li><li>রক্ত/মিউকাস থাকলে তাৎক্ষণিক ডাক্তার</li></ul></div>
+      <div class="ill" style="border-color:rgba(255,71,87,.38);background:rgba(255,71,87,.07)"><h4 style="color:var(--d)">🚨 এখনই হাসপাতাল</h4><ul><li>শ্বাস নিতে কষ্ট, ঠোঁট নীল</li><li>অজ্ঞান বা খিঁচুনি</li><li>২৪ ঘণ্টা প্রস্রাব নেই</li><li>১০৩°F+ জ্বর কমছে না</li></ul></div>
+    </div>
+  </div>
+</div>
+
+<!-- NUTRITION -->
+<div id="pg-nutr" class="page">
+  <div class="phd"><div class="back" onclick="goBack()">←</div><h2>🥗 পুষ্টি গাইড</h2></div>
+  <div class="pc">
+    <div class="stabs">
+      <div class="stab on" onclick="stab(this,'n','food')">🍽️ খাদ্য</div>
+      <div class="stab" onclick="stab(this,'n','bf')">🤱 স্তন্যপান</div>
+    </div>
+    <div id="n-food">
+      <div class="stabs" style="margin-bottom:12px">
+        <div class="stab on" onclick="nAge(this,'6m')">৬ মাস</div>
+        <div class="stab" onclick="nAge(this,'12m')">১ বছর</div>
+        <div class="stab" onclick="nAge(this,'24m')">২ বছর</div>
+      </div>
+      <div id="n6m">
+        <div class="card"><b>🌾 প্রথম খাবার শুরু</b><p style="font-size:.78rem;color:var(--t2);margin:6px 0">৬ মাস পর্যন্ত শুধু মায়ের দুধ। এরপর নরম খাবার শুরু করুন।</p>
+          <div class="fgd"><div class="fi2"><span class="fem">🍚</span>নরম ভাত</div><div class="fi2"><span class="fem">🍌</span>কলা</div><div class="fi2"><span class="fem">🥕</span>গাজর পিউরি</div><div class="fi2"><span class="fem">🍠</span>মিষ্টি আলু</div><div class="fi2"><span class="fem">🥦</span>সবজি পিউরি</div><div class="fi2"><span class="fem">🫘</span>ডাল পানি</div></div>
+        </div>
+        <div class="card"><b>📋 নিয়মাবলী</b><ul style="list-style:none;margin-top:7px;display:flex;flex-direction:column;gap:5px">
+          <li style="font-size:.79rem;color:var(--t2)">✅ একবারে ১টি নতুন খাবার দিন, ৩-৪ দিন পর নতুনটি</li>
+          <li style="font-size:.79rem;color:var(--t2)">✅ মায়ের দুধ চালু রাখুন</li>
+          <li style="font-size:.79rem;color:var(--t2)">❌ লবণ ও চিনি দেবেন না</li>
+          <li style="font-size:.79rem;color:var(--t2)">❌ ১ বছরের আগে মধু ও গরুর দুধ না</li></ul>
+        </div>
+      </div>
+      <div id="n12m" style="display:none">
+        <div class="card"><b>🍱 ১ বছরের খাদ্য পরিকল্পনা</b>
+          <div class="fgd"><div class="fi2"><span class="fem">🥚</span>ডিম</div><div class="fi2"><span class="fem">🐟</span>মাছ</div><div class="fi2"><span class="fem">🍗</span>মুরগি</div><div class="fi2"><span class="fem">🥛</span>দই</div><div class="fi2"><span class="fem">🍞</span>রুটি</div><div class="fi2"><span class="fem">🫘</span>ডাল</div></div>
+        </div>
+        <div class="card"><b>⏰ দৈনিক খাবার রুটিন (১ বছর)</b><ul style="list-style:none;margin-top:7px;display:flex;flex-direction:column;gap:5px">
+          <li style="font-size:.79rem;color:var(--t2)">🌅 সকাল: ভাত + ডিম/মাছ + সবজি</li>
+          <li style="font-size:.79rem;color:var(--t2)">☀️ দুপুর: নরম ভাত + মাছের ঝোল + সবজি</li>
+          <li style="font-size:.79rem;color:var(--t2)">🌆 বিকেল: ফল বা দই</li>
+          <li style="font-size:.79rem;color:var(--t2)">🌙 রাত: ভাত + ডাল + সবজি</li></ul>
+        </div>
+      </div>
+      <div id="n24m" style="display:none">
+        <div class="card"><b>🍴 পারিবারিক খাবার (কম মশলায়)</b>
+          <div class="fgd"><div class="fi2"><span class="fem">🍛</span>ভাত-তরকারি</div><div class="fi2"><span class="fem">🐟</span>মাছের ঝোল</div><div class="fi2"><span class="fem">🥗</span>সবজি</div><div class="fi2"><span class="fem">🍌</span>ফল</div><div class="fi2"><span class="fem">🥛</span>দুধ</div><div class="fi2"><span class="fem">🥜</span>বাদাম</div></div>
+        </div>
+        <div class="card"><b>🌟 এই বয়সে গুরুত্বপূর্ণ</b><ul style="list-style:none;margin-top:7px;display:flex;flex-direction:column;gap:5px">
+          <li style="font-size:.79rem;color:var(--t2)">✅ দিনে ৩ বার প্রধান খাবার + ২ বার স্ন্যাকস</li>
+          <li style="font-size:.79rem;color:var(--t2)">✅ নিজে খাওয়ার সুযোগ দিন</li>
+          <li style="font-size:.79rem;color:var(--t2)">✅ বিভিন্ন রঙের সবজি ও ফল দিন</li></ul>
+        </div>
+      </div>
+    </div>
+    <div id="n-bf" style="display:none">
+      <div class="card"><b>🤱 সঠিক স্তন্যপান পদ্ধতি</b>
+        <ol style="list-style:none;margin-top:8px;display:flex;flex-direction:column;gap:7px">
+          <li style="font-size:.79rem;color:var(--t2);padding-left:20px;position:relative"><span style="position:absolute;left:0;color:var(--p2);font-weight:700">১.</span>জন্মের ১ ঘণ্টার মধ্যে শালদুধ দিন — এটি সোনার চেয়ে দামি!</li>
+          <li style="font-size:.79rem;color:var(--t2);padding-left:20px;position:relative"><span style="position:absolute;left:0;color:var(--p2);font-weight:700">২.</span>আরামদায়ক অবস্থানে বসুন, শিশুকে পেটে ধরুন</li>
+          <li style="font-size:.79rem;color:var(--t2);padding-left:20px;position:relative"><span style="position:absolute;left:0;color:var(--p2);font-weight:700">৩.</span>প্রতি ২-৩ ঘণ্টায় খাওয়ান, রাতেও বাদ দেবেন না</li>
+          <li style="font-size:.79rem;color:var(--t2);padding-left:20px;position:relative"><span style="position:absolute;left:0;color:var(--p2);font-weight:700">৪.</span>দুই স্তন পর্যায়ক্রমে দিন</li>
+        </ol>
+      </div>
+      <div class="card"><b>⚠️ সাধারণ সমস্যা ও সমাধান</b>
+        <ul style="list-style:none;margin-top:7px;display:flex;flex-direction:column;gap:6px">
+          <li style="font-size:.79rem;color:var(--t2)">😣 <b>ব্যথা হলে:</b> সঠিক position চেক করুন, স্থানীয় স্বাস্থ্যকর্মীর পরামর্শ নিন</li>
+          <li style="font-size:.79rem;color:var(--t2)">🔴 <b>স্তন শক্ত হলে:</b> বেশি বার খাওয়ান, গরম সেঁক দিন</li>
+          <li style="font-size:.79rem;color:var(--t2)">😟 <b>দুধ কম মনে হলে:</b> প্রচুর পানি পান করুন, বেশি বার খাওয়ান</li>
+        </ul>
+      </div>
+      <div class="card"><b>👩 মায়ের পুষ্টি গাইড</b>
+        <div class="fgd" style="margin-top:7px"><div class="fi2"><span class="fem">🥛</span>দুধ/দই</div><div class="fi2"><span class="fem">🐟</span>মাছ</div><div class="fi2"><span class="fem">🥦</span>সবজি</div><div class="fi2"><span class="fem">💧</span>৮+ গ্লাস</div><div class="fi2"><span class="fem">🫘</span>ডাল</div><div class="fi2"><span class="fem">🥚</span>ডিম</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DEVELOPMENT -->
+<div id="pg-dev" class="page">
+  <div class="phd"><div class="back" onclick="goBack()">←</div><h2>🧠 বিকাশ ট্র্যাকার</h2></div>
+  <div class="pc">
+    <div class="stabs">
+      <div class="stab on" onclick="stab(this,'d','ms')">🎯 মাইলস্টোন</div>
+      <div class="stab" onclick="stab(this,'d','act')">🎮 খেলাধুলা</div>
+    </div>
+    <div id="d-ms"><div id="mslist"><p style="color:var(--t3);font-size:.8rem">শিশু নির্বাচন করুন</p></div></div>
+    <div id="d-act" style="display:none">
+      <div class="card"><b>🧩 ০–৬ মাস</b><ul style="list-style:none;margin-top:7px;display:flex;flex-direction:column;gap:5px"><li style="font-size:.79rem;color:var(--t2)">🔴 কালো-সাদা ছবি দেখান — দৃষ্টিশক্তি বিকাশ</li><li style="font-size:.79rem;color:var(--t2)">🎵 নরম সুরে গান গান — শ্রবণ বিকাশ</li><li style="font-size:.79rem;color:var(--t2)">🤲 Tummy Time দিনে কয়েকবার</li></ul></div>
+      <div class="card"><b>🧸 ৬–১২ মাস</b><ul style="list-style:none;margin-top:7px;display:flex;flex-direction:column;gap:5px"><li style="font-size:.79rem;color:var(--t2)">📚 বই দেখান ও নাম বলুন</li><li style="font-size:.79rem;color:var(--t2)">🥄 নিরাপদ খেলনা দিন</li><li style="font-size:.79rem;color:var(--t2)">🪆 Peek-a-boo খেলুন</li></ul></div>
+      <div class="card"><b>🎨 ১–২ বছর</b><ul style="list-style:none;margin-top:7px;display:flex;flex-direction:column;gap:5px"><li style="font-size:.79rem;color:var(--t2)">🖍️ রঙ দিয়ে আঁকতে দিন</li><li style="font-size:.79rem;color:var(--t2)">🏗️ ব্লক দিয়ে তৈরি করুন</li><li style="font-size:.79rem;color:var(--t2)">📖 গল্পের বই পড়ুন একসাথে</li></ul></div>
+    </div>
+  </div>
+</div>
+
+<!-- DAILY -->
+<div id="pg-daily" class="page">
+  <div class="phd"><div class="back" onclick="goBack()">←</div><h2>📅 দৈনিক রুটিন</h2></div>
+  <div class="pc">
+    <div class="stabs">
+      <div class="stab on" onclick="stab(this,'l','sch')">⏰ সময়সূচি</div>
+      <div class="stab" onclick="stab(this,'l','mh')">💚 মনস্বাস্থ্য</div>
+    </div>
+    <div id="l-sch">
+      <div class="sgrid">
+        <div class="si" onclick="logAct('feeding','🍼 খাওয়ানো')"><span class="sic">🍼</span><span class="slb">খাওয়ানো</span><div class="stm" id="lt-feeding">লগ করুন</div></div>
+        <div class="si" onclick="logAct('sleep','😴 ঘুম')"><span class="sic">😴</span><span class="slb">ঘুম</span><div class="stm" id="lt-sleep">লগ করুন</div></div>
+        <div class="si" onclick="logAct('diaper','👶 ডায়াপার')"><span class="sic">👶</span><span class="slb">ডায়াপার</span><div class="stm" id="lt-diaper">লগ করুন</div></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+        <button class="btn bs" style="padding:8px 14px;font-size:.78rem" onclick="genReport()">📊 দৈনিক রিপোর্ট</button>
+      </div>
+      <div class="stitle">📝 আজকের লগ</div>
+      <div id="loglst"><p style="color:var(--t3);font-size:.8rem">কোনো লগ নেই</p></div>
+    </div>
+    <div id="l-mh" style="display:none">
+      <div class="mntl"><h4>💗 পোস্টপার্টাম ডিপ্রেশন</h4><p style="font-size:.79rem;color:var(--t2);line-height:1.65">এটি স্বাভাবিক, দোষের কিছু না। লক্ষণ: অতিরিক্ত কান্না, ক্লান্তি, শিশুর সাথে বন্ধন না হওয়া।</p></div>
+      <div class="card"><b>🧘 স্ট্রেস কমানোর উপায়</b><ul style="list-style:none;margin-top:7px;display:flex;flex-direction:column;gap:5px">
+        <li style="font-size:.79rem;color:var(--t2)">🌬️ গভীর শ্বাস — ৪ নিন, ৭ ধরুন, ৮ ছাড়ুন</li>
+        <li style="font-size:.79rem;color:var(--t2)">🚶 শিশুকে নিয়ে বাইরে হাঁটুন</li>
+        <li style="font-size:.79rem;color:var(--t2)">👥 পরিবারের সাথে কথা বলুন</li>
+        <li style="font-size:.79rem;color:var(--t2)">💤 শিশু ঘুমালে আপনিও বিশ্রাম নিন</li>
+        <li style="font-size:.79rem;color:var(--t2)">🧘 প্রতিদিন ১০ মিনিট ধ্যান করুন</li></ul>
+      </div>
+      <div class="card"><b>📞 সাহায্যের জন্য যোগাযোগ</b>
+        <div class="hl2" style="margin-top:8px"><span style="font-size:1.2rem">💚</span><div style="flex:1"><div style="font-size:.82rem;font-weight:700">মানসিক স্বাস্থ্য হেল্পলাইন</div><div class="hlnum">16000</div></div><a href="tel:16000" class="btn bp" style="padding:7px 11px;font-size:.75rem">📞 কল</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMMUNITY -->
+<div id="pg-comm" class="page">
+  <div class="phd"><div class="back" onclick="goBack()">←</div><h2>👥 কমিউনিটি</h2></div>
+  <div class="pc">
+    <div class="npost">
+      <textarea id="postText" placeholder="মায়েদের সাথে অভিজ্ঞতা শেয়ার করুন..."></textarea>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px">
+        <input class="fi" id="postImg" placeholder="🖼️ ছবির URL (ঐচ্ছিক)" style="padding:8px 11px;font-size:.76rem;flex:1"/>
+        <button class="btn bp" style="padding:9px 14px;font-size:.8rem" onclick="submitPost()">📤 পোস্ট</button>
+      </div>
+    </div>
+    <input class="fi" id="postSearch" placeholder="🔍 পোস্ট খুঁজুন..." oninput="filterPosts(this.value)" style="margin-bottom:12px"/>
+    <div id="postFeed"><div class="spin"></div></div>
+  </div>
+</div>
+
+<!-- SHOP -->
+<div id="pg-shop" class="page">
+  <div class="phd"><div class="back" onclick="goBack()">←</div><h2>🛍️ শপ</h2></div>
+  <div class="pc">
+    <div class="stabs">
+      <div class="stab on" onclick="stab(this,'sh','prod')">🛒 পণ্য</div>
+      <div class="stab" onclick="stab(this,'sh','ebook')">📚 E-Book</div>
+      <div class="stab" onclick="stab(this,'sh','ord')">📦 অর্ডার</div>
+    </div>
+    <div id="sh-prod">
+      <div class="ctabs" id="catTabs">
+        <div class="stab on" onclick="filterProd(this,'all')">সব</div>
+        <div class="stab" onclick="filterProd(this,'food')">🍼 শিশু খাবার</div>
+        <div class="stab" onclick="filterProd(this,'care')">🧴 যত্ন পণ্য</div>
+        <div class="stab" onclick="filterProd(this,'toy')">🧸 খেলনা</div>
+        <div class="stab" onclick="filterProd(this,'fashion')">👗 ফ্যাশন</div>
+      </div>
+      <div id="prodGrid"><div class="spin"></div></div>
+    </div>
+    <div id="sh-ebook" style="display:none"><div id="ebookList"><div class="spin"></div></div></div>
+    <div id="sh-ord" style="display:none"><div id="orderList"><div class="spin"></div></div></div>
+  </div>
+</div>
+
+<!-- EARN -->
+<div id="pg-earn" class="page">
+  <div class="phd"><div class="back" onclick="goBack()">←</div><h2>🪙 উপার্জন</h2></div>
+  <div class="pc">
+    <div class="ehero">
+      <div class="epts" id="earnPts">০</div>
+      <div class="elbl">মোট পয়েন্ট</div>
+      <div class="estr" id="streakInfo">🔥 ০ দিনের ধারাবাহিকতা</div>
+      <button class="bbtn" id="bonusBtn" onclick="claimBonus()">🎁 দৈনিক বোনাস নিন (+১০ পয়েন্ট)</button>
+    </div>
+    <div class="stitle">🤖 Telegram বট থেকে পয়েন্ট অর্জন</div>
+    <div class="botc">
+      <div class="botic bi1">✈️</div>
+      <div style="flex:1"><div style="font-size:.88rem;font-weight:700">Easy Earning Bot</div><div style="font-size:.74rem;color:var(--t2);margin-top:2px">সহজ কাজ সম্পূর্ণ করে পয়েন্ট অর্জন করুন</div></div>
+      <a href="https://t.me/futfulcoinearnbot" target="_blank" class="btn bp" style="padding:8px 12px;font-size:.75rem">যান →</a>
+    </div>
+    <div class="botc">
+      <div class="botic bi2">🎮</div>
+      <div style="flex:1"><div style="font-size:.88rem;font-weight:700">Game Play Bot</div><div style="font-size:.74rem;color:var(--t2);margin-top:2px">গেম খেলে পয়েন্ট অর্জন করুন</div></div>
+      <a href="https://t.me/gameplaywithfriendbot" target="_blank" class="btn bp" style="padding:8px 12px;font-size:.75rem">যান →</a>
+    </div>
+    <div class="stitle">📋 পয়েন্ট ইতিহাস</div>
+    <div id="ptsLog"><p style="color:var(--t3);font-size:.8rem">কোনো ইতিহাস নেই</p></div>
+  </div>
+</div>
+
+<!-- TOOLS -->
+<div id="pg-tools" class="page">
+  <div class="phd"><div class="back" onclick="goBack()">←</div><h2>🛠️ সরঞ্জাম</h2></div>
+  <div class="pc">
+    <div class="stabs">
+      <div class="stab on" onclick="stab(this,'tl','emrg')">🚨 জরুরি</div>
+      <div class="stab" onclick="stab(this,'tl','calc')">🔢 ক্যালকুলেটর</div>
+      <div class="stab" onclick="stab(this,'tl','tips')">💡 টিপস</div>
+    </div>
+    <div id="tl-emrg">
+      <div class="emb"><span style="font-size:1.2rem">🚨</span><div style="flex:1"><b style="font-size:.82rem;color:var(--d)">জরুরি পরিষেবা</b><p style="font-size:.72rem;color:var(--t2)">এক ক্লিকে যোগাযোগ করুন</p></div></div>
+      <div class="hl2"><span style="font-size:1.2rem">🏥</span><div style="flex:1"><div style="font-size:.82rem;font-weight:700">জাতীয় স্বাস্থ্য হেল্পলাইন</div><div class="hlnum">16000</div></div><a href="tel:16000" class="btn bp" style="padding:7px 11px;font-size:.75rem">📞 কল</a></div>
+      <div class="hl2"><span style="font-size:1.2rem">🚒</span><div style="flex:1"><div style="font-size:.82rem;font-weight:700">ফায়ার সার্ভিস</div><div class="hlnum">199</div></div><a href="tel:199" class="btn bp" style="padding:7px 11px;font-size:.75rem">📞 কল</a></div>
+      <div class="hl2"><span style="font-size:1.2rem">🚔</span><div style="flex:1"><div style="font-size:.82rem;font-weight:700">পুলিশ হেল্পলাইন</div><div class="hlnum">999</div></div><a href="tel:999" class="btn bp" style="padding:7px 11px;font-size:.75rem">📞 কল</a></div>
+      <div class="hl2"><span style="font-size:1.2rem">👩</span><div style="flex:1"><div style="font-size:.82rem;font-weight:700">নারী ও শিশু নির্যাতন</div><div class="hlnum">109</div></div><a href="tel:109" class="btn bp" style="padding:7px 11px;font-size:.75rem">📞 কল</a></div>
+      <button class="btn bp bw" onclick="window.open('https://maps.google.com/?q=hospital+near+me','_blank')">🗺️ নিকটস্থ হাসপাতাল খুঁজুন</button>
+    </div>
+    <div id="tl-calc" style="display:none">
+      <div class="card" style="margin-bottom:9px"><b>📅 বয়স ক্যালকুলেটর</b>
+        <div class="fg" style="margin-top:9px"><label class="fl">জন্মতারিখ</label><input class="fi" id="ageBd" type="date" oninput="calcAge()"/></div>
+        <div class="crbox" id="ageRes" style="display:none"><div class="crv" id="ageV">—</div><div class="crl">বয়স</div></div>
+      </div>
+      <div class="card" style="margin-bottom:9px"><b>⚖️ ওজন রূপান্তর (কেজি ↔ পাউন্ড)</b>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px">
+          <div class="fg"><label class="fl">কেজি</label><input class="fi" id="wkg" type="number" placeholder="৮.৫" step=".01" oninput="convW('kg')"/></div>
+          <div class="fg"><label class="fl">পাউন্ড</label><input class="fi" id="wlb" type="number" placeholder="১৮.৭" step=".01" oninput="convW('lb')"/></div>
+        </div>
+      </div>
+      <div class="card"><b>💊 প্যারাসিটামল ডোজ ক্যালকুলেটর</b>
+        <div class="fg" style="margin-top:9px"><label class="fl">শিশুর ওজন (কেজি)</label><input class="fi" id="doseWt" type="number" placeholder="৮" step=".1" oninput="calcDose()"/></div>
+        <div class="crbox" id="doseRes" style="display:none">
+          <div class="crv" id="doseV">—</div>
+          <div class="crl">একবারের ডোজ (সিরাপ ১২৫mg/৫ml)</div>
+          <p style="font-size:.7rem;color:var(--d);margin-top:5px">⚠️ ডাক্তারের পরামর্শ ছাড়া ওষুধ দেবেন না</p>
+        </div>
+      </div>
+    </div>
+    <div id="tl-tips" style="display:none">
+      <div class="card"><b>🌸 বর্ষাকালীন সতর্কতা</b><p style="font-size:.79rem;color:var(--t2);margin-top:6px;line-height:1.65">ডায়রিয়া ও ডেঙ্গু বেশি হয়। মশারি ব্যবহার করুন, পানি ফুটিয়ে পান করুন।</p></div>
+      <div class="card"><b>❄️ শীতকালীন সতর্কতা</b><p style="font-size:.79rem;color:var(--t2);margin-top:6px;line-height:1.65">শিশুকে গরম রাখুন। নিউমোনিয়ার লক্ষণে দ্রুত ডাক্তার দেখান।</p></div>
+      <div class="card"><b>☀️ গ্রীষ্মকালীন পরামর্শ</b><p style="font-size:.79rem;color:var(--t2);margin-top:6px;line-height:1.65">রোদে বেশি বের না করুন। প্রচুর পানি দিন। পানিশূন্যতার লক্ষণ দেখুন।</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- GIFTS PAGE -->
+<div id="pg-gifts" class="page">
+  <div class="phd"><div class="back" onclick="goBack()">←</div><h2>🎁 গিফট ও অফার</h2></div>
+  <div class="pc"><div id="glist"><div class="spin"></div></div></div>
+</div>
+
+<!-- PROFILE -->
+<div id="pg-profile" class="page">
+  <div class="phd"><div class="back" onclick="goBack()">←</div><h2>👤 প্রোফাইল</h2></div>
+  <div class="prh">
+    <div class="prav" id="prav">ম</div>
+    <div class="prn" id="prn">লোড হচ্ছে...</div>
+    <div class="pre2" id="pre2"></div>
+    <div class="ptsbdg" id="profilePts">🪙 ০ পয়েন্ট</div>
+  </div>
+  <div class="pm">
+    <div class="stitle" style="margin-top:6px">👶 আমার শিশুরা</div>
+    <div id="pch" style="margin-bottom:12px"></div>
+    <div class="mi" onclick="openMo('mo-child')"><span style="font-size:1.15rem">➕</span><div style="flex:1;font-size:.88rem;font-weight:500">নতুন শিশু যোগ করুন</div><span style="color:var(--t3)">›</span></div>
+    <div class="mi" onclick="nav('pg-earn')"><span style="font-size:1.15rem">🪙</span><div style="flex:1;font-size:.88rem;font-weight:500">পয়েন্ট ও উপার্জন</div><span style="color:var(--t3)">›</span></div>
+    <div class="mi" onclick="nav('pg-tools')"><span style="font-size:1.15rem">🛠️</span><div style="flex:1;font-size:.88rem;font-weight:500">সরঞ্জাম ও ক্যালকুলেটর</div><span style="color:var(--t3)">›</span></div>
+    <div class="mi" onclick="nav('pg-gifts')"><span style="font-size:1.15rem">🎁</span><div style="flex:1;font-size:.88ali;font-weight:500">গিফট ও অফার</div><span style="color:var(--t3)">›</span></div>
+    <div class="mi" onclick="nav('pg-shop')"><span style="font-size:1.15rem">🛍️</span><div style="flex:1;font-size:.88rem;font-weight:500">শপ ও অর্ডার</div><span style="color:var(--t3)">›</span></div>
+    <div class="mi" onclick="doLogout()" style="margin-top:8px"><span style="font-size:1.15rem;color:var(--d)">🚪</span><div style="flex:1;font-size:.88rem;font-weight:500;color:var(--d)">লগআউট</div><span style="color:var(--t3)">›</span></div>
+  </div>
+</div>
+
+<!-- BOTTOM TAB -->
+<div class="tbar">
+  <button class="ti on" onclick="nav('pg-home',this)"><span class="tic">🏠</span>হোম</button>
+  <button class="ti" onclick="nav('pg-health',this)"><span class="tic">🏥</span>স্বাস্থ্য</button>
+  <button class="ti" onclick="nav('pg-comm',this)"><span class="tic">👥</span>কমিউনিটি</button>
+  <button class="ti" onclick="nav('pg-shop',this)"><span class="tic">🛍️</span>শপ</button>
+  <button class="ti" onclick="nav('pg-profile',this)"><span class="tic">👤</span>প্রোফাইল</button>
+</div>
+</div>
+
+<!-- MODALS -->
 <div class="mo" id="mo-child">
   <div class="mb">
-    <div class="mh"><h3>👶 শিশুর তথ্য যোগ করুন</h3><div class="mclose" onclick="closeMo('mo-child')">✕</div></div>
-    <div class="fg"><label class="fl">শিশুর নাম</label><input class="fi" id="cname" placeholder="নাম লিখুন"/></div>
-    <div class="fg"><label class="fl">জন্মতারিখ</label><input class="fi" id="cbirth" type="date"/></div>
-    <div class="fg"><label class="fl">লিঙ্গ</label><select class="fi" id="cgender"><option value="male">ছেলে</option><option value="female">মেয়ে</option></select></div>
-    <div style="display:flex;gap:9px;margin-top:16px">
+    <div class="mh"><h3>👶 শিশুর তথ্য</h3><div class="mcl" onclick="closeMo('mo-child')">✕</div></div>
+    <div class="fg"><label class="fl">শিশুর নাম</label><input class="fi" id="cn" placeholder="নাম লিখুন"/></div>
+    <div class="fg"><label class="fl">জন্মতারিখ</label><input class="fi" id="cb" type="date"/></div>
+    <div class="fg"><label class="fl">লিঙ্গ</label><select class="fi" id="cg"><option value="male">ছেলে</option><option value="female">মেয়ে</option></select></div>
+    <div style="display:flex;gap:8px;margin-top:13px">
       <button class="btn bs" style="flex:1" onclick="closeMo('mo-child')">বাতিল</button>
       <button class="btn bp" style="flex:1" onclick="saveChild()">সংরক্ষণ</button>
     </div>
   </div>
 </div>
-
-<!-- Gift Detail -->
 <div class="mo" id="mo-gift">
   <div class="mb">
-    <div class="mh"><h3 id="gdt"></h3><div class="mclose" onclick="closeMo('mo-gift')">✕</div></div>
-    <img class="gdi" id="gdi" src="" alt=""/>
-    <p id="gdd" style="font-size:.85rem;color:var(--t2);line-height:1.7"></p>
-    <a class="gdl" id="gdl" href="#" target="_blank">🔗 লিংক দেখুন</a>
+    <div class="mh"><h3 id="gdt"></h3><div class="mcl" onclick="closeMo('mo-gift')">✕</div></div>
+    <img class="gdi" id="gdi" src="" alt="" style="display:none"/>
+    <p id="gdd" style="font-size:.83rem;color:var(--t2);line-height:1.7"></p>
+    <a class="gdl" id="gdl" href="#" target="_blank" style="display:none">🔗 লিংক দেখুন</a>
+  </div>
+</div>
+<div class="mo" id="mo-prod">
+  <div class="mb">
+    <div class="mh"><h3 id="pMN"></h3><div class="mcl" onclick="closeMo('mo-prod')">✕</div></div>
+    <img id="pMI" src="" style="width:100%;border-radius:var(--r2);margin-bottom:11px;max-height:190px;object-fit:cover;display:none"/>
+    <p id="pMD" style="font-size:.83rem;color:var(--t2);line-height:1.7;margin-bottom:11px"></p>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:13px">
+      <div><span id="pMP" style="font-size:1.2rem;font-weight:800;color:var(--a)"></span> <span id="pMO" style="font-size:.8rem;color:var(--t3);text-decoration:line-through"></span></div>
+      <div class="bdg bok" id="pMS">স্টক আছে</div>
+    </div>
+    <button class="btn bp bw" onclick="placeOrder()">🛒 অর্ডার করুন</button>
+  </div>
+</div>
+<div class="mo" id="mo-cmt">
+  <div class="mb">
+    <div class="mh"><h3>💬 মন্তব্য</h3><div class="mcl" onclick="closeMo('mo-cmt')">✕</div></div>
+    <div id="cmtList" style="max-height:270px;overflow-y:auto;margin-bottom:11px"></div>
+    <div style="display:flex;gap:8px"><input class="fi" id="cmtInp" placeholder="মন্তব্য লিখুন..." style="flex:1"/><button class="btn bp" onclick="addCmt()" style="padding:11px 13px">➤</button></div>
   </div>
 </div>
 
-<!-- Toast -->
 <div class="tc" id="tc"></div>
 
-<!-- ══════════ SCRIPTS ══════════ -->
 <script>
-// ╔═══════════════════════════════════════╗
-// ║   FIREBASE CONFIG — আপনার কনফিগ দিন  ║
-// ╚═══════════════════════════════════════╝
+// ══════════════════════════════════════════
+//  FIREBASE CONFIG — আপনার project এর config
+// ══════════════════════════════════════════
 const FB_CFG = {
   apiKey: "AIzaSyAzd17RdhVyyZIsGtcitOxVUO2TqM8NJxg",
   authDomain: "futful.firebaseapp.com",
   projectId: "futful",
   storageBucket: "futful.firebasestorage.app",
   messagingSenderId: "435987261629",
-  appId: "1:435987261629:web:e8f489ba52163663836fd4",
-  measurementId: "G-CB5Z8XBDLG"
+  appId: "1:435987261629:web:e8f489ba52163663836fd4"
 };
 
-// Gemini API Key (Google AI Studio থেকে পান)
-const GEMINI_KEY = "YOUR_GEMINI_API_KEY"; // ← Google AI Studio থেকে key নিন: aistudio.google.com
-
-// ─── Firebase Init ───
 let db, fbAuth;
 try {
   firebase.initializeApp(FB_CFG);
   db = firebase.firestore();
   fbAuth = firebase.auth();
-} catch(e) { console.warn('Firebase config needed:', e.message); }
+} catch(e) { console.warn('Firebase:', e.message); }
 
-// ─── Bangladesh Vaccine Schedule ───
+// ══ DATA ══
 const VACCINES = [
   {k:'bcg',n:'বিসিজি (যক্ষ্মা)',m:0,d:'জন্মের সাথে সাথে'},
   {k:'opv0',n:'ওপিভি-০ (পোলিও)',m:0,d:'জন্মের সাথে সাথে'},
   {k:'penta1',n:'পেন্টাভ্যালেন্ট-১',m:1.5,d:'৬ সপ্তাহে'},
   {k:'opv1',n:'ওপিভি-১',m:1.5,d:'৬ সপ্তাহে'},
-  {k:'pcv1',n:'পিসিভি-১ (নিউমোনিয়া)',m:1.5,d:'৬ সপ্তাহে'},
+  {k:'pcv1',n:'পিসিভি-১',m:1.5,d:'৬ সপ্তাহে'},
   {k:'penta2',n:'পেন্টাভ্যালেন্ট-২',m:2.5,d:'১০ সপ্তাহে'},
   {k:'opv2',n:'ওপিভি-২',m:2.5,d:'১০ সপ্তাহে'},
   {k:'penta3',n:'পেন্টাভ্যালেন্ট-৩',m:3.5,d:'১৪ সপ্তাহে'},
@@ -618,708 +786,631 @@ const VACCINES = [
   {k:'measles1',n:'হাম-রুবেলা-১',m:9,d:'৯ মাসে'},
   {k:'measles2',n:'হাম-রুবেলা-২',m:15,d:'১৫ মাসে'}
 ];
-
 const MILESTONES = {
   1:['হাসি দেয়','মুখের কাছে হাত আনে','শব্দে সাড়া দেয়'],
   2:['মাথা উপরে তোলে','আওয়াজ করে'],
   4:['মাথা স্থির রাখে','গড়াগড়ি দেয়'],
   6:['সাহায্যে বসে','নাম ডাকলে সাড়া দেয়'],
-  9:['একা বসে','হামাগুড়ি দেয়','"মামা/দাদা" বলে'],
+  9:['একা বসে','হামাগুড়ি দেয়','মামা/দাদা বলে'],
   12:['একা দাঁড়ায়','প্রথম পদক্ষেপ','২-৩টি শব্দ বলে'],
   18:['ভালো হাঁটে','১০+ শব্দ বলে'],
   24:['দৌড়ায়','২-৩ শব্দের বাক্য']
 };
+const KB = [
+  {k:['জ্বর','fever','তাপ'],r:`🌡️ **শিশুর জ্বরে করণীয়:**\n\n• হালকা পোশাক, কপালে ঠান্ডা কাপড়\n• প্রচুর তরল পান করান\n• বয়স অনুযায়ী প্যারাসিটামল দিন\n• ১০৩°F+ হলে তাৎক্ষণিক ডাক্তার\n\n⚠️ ৩ মাসের নিচে হলে যেকোনো জ্বরে ডাক্তার দেখান।`},
+  {k:['কাশি','সর্দি','ঠান্ডা','নাক','cough'],r:`😮 **সর্দি-কাশিতে করণীয়:**\n\n• মাথা সামান্য উঁচু করে শোয়ান\n• ১ বছর+ হলে মধু দিন\n• গরম বাষ্প নিন (সাবধানে)\n• শ্বাসকষ্ট হলে জরুরি ডাক্তার`},
+  {k:['ডায়রিয়া','পায়খানা','পাতলা','বমি'],r:`💧 **ডায়রিয়ায় করণীয়:**\n\n• ORS (খাবার স্যালাইন) বারবার দিন\n• মায়ের দুধ থামাবেন না\n• জিংক ট্যাবলেট ১০-১৪ দিন দিন\n• রক্ত থাকলে তাৎক্ষণিক ডাক্তার`},
+  {k:['টিকা','vaccine','bcg','পোলিও'],r:`💉 **বাংলাদেশ সরকারি টিকা সময়সূচি:**\n\n• জন্মে: বিসিজি + ওপিভি-০\n• ৬ সপ্তাহে: পেন্টা-১ + ওপিভি-১ + পিসিভি-১\n• ১০ সপ্তাহে: পেন্টা-২ + ওপিভি-২\n• ১৪ সপ্তাহে: পেন্টা-৩ + আইপিভি\n• ৯ মাসে: হাম-রুবেলা-১\n• ১৫ মাসে: হাম-রুবেলা-২\n\n📍 নিকটস্থ সরকারি স্বাস্থ্য কেন্দ্রে বিনামূল্যে পাওয়া যায়।`},
+  {k:['বুকের দুধ','স্তন্যপান','মায়ের দুধ'],r:`🤱 **স্তন্যপান পরামর্শ:**\n\n• জন্মের ১ ঘণ্টার মধ্যে শালদুধ দিন\n• ৬ মাস পর্যন্ত শুধু মায়ের দুধ\n• প্রতি ২-৩ ঘণ্টায় খাওয়ান\n• দুই স্তন পর্যায়ক্রমে দিন`},
+  {k:['খাবার','পুষ্টি','food','রেসিপি'],r:`🥗 **বয়স অনুযায়ী খাবার:**\n\n• ৬ মাস: নরম ভাত, সবজি পিউরি, কলা\n• ৯ মাস: ডিম, মাছ, দই যোগ করুন\n• ১ বছর+: পরিবারের খাবার (কম মশলায়)\n\n❌ ১ বছরের আগে মধু ও গরুর দুধ না।`},
+  {k:['ঘুম','sleep','ঘুমায় না'],r:`😴 **শিশুর ঘুমের গাইড:**\n\n• নবজাতক: ১৬-১৮ ঘণ্টা\n• ৩-৬ মাস: ১৪-১৬ ঘণ্টা\n• ৬-১২ মাস: ১২-১৪ ঘণ্টা\n• সন্ধ্যায় গোসল → ভালো ঘুম\n• একই সময়ে শোয়ানোর অভ্যাস করুন`},
+  {k:['ওজন','উচ্চতা','বৃদ্ধি','weight'],r:`📊 **শিশুর স্বাভাবিক বৃদ্ধি:**\n\n• জন্মে: ~৩-৩.৫ কেজি\n• ৫ মাসে: জন্মের দ্বিগুণ (~৬ কেজি)\n• ১ বছরে: জন্মের তিনগুণ (~৯ কেজি)\n• প্রথম বছর: মাসে ~০.৫-১ কেজি বাড়ে`},
+  {k:['মাইলস্টোন','হাটা','কথা','বিকাশ'],r:`🎯 **শিশুর বিকাশ মাইলস্টোন:**\n\n• ২ মাস: হাসি দেয়, সাড়া দেয়\n• ৬ মাস: সাহায্যে বসে\n• ৯ মাস: হামাগুড়ি দেয়\n• ১২ মাস: প্রথম পদক্ষেপ, ২-৩ শব্দ\n• ২ বছর: দৌড়ায়, ছোট বাক্য বলে`},
+  {k:['জরুরি','emergency','খিঁচুনি','নীল','শ্বাস'],r:`🚨 **এখনই হাসপাতাল যান:**\n\n• শ্বাস নিতে কষ্ট বা ঠোঁট নীল\n• অজ্ঞান বা খিঁচুনি\n• ২৪ ঘণ্টা প্রস্রাব নেই\n• ১০৩°F+ জ্বর কমছে না\n\n📞 স্বাস্থ্য হেল্পলাইন: **16000**`},
+  {k:['বিষণ্ণ','কান্না','মন খারাপ','postpartum'],r:`💗 **মানসিক স্বাস্থ্য পরামর্শ:**\n\nপ্রসব পরবর্তী মন খারাপ স্বাভাবিক। পরিবারকে জানান।\n\n• পর্যাপ্ত ঘুম নিন\n• বাইরে হাঁটুন\n• প্রয়োজনে ডাক্তার দেখান\n\n📞 হেল্পলাইন: **16000**`},
+  {k:['পয়েন্ট','earn','উপার্জন'],r:`🪙 **পয়েন্ট অর্জন করুন:**\n\n• প্রতিদিন লগইন করলে ১০ পয়েন্ট\n• Telegram বট @futfulcoinearnbot থেকে বেশি পয়েন্ট\n• গেম খেলুন @gameplaywithfriendbot\n\nউপার্জন পেজে যান: নিচে 🪙 আইকনে ক্লিক করুন।`},
+  {k:['সালাম','হ্যালো','hello','hi','কেমন','ভালো'],r:`আস-সালামু আলাইকুম! 😊 আমি **FutFul Help Desk**।\n\nআমি সাহায্য করতে পারি:\n• 🤒 রোগ ও চিকিৎসা পরামর্শ\n• 💉 টিকা সময়সূচি\n• 🥗 পুষ্টি ও খাবার গাইড\n• 📊 বৃদ্ধি ও বিকাশ\n• 🤱 স্তন্যপান পরামর্শ\n• 🪙 পয়েন্ট অর্জন\n\nযেকোনো প্রশ্ন বাংলায় করুন!`}
+];
 
-// ═══════════════════════════════════
-// STATE
-// ═══════════════════════════════════
-let CU = null, CUP = null, kids = [], selKid = null;
-let pgHist = ['pg-home'];
-let chatHist = JSON.parse(localStorage.getItem('ff_chat')||'[]');
-let bannerIdx = 0, bannerTimer = null, banners = [];
-let growChart = null, logs = [], vaccDone = {}, msDone = {};
+// ══ STATE ══
+let CU=null,CUP=null,kids=[],selKid=null;
+let pgHist=['pg-home'],chatHist=JSON.parse(localStorage.getItem('ff_chat')||'[]');
+let bannerIdx=0,bannerTimer=null,growChart=null;
+let vaccDone={},msDone={},currentPostId=null,currentProd=null;
+let chatLoaded=false,userPts=0;
 
-// ═══════════════════════════════════
-// AUTH INIT
-// ═══════════════════════════════════
-window.addEventListener('DOMContentLoaded', () => {
-  if (!fbAuth) return;
-  fbAuth.onAuthStateChanged(async u => {
-    if (u) {
-      CU = u;
-      document.getElementById('auth').style.display = 'none';
-      document.getElementById('wrap').style.display = 'block';
-      try { CUP = (await db.collection('users').doc(u.uid).get()).data(); } catch(e) {}
+// ══ INIT ══
+window.addEventListener('DOMContentLoaded',()=>{
+  if(!fbAuth)return;
+  fbAuth.onAuthStateChanged(async u=>{
+    if(u){
+      CU=u;
+      Q('#auth').style.display='none';
+      Q('#wrap').style.display='block';
+      try{CUP=(await db.collection('users').doc(u.uid).get()).data();}catch(e){}
       initUI();
-    } else {
-      document.getElementById('auth').style.display = 'flex';
-      document.getElementById('wrap').style.display = 'none';
+    }else{
+      Q('#auth').style.display='flex';
+      Q('#wrap').style.display='none';
     }
   });
-  loadChatHistory();
 });
 
-function initUI() {
-  const name = CUP?.displayName || CU?.displayName || 'ব্যবহারকারী';
-  const ini = name.charAt(0).toUpperCase();
-  Q('#uav').textContent = ini;
-  Q('#prav').textContent = ini;
-  Q('#prn').textContent = name;
-  Q('#pre').textContent = CU?.email || '';
-  const h = new Date().getHours();
-  const gr = h<12?'শুভ সকাল':h<17?'শুভ অপরাহ্ন':'শুভ সন্ধ্যা';
-  Q('#gtext').textContent = `${gr}, ${name.split(' ')[0]}! 👋`;
-  loadKids();
-  loadBanners();
-  loadHomeGifts();
+function initUI(){
+  const name=CUP?.displayName||CU?.displayName||'ব্যবহারকারী';
+  const ini=name.charAt(0).toUpperCase();
+  Q('#uav').textContent=ini;Q('#prav').textContent=ini;
+  Q('#prn').textContent=name;Q('#pre2').textContent=CU?.email||'';
+  const h=new Date().getHours();
+  const gr=h<12?'শুভ সকাল':h<17?'শুভ অপরাহ্ন':'শুভ সন্ধ্যা';
+  Q('#gtext').textContent=`${gr}, ${name.split(' ')[0]}! 👋`;
+  loadKids();loadBanners();loadHomeGifts();loadPts();
+  if(!chatLoaded){chatLoaded=true;chatHist.forEach(m=>addBubble(m.role,m.content,false));}
 }
 
-// ═══════════════════════════════════
-// AUTH FUNCTIONS
-// ═══════════════════════════════════
-function swTab(t) {
-  Q('#tab-login').classList.toggle('on', t==='login');
-  Q('#tab-reg').classList.toggle('on', t==='reg');
-  Q('#fLogin').style.display = t==='login'?'block':'none';
-  Q('#fReg').style.display = t==='reg'?'block':'none';
+// ══ AUTH ══
+function swTab(t){
+  Q('#tl').classList.toggle('on',t==='l');Q('#tr').classList.toggle('on',t==='r');
+  Q('#fL').style.display=t==='l'?'block':'none';Q('#fR').style.display=t==='r'?'block':'none';
 }
-
-async function doLogin() {
-  const e = Q('#lemail').value, p = Q('#lpass').value;
-  if (!e||!p) return toast('ইমেইল ও পাসওয়ার্ড দিন','e');
-  try {
-    await fbAuth.signInWithEmailAndPassword(e, p);
-    toast('স্বাগতম! লগইন সফল','s');
-  } catch(err) { toast('ইমেইল বা পাসওয়ার্ড ভুল','e'); }
+function showCP(){
+  const s=getSC();if(!s)return;
+  Q('#sEmail').textContent=s.e;Q('#credPop').classList.add('show');
 }
+function hideCP(){setTimeout(()=>Q('#credPop').classList.remove('show'),200);}
+function fillCreds(ev){
+  ev.preventDefault();const s=getSC();if(!s)return;
+  Q('#le').value=s.e;Q('#lp').value=s.p;Q('#credPop').classList.remove('show');
+  toast('তথ্য পূরণ হয়েছে ✓','s');
+}
+function SC(e,p){try{localStorage.setItem('_fc',btoa(unescape(encodeURIComponent(JSON.stringify({e,p})))))}catch{}}
+function getSC(){try{const d=localStorage.getItem('_fc');return d?JSON.parse(decodeURIComponent(escape(atob(d)))):null;}catch{return null;}}
 
-async function doReg() {
-  const name = Q('#rname').value.trim();
-  const e = Q('#remail').value.trim();
-  const p = Q('#rpass').value;
-  const wa = Q('#rwa').value.trim();
-  const fb = Q('#rfb').value.trim();
-  if (!name) return toast('নাম লিখুন','e');
-  if (!e) return toast('ইমেইল দিন','e');
-  if (!p || p.length<6) return toast('পাসওয়ার্ড ৬+ অক্ষর হতে হবে','e');
-  if (!wa) return toast('WhatsApp নম্বর দিন','e');
-  if (!/^01[3-9]\d{8}$/.test(wa)) return toast('সঠিক নম্বর দিন — 01XXXXXXXXX','e');
-  try {
-    const cr = await fbAuth.createUserWithEmailAndPassword(e, p);
-    await cr.user.updateProfile({displayName: name});
+async function doLogin(){
+  const e=Q('#le').value.trim(),p=Q('#lp').value;
+  if(!e||!p)return toast('ইমেইল ও পাসওয়ার্ড দিন','e');
+  try{await fbAuth.signInWithEmailAndPassword(e,p);SC(e,p);toast('স্বাগতম! লগইন সফল ✓','s');}
+  catch(err){toast('ইমেইল বা পাসওয়ার্ড ভুল','e');}
+}
+async function doReg(){
+  const name=Q('#rn').value.trim(),e=Q('#re').value.trim(),p=Q('#rp').value;
+  const wa=Q('#rwa').value.trim(),fb=Q('#rfb').value.trim();
+  if(!name)return toast('নাম দিন','e');
+  if(!e)return toast('ইমেইল দিন','e');
+  if(!p||p.length<6)return toast('পাসওয়ার্ড ৬+ অক্ষর হতে হবে','e');
+  if(!wa)return toast('WhatsApp নম্বর দিন','e');
+  if(!/^01[3-9]\d{8}$/.test(wa))return toast('সঠিক নম্বর — 01XXXXXXXXX','e');
+  try{
+    const cr=await fbAuth.createUserWithEmailAndPassword(e,p);
+    await cr.user.updateProfile({displayName:name});
     await db.collection('users').doc(cr.user.uid).set({
-      uid: cr.user.uid,
-      email: e,
-      displayName: name,
-      whatsapp: '+880' + wa,
-      facebook: fb ? 'fb.com/' + fb : '',
-      role: 'user',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      uid:cr.user.uid,email:e,displayName:name,
+      whatsapp:'+880'+wa,facebook:fb?'fb.com/'+fb:'',
+      role:'user',userType:'user',points:0,streak:0,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
-    toast('নিবন্ধন সফল! স্বাগতম 🎉','s');
-  } catch(err) {
-    if (err.code==='auth/email-already-in-use') toast('এই ইমেইল আগে থেকেই নিবন্ধিত','e');
+    SC(e,p);toast('নিবন্ধন সফল! স্বাগতম 🎉','s');
+  }catch(err){
+    if(err.code==='auth/email-already-in-use')toast('এই ইমেইল আগে থেকেই নিবন্ধিত','e');
     else toast('সমস্যা: '+err.message,'e');
   }
 }
+async function doLogout(){await fbAuth.signOut();localStorage.removeItem('ff_chat');toast('লগআউট সফল','i');}
 
-async function doLogout() {
-  await fbAuth.signOut();
-  toast('লগআউট সফল','i');
-}
-
-// ═══════════════════════════════════
-// NAVIGATION
-// ═══════════════════════════════════
-function nav(pid, tabEl) {
-  // Chat page is fullscreen fixed overlay
-  if (pid === 'pg-chat') {
-    Q('#pg-chat').classList.add('on');
-    pgHist.push('pg-chat');
-    loadChatHistory();
-    setTimeout(()=>{ const el=Q('#cmsgs'); el.scrollTop=el.scrollHeight; },100);
-    return;
+// ══ NAVIGATION ══
+function nav(pid,tabEl){
+  if(pid==='pg-chat'){
+    Q('#pg-chat').classList.add('on');pgHist.push('pg-chat');
+    setTimeout(()=>{const el=Q('#cmsgs');el.scrollTop=el.scrollHeight;},100);return;
   }
-  // Hide chat if open
   Q('#pg-chat').classList.remove('on');
   QA('.page').forEach(p=>{p.style.display='none';p.classList.remove('on')});
-  const tgt = Q('#'+pid);
-  if (tgt) { tgt.style.display='block'; tgt.classList.add('on'); }
-  if (pgHist[pgHist.length-1]!==pid) pgHist.push(pid);
-  if (tabEl) { QA('.ti').forEach(t=>t.classList.remove('on')); tabEl.classList.add('on'); }
-  if (pid==='pg-gifts') loadGiftsPage();
-  if (pid==='pg-health') loadVaccines();
-  if (pid==='pg-dev') loadMilestones();
-  if (pid==='pg-daily') loadLogs();
-  if (pid==='pg-profile') loadProfileKids();
+  const tgt=Q('#'+pid);if(tgt){tgt.style.display='block';tgt.classList.add('on');}
+  if(pgHist[pgHist.length-1]!==pid)pgHist.push(pid);
+  if(tabEl){QA('.ti').forEach(t=>t.classList.remove('on'));tabEl.classList.add('on');}
+  if(pid==='pg-gifts')loadGiftsPage();
+  if(pid==='pg-health')loadVaccines();
+  if(pid==='pg-dev')loadMilestones();
+  if(pid==='pg-daily')loadLogs();
+  if(pid==='pg-profile'){loadProfileKids();loadPts();}
+  if(pid==='pg-comm')loadPosts();
+  if(pid==='pg-shop'){loadProds();loadEbooks();}
+  if(pid==='pg-earn')loadEarnPage();
 }
-
-function goBack() {
-  if (pgHist.length>1) {
-    pgHist.pop();
-    const prev = pgHist[pgHist.length-1];
-    if (prev === 'pg-chat') {
-      Q('#pg-chat').classList.add('on');
-    } else {
-      Q('#pg-chat').classList.remove('on');
-      QA('.page').forEach(p=>{p.style.display='none';p.classList.remove('on')});
-      const tgt = Q('#'+prev);
-      if (tgt) { tgt.style.display='block'; tgt.classList.add('on'); }
-    }
+function goBack(){
+  if(pgHist.length>1){pgHist.pop();
+  const p=pgHist[pgHist.length-1];
+  Q('#pg-chat').classList.remove('on');
+  QA('.page').forEach(pg=>{pg.style.display='none';pg.classList.remove('on')});
+  const tgt=Q('#'+p);if(tgt){tgt.style.display='block';tgt.classList.add('on');}
   }
 }
-
-// ═══════════════════════════════════
-// SUB TABS
-// ═══════════════════════════════════
-function stab(el, sec, tab) {
+function stab(el,sec,tab){
   el.closest('.stabs').querySelectorAll('.stab').forEach(t=>t.classList.remove('on'));
   el.classList.add('on');
-  const map = {
-    h:['vacc','grw','ill'],
-    n:['food','bf'],
-    d:['ms','act'],
-    l:['sch','mh']
-  };
-  map[sec].forEach(s => {
-    const el2 = Q(`#${sec}-${s}`) || Q(`#${sec === 'n' ? 'n' : sec === 'd' ? 'd' : sec === 'l' ? 'l' : 'h'}-${s}`);
-    if (el2) el2.style.display = s===tab?'block':'none';
-  });
+  const m={h:['vacc','grw','ill'],n:['food','bf'],d:['ms','act'],l:['sch','mh'],sh:['prod','ebook','ord'],tl:['emrg','calc','tips']};
+  m[sec].forEach(s=>{const e2=Q(`#${sec}-${s}`);if(e2)e2.style.display=s===tab?'block':'none';});
+  if(sec==='sh'&&tab==='ord')loadOrders();
+  if(sec==='sh'&&tab==='prod')loadProds();
+  if(sec==='sh'&&tab==='ebook')loadEbooks();
+}
+function nAge(el,age){
+  el.closest('.stabs').querySelectorAll('.stab').forEach(t=>t.classList.remove('on'));el.classList.add('on');
+  ['6m','12m','24m'].forEach(a=>{const d=Q('#n'+a);if(d)d.style.display=a===age?'block':'none';});
 }
 
-function nAge(el, age) {
-  el.closest('.stabs').querySelectorAll('.stab').forEach(t=>t.classList.remove('on'));
-  el.classList.add('on');
-  ['6m','12m','24m'].forEach(a => {
-    const d = Q('#n'+a);
-    if (d) d.style.display = a===age?'block':'none';
-  });
-}
-
-// ═══════════════════════════════════
-// BANNERS
-// ═══════════════════════════════════
-async function loadBanners() {
-  try {
-    const snap = await db.collection('banners').where('active','==',true).get();
-    banners = snap.docs.map(d=>({id:d.id,...d.data()}));
-    banners.sort((a,b)=>(a.order||0)-(b.order||0));
-    if (!banners.length) return;
-    const track = Q('#strack'), dots = Q('#sdots');
-    track.innerHTML = banners.map(b=>`
-      <div class="slide" onclick="${b.link?`window.open('${b.link}','_blank')`:''}">
-        ${b.imageUrl?`<img src="${b.imageUrl}" alt=""/>`:`<div class="slide-ph" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;font-weight:700;color:var(--t2)">🖼️ <span>${esc(b.title||'')}</span></div>`}
-        <div class="stxt">${esc(b.title||'')}</div>
-      </div>`).join('');
-    dots.innerHTML = banners.map((_,i)=>`<div class="dot${i===0?' on':''}" onclick="goBanner(${i})"></div>`).join('');
+// ══ BANNERS ══
+async function loadBanners(){
+  try{
+    const snap=await db.collection('banners').where('active','==',true).get();
+    const bans=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.order||0)-(b.order||0));
+    if(!bans.length)return;
+    const tr=Q('#strack'),ds=Q('#sdots');
+    tr.innerHTML=bans.map(b=>`<div class="slide" onclick="${b.link?`window.open('${esc(b.link)}','_blank')`:''}">
+      ${b.imageUrl?`<img src="${esc(b.imageUrl)}" alt="" onerror="this.style.display='none'"/>`:`<div class="sph" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px">🖼️ <span style="font-size:.88rem">${esc(b.title||'')}</span></div>`}
+      <div class="stxt">${esc(b.title||'')}</div></div>`).join('');
+    ds.innerHTML=bans.map((_,i)=>`<div class="dot${i===0?' on':''}" onclick="goBanner(${i})"></div>`).join('');
     clearInterval(bannerTimer);
-    bannerTimer = setInterval(()=>{bannerIdx=(bannerIdx+1)%banners.length;moveBanner();},4200);
-  } catch(e) {}
+    bannerTimer=setInterval(()=>{bannerIdx=(bannerIdx+1)%bans.length;moveBanner();},4200);
+  }catch(e){}
 }
+function goBanner(i){bannerIdx=i;moveBanner();}
+function moveBanner(){Q('#strack').style.transform=`translateX(-${bannerIdx*100}%)`;QA('.dot').forEach((d,i)=>d.classList.toggle('on',i===bannerIdx));}
 
-function goBanner(i) { bannerIdx=i; moveBanner(); }
-function moveBanner() {
-  Q('#strack').style.transform=`translateX(-${bannerIdx*100}%)`;
-  QA('.dot').forEach((d,i)=>d.classList.toggle('on',i===bannerIdx));
+// ══ GIFTS ══
+async function loadHomeGifts(){
+  const el=Q('#hgifts');
+  try{
+    const snap=await db.collection('gifts').where('active','==',true).get();
+    const gifts=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    el.innerHTML=gifts.length?gifts.slice(0,3).map(gCard).join(''):'<p style="color:var(--t3);font-size:.8rem">কোনো গিফট নেই</p>';
+  }catch(e){el.innerHTML='<p style="color:var(--t3);font-size:.8rem">লোড করতে পারছে না</p>';}
 }
-
-// ═══════════════════════════════════
-// GIFTS
-// ═══════════════════════════════════
-async function loadHomeGifts() {
-  const el = Q('#hgifts');
-  try {
-    const snap = await db.collection('gifts').where('active','==',true).get();
-    const gifts = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-    el.innerHTML = gifts.length ? gifts.slice(0,3).map(gCard).join('') : '<p style="color:var(--t3);font-size:.83rem">কোনো গিফট নেই</p>';
-  } catch(e) { el.innerHTML='<p style="color:var(--t3);font-size:.83rem">লোড করতে পারছে না</p>'; }
+async function loadGiftsPage(){
+  const el=Q('#glist');el.innerHTML='<div class="spin"></div>';
+  try{
+    const snap=await db.collection('gifts').where('active','==',true).get();
+    const gifts=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    el.innerHTML=gifts.length?gifts.map(gCard).join(''):'<p style="color:var(--t3);font-size:.8rem">কোনো গিফট নেই</p>';
+  }catch(e){}
 }
-
-async function loadGiftsPage() {
-  const el = Q('#glist');
-  el.innerHTML = '<div class="spin"></div>';
-  try {
-    const snap = await db.collection('gifts').where('active','==',true).get();
-    const gifts = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-    el.innerHTML = gifts.length ? gifts.map(gCard).join('') : '<p style="color:var(--t3);font-size:.83rem">কোনো গিফট নেই</p>';
-  } catch(e) { el.innerHTML='<p style="color:var(--t3);font-size:.83rem">লোড করতে পারছে না</p>'; }
+function gCard(g){
+  return `<div class="gc2" onclick="openGift('${esc(g.title||'')}','${esc(g.description||'')}','${esc(g.imageUrl||'')}','${esc(g.link||'')}')">
+    ${g.imageUrl?`<img class="gth" src="${esc(g.imageUrl)}" alt="" onerror="this.style.display='none'"/>`:`<div class="gth">🎁</div>`}
+    <div class="gi"><h4>${esc(g.title||'')}</h4><p>${esc((g.description||'').slice(0,62))}${(g.description||'').length>62?'...':''}</p></div>
+    <span style="position:absolute;right:11px;color:var(--w);font-size:.92rem">›</span></div>`;
 }
-
-function gCard(g) {
-  return `<div class="gift-c" onclick="openGift('${esc(g.title||'')}','${esc(g.description||'')}','${esc(g.imageUrl||'')}','${esc(g.link||'')}')">
-    ${g.imageUrl?`<img class="gthumb" src="${esc(g.imageUrl)}" alt=""/>`:`<div class="gthumb">🎁</div>`}
-    <div class="gi"><h4>${esc(g.title||'')}</h4><p>${esc((g.description||'').slice(0,70))}${(g.description||'').length>70?'...':''}</p></div>
-    <div class="garr">›</div>
-  </div>`;
-}
-
-function openGift(title, desc, img, link) {
-  Q('#gdt').textContent = title;
-  Q('#gdd').textContent = desc;
-  const gi = Q('#gdi');
-  if (img) { gi.src=img; gi.style.display='block'; } else gi.style.display='none';
-  const gl = Q('#gdl');
-  if (link) { gl.href=link; gl.style.display='block'; } else gl.style.display='none';
+function openGift(t,d,img,lk){
+  Q('#gdt').textContent=t;Q('#gdd').textContent=d;
+  const gi=Q('#gdi');if(img){gi.src=img;gi.style.display='block';}else gi.style.display='none';
+  const gl=Q('#gdl');if(lk){gl.href=lk;gl.style.display='block';}else gl.style.display='none';
   openMo('mo-gift');
 }
 
-// ═══════════════════════════════════
-// CHILDREN
-// ═══════════════════════════════════
-async function loadKids() {
-  if (!CU) return;
-  try {
-    const snap = await db.collection('users').doc(CU.uid).collection('children').get();
-    kids = snap.docs.map(d=>({id:d.id,...d.data()}));
-    renderKidChips();
-    if (kids.length && !selKid) selKid = kids[0], onKidSelect();
-  } catch(e) {}
+// ══ CHILDREN ══
+async function loadKids(){
+  if(!CU)return;
+  try{
+    const snap=await db.collection('users').doc(CU.uid).collection('children').get();
+    kids=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderChips();
+    if(kids.length&&!selKid){selKid=kids[0];onKidSel();}
+  }catch(e){}
+}
+function renderChips(){
+  const el=Q('#csel');
+  el.innerHTML=kids.map(k=>`<div class="cchip${selKid?.id===k.id?' on':''}" onclick='pickKid(${JSON.stringify(k).replace(/"/g,"&quot;")})'>
+    <div class="cav2">${k.gender==='female'?'👧':'👦'}</div><span class="cn">${esc(k.name||'')}</span></div>`).join('')
+  +`<div class="cchip addc" onclick="openMo('mo-child')"><div class="cav2">＋</div><span class="cn">যোগ করুন</span></div>`;
+}
+function pickKid(k){selKid=k;renderChips();onKidSel();}
+function onKidSel(){
+  if(!selKid)return;
+  Q('#gsub').textContent=`${selKid.name} — বয়স: ${ageM(selKid.birthDate)} মাস`;
+  loadVaccines();loadMilestones();loadLogs();
+}
+function loadProfileKids(){
+  const el=Q('#pch');
+  el.innerHTML=kids.length?kids.map(k=>`<div class="mi"><span style="font-size:1.15rem">${k.gender==='female'?'👧':'👦'}</span>
+    <div style="flex:1;font-size:.86rem;font-weight:600">${esc(k.name)} — ${ageM(k.birthDate)} মাস</div></div>`).join('')
+  :'<p style="color:var(--t3);font-size:.8rem;padding:4px 0">কোনো শিশু যোগ করা হয়নি</p>';
+}
+async function saveChild(){
+  const n=Q('#cn').value.trim(),b=Q('#cb').value,g=Q('#cg').value;
+  if(!n||!b)return toast('সব তথ্য পূরণ করুন','e');
+  try{
+    await db.collection('users').doc(CU.uid).collection('children').add({name:n,birthDate:b,gender:g,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    toast('শিশু যোগ হয়েছে ✓','s');closeMo('mo-child');Q('#cn').value='';Q('#cb').value='';loadKids();
+  }catch(e){toast('সমস্যা: '+e.message,'e');}
 }
 
-function renderKidChips() {
-  const el = Q('#csel');
-  el.innerHTML = kids.map(k=>`
-    <div class="cchip${selKid?.id===k.id?' on':''}" onclick='pickKid(${JSON.stringify(k)})'>
-      <div class="cav">${k.gender==='female'?'👧':'👦'}</div>
-      <span class="cn">${esc(k.name||'')}</span>
-    </div>`).join('')
-  + `<div class="cchip add-c" onclick="openMo('mo-child')"><div class="cav">＋</div><span class="cn">যোগ করুন</span></div>`;
-}
-
-function pickKid(k) { selKid=k; renderKidChips(); onKidSelect(); }
-
-function onKidSelect() {
-  if (!selKid) return;
-  const ageM = ageMonths(selKid.birthDate);
-  Q('#gsub').textContent = `${selKid.name} — বয়স: ${ageM} মাস`;
-  loadVaccines(); loadMilestones(); loadLogs();
-}
-
-function loadProfileKids() {
-  const el = Q('#pch');
-  el.innerHTML = kids.length ? kids.map(k=>`
-    <div class="mi"><div class="mic">${k.gender==='female'?'👧':'👦'}</div>
-    <div class="ml">${esc(k.name)} — ${ageMonths(k.birthDate)} মাস</div></div>`).join('')
-  : '<p style="color:var(--t3);font-size:.83rem;padding:4px 0">কোনো শিশু যোগ করা হয়নি</p>';
-}
-
-async function saveChild() {
-  const name=Q('#cname').value, birth=Q('#cbirth').value, gender=Q('#cgender').value;
-  if (!name||!birth) return toast('সব তথ্য পূরণ করুন','e');
-  try {
-    await db.collection('users').doc(CU.uid).collection('children').add({name,birthDate:birth,gender,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-    toast('শিশু যোগ হয়েছে ✓','s');
-    closeMo('mo-child');
-    Q('#cname').value=''; Q('#cbirth').value='';
-    loadKids();
-  } catch(e) { toast('সমস্যা হয়েছে','e'); }
-}
-
-// ═══════════════════════════════════
-// VACCINES
-// ═══════════════════════════════════
-async function loadVaccines() {
-  const el = Q('#vlist');
-  if (!selKid) { el.innerHTML='<p style="color:var(--t3);font-size:.83rem">শিশু নির্বাচন করুন</p>'; return; }
-  const ageM = ageMonths(selKid.birthDate);
-  try {
-    const snap = await db.collection('users').doc(CU.uid).collection('children').doc(selKid.id).collection('vaccines').get();
-    vaccDone = {};
-    snap.docs.forEach(d=>vaccDone[d.id]=d.data().done);
-  } catch(e) {}
-  el.innerHTML = VACCINES.map(v=>{
-    const due = v.m<=ageM, done = vaccDone[v.k];
-    return `<div class="vi">
-      <div class="vck${done?' ok':''}" onclick="togVacc('${v.k}',${!done})">${done?'✓':''}</div>
-      <div class="vin"><h4>${esc(v.n)}</h4><p>${v.d}</p></div>
-      <span class="bdg ${done?'bg-ok':due?'bg-w':'bg-p'}">${done?'সম্পন্ন':due?'বাকি':'আসছে'}</span>
-    </div>`;
+// ══ VACCINES ══
+async function loadVaccines(){
+  const el=Q('#vlist');
+  if(!selKid){el.innerHTML='<p style="color:var(--t3);font-size:.8rem">শিশু নির্বাচন করুন</p>';return;}
+  const am=ageM(selKid.birthDate);
+  try{
+    const snap=await db.collection('users').doc(CU.uid).collection('children').doc(selKid.id).collection('vaccines').get();
+    vaccDone={};snap.docs.forEach(d=>vaccDone[d.id]=d.data().done);
+  }catch(e){}
+  el.innerHTML=VACCINES.map(v=>{
+    const due=v.m<=am,done=vaccDone[v.k];
+    return `<div class="vi"><div class="vck${done?' ok':''}" onclick="togVacc('${v.k}',${!done})">${done?'✓':''}</div>
+      <div class="vin" style="flex:1"><h4>${esc(v.n)}</h4><p>${v.d}</p></div>
+      <span class="bdg ${done?'bok':due?'bw2':'bp2'}">${done?'সম্পন্ন':due?'বাকি':'আসছে'}</span></div>`;
   }).join('');
 }
-
-async function togVacc(key, val) {
-  if (!selKid) return;
-  try {
-    await db.collection('users').doc(CU.uid).collection('children').doc(selKid.id).collection('vaccines').doc(key).set({done:val},{merge:true});
-    vaccDone[key]=val;
-    toast(val?'✓ টিকা সম্পন্ন':'টিকা চিহ্নমুক্ত', val?'s':'i');
-    loadVaccines();
-  } catch(e) {}
+async function togVacc(k,val){
+  if(!selKid)return;
+  try{
+    await db.collection('users').doc(CU.uid).collection('children').doc(selKid.id).collection('vaccines').doc(k).set({done:val},{merge:true});
+    vaccDone[k]=val;toast(val?'✓ টিকা সম্পন্ন':'চিহ্নমুক্ত',val?'s':'i');loadVaccines();
+  }catch(e){}
 }
 
-// ═══════════════════════════════════
-// GROWTH CHART
-// ═══════════════════════════════════
-async function saveGrow() {
-  if (!selKid) return toast('শিশু নির্বাচন করুন','e');
-  const w=Q('#winp').value, h=Q('#hinp').value;
-  if (!w&&!h) return toast('ওজন বা উচ্চতা দিন','e');
-  try {
+// ══ GROWTH ══
+async function saveGrow(){
+  if(!selKid)return toast('শিশু নির্বাচন করুন','e');
+  const w=Q('#winp').value,h=Q('#hinp').value;
+  if(!w&&!h)return toast('ওজন বা উচ্চতা দিন','e');
+  try{
     await db.collection('users').doc(CU.uid).collection('children').doc(selKid.id).collection('growth').add({
-      weight:parseFloat(w)||null, height:parseFloat(h)||null,
+      weight:parseFloat(w)||null,height:parseFloat(h)||null,
       date:new Date().toISOString().split('T')[0],
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
-    toast('রেকর্ড সংরক্ষিত ✓','s');
-    Q('#winp').value=''; Q('#hinp').value='';
-    drawGrowthChart();
-  } catch(e) {}
+    toast('রেকর্ড সংরক্ষিত ✓','s');Q('#winp').value='';Q('#hinp').value='';
+    drawGrowth();
+  }catch(e){toast('সমস্যা: '+e.message,'e');}
 }
-
-async function drawGrowthChart() {
-  if (!selKid) return;
-  try {
-    const snap = await db.collection('users').doc(CU.uid).collection('children').doc(selKid.id).collection('growth').orderBy('date').get();
-    const recs = snap.docs.map(d=>d.data());
-    if (growChart) growChart.destroy();
-    growChart = new Chart(Q('#gchart'), {
+async function drawGrowth(){
+  if(!selKid)return;
+  try{
+    const snap=await db.collection('users').doc(CU.uid).collection('children').doc(selKid.id).collection('growth').orderBy('date').get();
+    const recs=snap.docs.map(d=>d.data());
+    if(!recs.length)return;
+    // Check for abnormal growth
+    const lastW=recs[recs.length-1]?.weight;
+    const prevW=recs.length>1?recs[recs.length-2]?.weight:null;
+    const warnEl=Q('#growWarn');
+    if(prevW&&lastW&&Math.abs(lastW-prevW)>1.5){
+      warnEl.style.display='block';
+      warnEl.innerHTML=`<div style="background:rgba(255,71,87,.15);border:1px solid rgba(255,71,87,.35);border-radius:var(--r2);padding:11px;font-size:.8rem;color:var(--d)">⚠️ ওজনে অস্বাভাবিক পরিবর্তন লক্ষ্য করা গেছে। ডাক্তারের পরামর্শ নিন।</div>`;
+    }else{warnEl.style.display='none';}
+    if(growChart)growChart.destroy();
+    growChart=new Chart(Q('#gchart'),{
       type:'line',
-      data:{
-        labels:recs.map(r=>r.date),
-        datasets:[
-          {label:'ওজন (কেজি)',data:recs.map(r=>r.weight),borderColor:'#7C6EFA',backgroundColor:'rgba(124,110,250,.12)',tension:.4,fill:true},
-          {label:'উচ্চতা (সেমি)',data:recs.map(r=>r.height),borderColor:'#FF6B9D',backgroundColor:'rgba(255,107,157,.12)',tension:.4,fill:true}
-        ]
-      },
-      options:{responsive:true,plugins:{legend:{labels:{color:'#EEF2FF',font:{family:'Hind Siliguri'}}}},scales:{x:{ticks:{color:'rgba(238,242,255,.55)'},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'rgba(238,242,255,.55)'},grid:{color:'rgba(255,255,255,.04)'}}}}
+      data:{labels:recs.map(r=>r.date),datasets:[
+        {label:'ওজন (কেজি)',data:recs.map(r=>r.weight),borderColor:'#7C6EFA',backgroundColor:'rgba(124,110,250,.12)',tension:.4,fill:true},
+        {label:'উচ্চতা (সেমি)',data:recs.map(r=>r.height),borderColor:'#FF6B9D',backgroundColor:'rgba(255,107,157,.12)',tension:.4,fill:true}
+      ]},
+      options:{responsive:true,plugins:{legend:{labels:{color:'#EEF2FF',font:{family:'Hind Siliguri'}}}},
+        scales:{x:{ticks:{color:'rgba(238,242,255,.55)'},grid:{color:'rgba(255,255,255,.04)'}},
+                y:{ticks:{color:'rgba(238,242,255,.55)'},grid:{color:'rgba(255,255,255,.04)'}}}}
     });
-  } catch(e) {}
+  }catch(e){}
 }
 
-// ═══════════════════════════════════
-// MILESTONES
-// ═══════════════════════════════════
-async function loadMilestones() {
-  const el = Q('#mslist');
-  if (!selKid) { el.innerHTML='<p style="color:var(--t3);font-size:.83rem">শিশু নির্বাচন করুন</p>'; return; }
-  const ageM = ageMonths(selKid.birthDate);
-  try {
-    const snap = await db.collection('users').doc(CU.uid).collection('children').doc(selKid.id).collection('milestones').get();
-    msDone = {};
-    snap.docs.forEach(d=>msDone[d.id]=d.data().achieved);
-  } catch(e) {}
-  el.innerHTML = Object.entries(MILESTONES).map(([m,items])=>`
-    <div style="margin-bottom:17px">
-      <div class="mgt">${m} মাস বয়সে</div>
-      ${items.map(item=>{
-        const key=`${m}_${item.slice(0,8)}`, done=msDone[key];
-        return `<div class="mit${done?' ok':''}">
-          <div class="mck${done?' ok':''}" onclick="togMs('${key}',${!done})"></div>
-          <span style="font-size:.85rem;flex:1">${item}</span>
-          ${done?'<span class="bdg bg-ok">অর্জিত</span>':''}
-        </div>`;
-      }).join('')}
-    </div>`).join('');
+// ══ MILESTONES ══
+async function loadMilestones(){
+  const el=Q('#mslist');
+  if(!selKid){el.innerHTML='<p style="color:var(--t3);font-size:.8rem">শিশু নির্বাচন করুন</p>';return;}
+  const am=ageM(selKid.birthDate);
+  try{
+    const snap=await db.collection('users').doc(CU.uid).collection('children').doc(selKid.id).collection('milestones').get();
+    msDone={};snap.docs.forEach(d=>msDone[d.id]=d.data().achieved);
+  }catch(e){}
+  // Check for delayed development warning
+  let warn='';
+  Object.entries(MILESTONES).forEach(([m,items])=>{
+    if(parseInt(m)<am-3){
+      items.forEach(item=>{
+        const k=`m${m}_${item.slice(0,6).replace(/\s/g,'_')}`;
+        if(!msDone[k])warn=`⚠️ ${m} মাসের কিছু মাইলস্টোন এখনো অর্জিত হয়নি। ডাক্তারের পরামর্শ নিন।`;
+      });
+    }
+  });
+  el.innerHTML=(warn?`<div style="background:rgba(255,71,87,.12);border:1px solid rgba(255,71,87,.3);border-radius:var(--r2);padding:10px;font-size:.78rem;color:var(--d);margin-bottom:11px">${warn}</div>`:'')+
+  Object.entries(MILESTONES).map(([m,items])=>`<div style="margin-bottom:13px">
+    <div class="mgt">${m} মাস বয়সে</div>
+    ${items.map(item=>{
+      const key=`m${m}_${item.slice(0,6).replace(/\s/g,'_')}`,done=msDone[key];
+      return `<div class="mit${done?' ok':''}"><div class="mck${done?' ok':''}" onclick="togMs('${key}',${!done})">${done?'✓':''}</div>
+        <span style="font-size:.81rem;flex:1">${item}</span>${done?'<span class="bdg bok">অর্জিত</span>':''}</div>`;
+    }).join('')}</div>`).join('');
 }
-
-async function togMs(key, val) {
-  if (!selKid) return;
-  try {
+async function togMs(key,val){
+  if(!selKid)return;
+  try{
     await db.collection('users').doc(CU.uid).collection('children').doc(selKid.id).collection('milestones').doc(key).set({achieved:val},{merge:true});
-    msDone[key]=val;
-    if (val) toast('🎉 মাইলস্টোন অর্জিত!','s');
-    loadMilestones();
-  } catch(e) {}
+    msDone[key]=val;if(val)toast('🎉 মাইলস্টোন অর্জিত!','s');loadMilestones();
+  }catch(e){}
 }
 
-// ═══════════════════════════════════
-// DAILY LOGS
-// ═══════════════════════════════════
-async function logAct(type, label) {
-  if (!selKid) return toast('শিশু নির্বাচন করুন','e');
-  const now = new Date(), time = now.toTimeString().slice(0,5);
-  try {
+// ══ DAILY LOGS ══
+async function logAct(type,label){
+  if(!selKid)return toast('শিশু নির্বাচন করুন','e');
+  const now=new Date(),time=now.toTimeString().slice(0,5);
+  try{
     await db.collection('users').doc(CU.uid).collection('children').doc(selKid.id).collection('logs').add({
-      type, label, time, date:now.toISOString().split('T')[0],
+      type,label,time,date:now.toISOString().split('T')[0],
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
-    const lt = Q(`#lt-${type}`);
-    if (lt) lt.textContent = time;
-    toast(`${label} লগ হয়েছে`,'s');
-    loadLogs();
-  } catch(e) {}
+    const lt=Q(`#lt-${type}`);if(lt)lt.textContent=time;
+    toast(`${label} লগ হয়েছে`,'s');loadLogs();
+  }catch(e){}
+}
+async function loadLogs(){
+  if(!selKid)return;
+  const today=new Date().toISOString().split('T')[0];
+  try{
+    const snap=await db.collection('users').doc(CU.uid).collection('children').doc(selKid.id).collection('logs').where('date','==',today).get();
+    const logs=snap.docs.map(d=>d.data()).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    const el=Q('#loglst');
+    el.innerHTML=logs.length?logs.map(l=>`<div class="litem"><span style="font-size:1.15rem">${l.type==='feeding'?'🍼':l.type==='sleep'?'😴':'👶'}</span>
+      <div style="flex:1"><div style="font-size:.83rem;font-weight:600">${esc(l.label||l.type)}</div>
+      <div style="font-size:.7rem;color:var(--t3)">${l.time||''}</div></div></div>`).join('')
+    :'<p style="color:var(--t3);font-size:.8rem">আজকে কোনো লগ নেই</p>';
+  }catch(e){}
+}
+function genReport(){
+  if(!selKid)return toast('শিশু নির্বাচন করুন','e');
+  const today=new Date().toLocaleDateString('bn-BD');
+  toast(`📊 ${selKid.name} এর আজকের রিপোর্ট তৈরি হয়েছে`,'s');
 }
 
-async function loadLogs() {
-  if (!selKid) return;
-  const today = new Date().toISOString().split('T')[0];
-  try {
-    const snap = await db.collection('users').doc(CU.uid).collection('children').doc(selKid.id).collection('logs').where('date','==',today).orderBy('time').get();
-    logs = snap.docs.map(d=>d.data());
-    const el = Q('#loglst');
-    el.innerHTML = logs.length ? [...logs].reverse().map(l=>`
-      <div class="litem">
-        <span style="font-size:1.2rem">${l.type==='feeding'?'🍼':l.type==='sleep'?'😴':'👶'}</span>
-        <div style="flex:1"><div style="font-size:.87rem;font-weight:600">${esc(l.label||l.type)}</div><div style="font-size:.74rem;color:var(--t3)">${l.time||''}</div></div>
-      </div>`).join('')
-    : '<p style="color:var(--t3);font-size:.83rem">আজকে কোনো লগ নেই</p>';
-  } catch(e) {}
+// ══ COMMUNITY ══
+async function loadPosts(q=''){
+  const el=Q('#postFeed');el.innerHTML='<div class="spin"></div>';
+  try{
+    const snap=await db.collection('posts').orderBy('createdAt','desc').limit(20).get();
+    let posts=snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(q)posts=posts.filter(p=>(p.text||'').toLowerCase().includes(q.toLowerCase()));
+    el.innerHTML=posts.length?posts.map(postCard).join(''):'<p style="color:var(--t3);font-size:.8rem">কোনো পোস্ট নেই</p>';
+  }catch(e){el.innerHTML='<p style="color:var(--t3);font-size:.8rem">লোড করতে পারছে না</p>';}
 }
-
-// ═══════════════════════════════════
-// CHAT (GEMINI AI)
-// ═══════════════════════════════════
-let chatLoaded = false;
-function loadChatHistory() {
-  if (chatLoaded) return;
-  chatLoaded = true;
-  chatHist.forEach(m => addBubble(m.role, m.content, false));
-  const el = Q('#cmsgs'); el.scrollTop = el.scrollHeight;
+function postCard(p){
+  const nm=p.authorName||'অজানা',tm=p.createdAt?new Date(p.createdAt.seconds*1000).toLocaleDateString('bn-BD'):'';
+  return `<div class="post-card">
+    <div class="post-hd"><div class="pav">${nm.charAt(0).toUpperCase()}</div>
+      <div><div class="pnm">${esc(nm)}</div><div class="ptm">${tm}</div></div></div>
+    ${p.imageUrl?`<img class="pimg" src="${esc(p.imageUrl)}" alt="" onerror="this.style.display='none'"/>`:''}
+    <div class="ptxt">${esc(p.text||'')}</div>
+    <div class="pact">
+      <button class="pa" onclick="likePost('${p.id}',this)">❤️ ${p.likeCount||0}</button>
+      <button class="pa" onclick="openCmt('${p.id}')">💬 মন্তব্য</button>
+    </div></div>`;
 }
-
-function formatReply(text) {
-  text = text.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
-  text = text.replace(/\n/g, '<br>');
-  return text;
+async function submitPost(){
+  const text=Q('#postText').value.trim(),imgUrl=Q('#postImg').value.trim();
+  if(!text)return toast('পোস্টের বিষয়বস্তু লিখুন','e');
+  if(text.length<5)return toast('পোস্ট খুব ছোট — কমপক্ষে ৫ অক্ষর লিখুন','e');
+  try{
+    await db.collection('posts').add({text,imageUrl:imgUrl||'',authorId:CU.uid,authorName:CU.displayName||'ব্যবহারকারী',likeCount:0,commentCount:0,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    Q('#postText').value='';Q('#postImg').value='';
+    toast('পোস্ট করা হয়েছে ✓','s');loadPosts();
+  }catch(e){toast('সমস্যা: '+e.message,'e');}
 }
-
-function addBubble(role, text, scroll=true) {
-  const el = Q('#cmsgs');
-  const d = document.createElement('div');
-  d.className = `cm ${role==='user'?'u':'bot'}`;
-  const icon = role==='user' ? '👩' : '🏥';
-  const cls = role==='user' ? 'uav' : 'bav';
-  const content = role==='user' ? esc(text) : formatReply(text);
-  d.innerHTML = `<div class="cav2 ${cls}">${icon}</div><div class="bbl">${content}</div>`;
-  el.appendChild(d);
-  if (scroll) el.scrollTop = el.scrollHeight;
-}
-
-function ckEnter(e) { if (e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); sendMsg(); } }
-
-// ══════════════════════════════════════
-// FutFul Help Desk — স্মার্ট বাংলা চ্যাটবট
-// ══════════════════════════════════════
-const HELPDESK_KB = [
-  // জ্বর
-  { keys:['জ্বর','তাপমাত্র','গরম','fever','temp'], reply:`🌡️ **শিশুর জ্বরে করণীয়:**
-
-• হালকা পোশাক পরান, কম্বল সরিয়ে দিন
-• মাথায় ও কপালে ঠান্ডা ভেজা কাপড় দিন
-• প্রচুর পানি ও তরল খাবার দিন
-• বয়স অনুযায়ী প্যারাসিটামল দিন (ডাক্তারের ডোজ মতো)
-• ১০৩°F বা তার বেশি হলে সাথে সাথে ডাক্তার দেখান
-
-⚠️ ৩ মাসের কম বয়সী শিশুর যেকোনো জ্বরে তাৎক্ষণিক ডাক্তার দেখান।` },
-
-  // কাশি
-  { keys:['কাশি','সর্দি','ঠান্ডা','নাক','cough','cold'], reply:`😮 **সর্দি-কাশিতে করণীয়:**
-
-• মাথা সামান্য উঁচু করে শোয়ান
-• ১ বছরের বেশি হলে মধু দিন (রাতে ঘুমানোর আগে)
-• গরম বাষ্প নিন (সাবধানে, পুড়বেন না)
-• লবণ-পানি দিয়ে নাক পরিষ্কার করুন
-• ঘর উষ্ণ ও আর্দ্র রাখুন
-
-⚠️ শ্বাস নিতে কষ্ট হলে বা ঠোঁট নীল হলে সাথে সাথে হাসপাতাল যান।` },
-
-  // ডায়রিয়া
-  { keys:['ডায়রিয়া','পায়খানা','পাতলা','বমি','diarrhea','vomit'], reply:`💧 **ডায়রিয়ায় করণীয়:**
-
-• খাবার স্যালাইন (ORS) বানিয়ে বারবার দিন
-• মায়ের দুধ থামাবেন না, চালিয়ে যান
-• জিংক ট্যাবলেট ১০-১৪ দিন দিন (ডাক্তারের পরামর্শে)
-• পরিষ্কার পানি ও সহজপাচ্য খাবার দিন
-• প্রতিবার পায়খানার পর ORS দিন
-
-⚠️ রক্ত বা মিউকাস থাকলে, ২৪ ঘণ্টা প্রস্রাব না হলে — ডাক্তার দেখান।` },
-
-  // টিকা
-  { keys:['টিকা','vaccine','vaccination','ইমুনাইজ','bcg','পোলিও'], reply:`💉 **বাংলাদেশ সরকারি টিকা সময়সূচি:**
-
-• জন্মের সাথে সাথে: বিসিজি + ওপিভি-০
-• ৬ সপ্তাহে: পেন্টাভ্যালেন্ট-১ + ওপিভি-১ + পিসিভি-১
-• ১০ সপ্তাহে: পেন্টাভ্যালেন্ট-২ + ওপিভি-২
-• ১৪ সপ্তাহে: পেন্টাভ্যালেন্ট-৩ + ওপিভি-৩ + আইপিভি
-• ৯ মাসে: হাম-রুবেলা-১
-• ১৫ মাসে: হাম-রুবেলা-২
-
-📍 নিকটস্থ সরকারি স্বাস্থ্য কেন্দ্রে বিনামূল্যে পাওয়া যায়।` },
-
-  // বুকের দুধ
-  { keys:['বুকের দুধ','স্তন্যপান','বুকের','মায়ের দুধ','breastfeed','feed'], reply:`🤱 **স্তন্যপান বিষয়ক পরামর্শ:**
-
-• জন্মের ১ ঘণ্টার মধ্যে শালদুধ দিন — এটি সোনার চেয়ে দামি!
-• ৬ মাস পর্যন্ত শুধু মায়ের দুধ দিন, পানিও না
-• প্রতি ২-৩ ঘণ্টায় খাওয়ান, রাতেও বাদ দেবেন না
-• দুই স্তন পর্যায়ক্রমে দিন
-• মা প্রচুর পানি ও পুষ্টিকর খাবার খান
-
-💡 ব্যথা হলে বা দুধ কম হলে নিকটস্থ স্বাস্থ্যকর্মীর সাথে কথা বলুন।` },
-
-  // খাবার / পুষ্টি
-  { keys:['খাবার','খাওয়া','পুষ্টি','রেসিপি','food','nutrition','diet','ভাত','মাছ'], reply:`🥗 **বয়স অনুযায়ী খাবার গাইড:**
-
-**৬ মাস থেকে শুরু:**
-• নরম ভাত, সবজি পিউরি, কলা, মিষ্টি আলু
-• একবারে একটি নতুন খাবার, ৩-৪ দিন পরে নতুনটি
-
-**৯-১২ মাসে:**
-• ডিম, মাছ, মুরগির মাংস (ছোট টুকরো)
-• দই, ডাল, নরম সবজি
-
-**১ বছর পরে:**
-• পরিবারের খাবার (কম মশলায়)
-• লবণ ও চিনি কম দিন
-
-❌ ১ বছরের আগে মধু ও গরুর দুধ দেবেন না।` },
-
-  // ঘুম
-  { keys:['ঘুম','রাত','sleep','ঘুমায় না','কাঁদে'], reply:`😴 **শিশুর ঘুমের পরামর্শ:**
-
-• নবজাতক: দিনে ১৬-১৮ ঘণ্টা ঘুমায়
-• ৩-৬ মাস: ১৪-১৬ ঘণ্টা
-• ৬-১২ মাস: ১২-১৪ ঘণ্টা
-• সন্ধ্যায় গোসল করালে ভালো ঘুম হয়
-• একই সময়ে শোয়ানোর অভ্যাস করুন
-• শোয়ানোর আগে আলতো মালিশ করুন
-
-💡 শিশু বেশি কাঁদলে খিদা, ডায়াপার, বা অস্বস্তি চেক করুন।` },
-
-  // বৃদ্ধি / ওজন
-  { keys:['ওজন','উচ্চতা','বৃদ্ধি','weight','height','growth','মোটা','চিকন'], reply:`📊 **শিশুর স্বাভাবিক বৃদ্ধি:**
-
-• জন্মে: গড় ৩-৩.৫ কেজি
-• ৫ মাসে: জন্মের দ্বিগুণ (~৬ কেজি)
-• ১ বছরে: জন্মের তিনগুণ (~৯ কেজি)
-• প্রথম বছরে: প্রতি মাসে ~০.৫-১ কেজি বাড়ে
-
-প্রতি মাসে ওজন মাপুন, স্বাস্থ্য কার্ডে লিখুন।
-
-⚠️ ওজন না বাড়লে বা কমলে পুষ্টিবিদ বা ডাক্তার দেখান।` },
-
-  // মাইলস্টোন
-  { keys:['হাটা','কথা','বসা','দাঁড়া','milestone','হাসা','বিকাশ','development'], reply:`🎯 **শিশুর বিকাশ মাইলস্টোন:**
-
-• ১-২ মাস: হাসি দেয়, শব্দে সাড়া দেয়
-• ৩-৪ মাস: মাথা ধরে, গড়াগড়ি দেয়
-• ৬ মাস: সাহায্যে বসে, খাবারে আগ্রহ
-• ৯ মাস: একা বসে, হামাগুড়ি দেয়
-• ১২ মাস: দাঁড়ায়, প্রথম পদক্ষেপ, ২-৩ শব্দ
-• ১৮ মাস: ভালো হাঁটে, ১০+ শব্দ বলে
-• ২৪ মাস: দৌড়ায়, ছোট বাক্য বলে
-
-⚠️ বিলম্ব দেখলে শিশু বিশেষজ্ঞ দেখান।` },
-
-  // মানসিক স্বাস্থ্য
-  { keys:['কান্না','বিষণ্ণ','মন খারাপ','depression','stress','চাপ','একা','postpartum'], reply:`💗 **মায়ের মানসিক স্বাস্থ্য:**
-
-প্রসব পরবর্তী মন খারাপ (Postpartum Depression) অনেক মায়েরই হয় — এটা স্বাভাবিক, দোষের না।
-
-লক্ষণ: অতিরিক্ত কান্না, ক্লান্তি, শিশুর সাথে বন্ধন না হওয়া
-
-করণীয়:
-• পরিবারকে জানান, একা বহন করবেন না
-• পর্যাপ্ত ঘুম নিন (শিশু ঘুমালে আপনিও ঘুমান)
-• বাইরে হাঁটুন, রোদ পান
-• ডাক্তার বা মনোরোগ বিশেষজ্ঞের সাথে কথা বলুন
-
-📞 জাতীয় হেল্পলাইন: **16000**` },
-
-  // জরুরি
-  { keys:['জরুরি','emergency','বিপদ','অজ্ঞান','খিঁচুনি','নীল','শ্বাস'], reply:`🚨 **এখনই হাসপাতাল যান যদি:**
-
-• শ্বাস নিতে কষ্ট হচ্ছে বা অনিয়মিত শ্বাস
-• ঠোঁট বা নখ নীল হয়ে যাচ্ছে
-• অজ্ঞান বা অচেতন অবস্থা
-• খিঁচুনি হচ্ছে
-• ২৪ ঘণ্টার বেশি প্রস্রাব নেই
-• ১০৩°F এর বেশি জ্বর কমছে না
-• শিশু সম্পূর্ণ খাওয়া বন্ধ করেছে
-
-📞 জাতীয় স্বাস্থ্য হেল্পলাইন: **16000**
-🏥 নিকটস্থ সরকারি হাসপাতালে যান।` },
-
-  // সালাম / হ্যালো
-  { keys:['সালাম','হ্যালো','hello','hi','হাই','কেমন','কি খবর','ভালো'], reply:`আস-সালামু আলাইকুম! 😊 আমি **FutFul Help Desk**।
-
-আমি আপনাকে সাহায্য করতে পারি:
-• 🤒 শিশুর রোগ ও চিকিৎসা পরামর্শ
-• 💉 টিকা সময়সূচি
-• 🥗 পুষ্টি ও খাবার গাইড
-• 📊 বৃদ্ধি ও বিকাশ তথ্য
-• 🤱 স্তন্যপান পরামর্শ
-• 💗 মায়ের স্বাস্থ্য
-
-যেকোনো প্রশ্ন করুন বাংলায়!` },
-];
-
-function getBotReply(text) {
-  const t = text.toLowerCase();
-  for (const item of HELPDESK_KB) {
-    if (item.keys.some(k => t.includes(k))) {
-      return item.reply;
+async function likePost(pid,btn){
+  try{
+    const lr=db.collection('posts').doc(pid).collection('likes').doc(CU.uid);
+    const doc=await lr.get();
+    if(doc.exists){
+      await lr.delete();
+      await db.collection('posts').doc(pid).update({likeCount:firebase.firestore.FieldValue.increment(-1)});
+    }else{
+      await lr.set({userId:CU.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      await db.collection('posts').doc(pid).update({likeCount:firebase.firestore.FieldValue.increment(1)});
+      btn.classList.add('liked');
     }
-  }
-  // Default response
-  return `আমি বুঝতে পারিনি। নিচের বিষয়ে প্রশ্ন করতে পারেন:
+    loadPosts(Q('#postSearch').value);
+  }catch(e){}
+}
+async function openCmt(pid){
+  currentPostId=pid;Q('#cmtList').innerHTML='<div class="spin"></div>';openMo('mo-cmt');
+  try{
+    const snap=await db.collection('posts').doc(pid).collection('comments').orderBy('createdAt').get();
+    const cmts=snap.docs.map(d=>d.data());
+    Q('#cmtList').innerHTML=cmts.length?cmts.map(c=>`<div style="padding:8px 0;border-bottom:1px solid var(--br)">
+      <div style="font-size:.8rem;font-weight:600">${esc(c.authorName||'')}</div>
+      <div style="font-size:.78rem;color:var(--t2);margin-top:3px">${esc(c.text||'')}</div></div>`).join('')
+    :'<p style="color:var(--t3);font-size:.8rem">কোনো মন্তব্য নেই</p>';
+  }catch(e){}
+}
+async function addCmt(){
+  const text=Q('#cmtInp').value.trim();
+  if(!text||!currentPostId)return;
+  try{
+    await db.collection('posts').doc(currentPostId).collection('comments').add({text,authorId:CU.uid,authorName:CU.displayName||'ব্যবহারকারী',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    await db.collection('posts').doc(currentPostId).update({commentCount:firebase.firestore.FieldValue.increment(1)});
+    Q('#cmtInp').value='';toast('মন্তব্য যোগ হয়েছে ✓','s');openCmt(currentPostId);
+  }catch(e){toast('সমস্যা: '+e.message,'e');}
+}
+function filterPosts(q){loadPosts(q);}
 
-• জ্বর, কাশি, সর্দি, ডায়রিয়া
-• টিকা সময়সূচি
-• খাবার ও পুষ্টি গাইড
-• বৃদ্ধি ও বিকাশ
-• স্তন্যপান পরামর্শ
-• মায়ের মানসিক স্বাস্থ্য
-• জরুরি স্বাস্থ্য সমস্যা
-
-উদাহরণ: "শিশুর জ্বর হলে কি করব?" লিখুন।`;
+// ══ SHOP ══
+async function loadProds(cat='all'){
+  const el=Q('#prodGrid');if(!el)return;el.innerHTML='<div class="spin"></div>';
+  try{
+    let q=db.collection('products');
+    if(cat!=='all')q=q.where('category','==',cat);
+    const snap=await q.get();
+    const prods=snap.docs.map(d=>({id:d.id,...d.data()}));
+    el.innerHTML=prods.length?`<div class="pgrid">${prods.map(prodCard).join('')}</div>`:'<p style="color:var(--t3);font-size:.8rem">কোনো পণ্য নেই — Admin থেকে পণ্য যোগ করুন</p>';
+  }catch(e){el.innerHTML='<p style="color:var(--t3);font-size:.8rem">লোড করতে পারছে না</p>';}
+}
+function prodCard(p){
+  return `<div class="pcard" onclick='openProd(${JSON.stringify(p).replace(/"/g,"&quot;")})'>
+    ${p.imageUrl?`<img class="pimg2" src="${esc(p.imageUrl)}" style="width:100%;height:125px;object-fit:cover" onerror="this.parentElement.querySelector('.pimg2').style.display='none'"/>`:`<div class="pimg2">${p.category==='toy'?'🧸':p.category==='food'?'🍼':p.category==='care'?'🧴':p.category==='fashion'?'👗':'📦'}</div>`}
+    <div class="pinf"><div class="pnm2">${esc(p.name||'')}</div>
+    <div style="margin-top:4px"><span class="ppr">৳${p.price||0}</span> ${p.originalPrice?`<span class="pop">৳${p.originalPrice}</span>`:''}</div></div></div>`;
+}
+function openProd(p){
+  currentProd=p;
+  Q('#pMN').textContent=p.name||'';Q('#pMD').textContent=p.description||'';
+  Q('#pMP').textContent='৳'+(p.price||0);Q('#pMO').textContent=p.originalPrice?'৳'+p.originalPrice:'';
+  const img=Q('#pMI');if(p.imageUrl){img.src=p.imageUrl;img.style.display='block';}else img.style.display='none';
+  Q('#pMS').textContent=p.inStock===false?'স্টক নেই':'স্টক আছে';
+  Q('#pMS').className='bdg '+(p.inStock===false?'bd2':'bok');
+  openMo('mo-prod');
+}
+async function placeOrder(){
+  if(!currentProd)return;
+  if(currentProd.inStock===false)return toast('স্টক নেই','e');
+  try{
+    await db.collection('orders').add({userId:CU.uid,userName:CU.displayName||'',productId:currentProd.id,productName:currentProd.name,price:currentProd.price,status:'pending',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    toast('অর্ডার সফল হয়েছে 🎉','s');closeMo('mo-prod');
+  }catch(e){toast('সমস্যা: '+e.message,'e');}
+}
+function filterProd(el,cat){
+  Q('#catTabs').querySelectorAll('.stab').forEach(t=>t.classList.remove('on'));el.classList.add('on');loadProds(cat);
+}
+async function loadEbooks(){
+  const el=Q('#ebookList');if(!el)return;el.innerHTML='<div class="spin"></div>';
+  try{
+    const snap=await db.collection('ebooks').get();
+    const books=snap.docs.map(d=>({id:d.id,...d.data()}));
+    el.innerHTML=books.length?books.map(b=>`<div class="card" style="display:flex;align-items:center;gap:11px">
+      <span style="font-size:1.9rem">📚</span>
+      <div style="flex:1"><div style="font-size:.86rem;font-weight:700">${esc(b.title||'')}</div>
+      <div style="font-size:.72rem;color:var(--t2);margin-top:2px">${esc(b.description||'')}</div></div>
+      <a href="${esc(b.url||'#')}" target="_blank" class="btn bp" style="padding:7px 11px;font-size:.74rem">📥 ডাউনলোড</a></div>`).join('')
+    :'<p style="color:var(--t3);font-size:.8rem">কোনো E-Book নেই</p>';
+  }catch(e){el.innerHTML='<p style="color:var(--t3);font-size:.8rem">লোড করতে পারছে না</p>';}
+}
+async function loadOrders(){
+  const el=Q('#orderList');if(!el)return;el.innerHTML='<div class="spin"></div>';
+  try{
+    const snap=await db.collection('orders').where('userId','==',CU.uid).get();
+    const orders=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    const sBn={pending:'অপেক্ষামান',confirmed:'নিশ্চিত',shipped:'পাঠানো হয়েছে',delivered:'পৌঁছেছে',cancelled:'বাতিল'};
+    el.innerHTML=orders.length?orders.map(o=>`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:.86rem;font-weight:700">${esc(o.productName||'')}</div>
+      <span class="bdg bok">${sBn[o.status]||o.status}</span></div>
+      <div style="font-size:.78rem;color:var(--t2);margin-top:4px">মূল্য: ৳${o.price||0}</div></div>`).join('')
+    :'<p style="color:var(--t3);font-size:.8rem">কোনো অর্ডার নেই</p>';
+  }catch(e){el.innerHTML='<p style="color:var(--t3);font-size:.8rem">লোড করতে পারছে না</p>';}
 }
 
-function sendMsg() {
-  const inp = Q('#cinput'), text = inp.value.trim();
-  if (!text) return;
-  inp.value = '';
-  inp.style.height = 'auto';
-  addBubble('user', text);
+// ══ EARN ══
+async function loadPts(){
+  if(!CU)return;
+  try{
+    const doc=await db.collection('users').doc(CU.uid).get();
+    userPts=doc.data()?.points||0;
+    const streak=doc.data()?.streak||0;
+    if(Q('#earnPts'))Q('#earnPts').textContent=userPts;
+    if(Q('#profilePts'))Q('#profilePts').textContent='🪙 '+userPts+' পয়েন্ট';
+    if(Q('#streakInfo'))Q('#streakInfo').textContent=`🔥 ${streak} দিনের ধারাবাহিকতা`;
+  }catch(e){}
+}
+async function loadEarnPage(){
+  await loadPts();
+  const today=new Date().toISOString().split('T')[0];
+  try{
+    const doc=await db.collection('loginBonuses').doc(CU.uid).get();
+    const last=doc.exists?doc.data()?.lastClaim:'';
+    const btn=Q('#bonusBtn');
+    if(last===today){btn.disabled=true;btn.textContent='✅ আজকের বোনাস নেওয়া হয়েছে';}
+    else{btn.disabled=false;btn.textContent='🎁 দৈনিক বোনাস নিন (+১০ পয়েন্ট)';}
+  }catch(e){}
+  try{
+    const snap=await db.collection('users').doc(CU.uid).collection('pointsLog').orderBy('createdAt','desc').limit(10).get();
+    const logs=snap.docs.map(d=>d.data());
+    Q('#ptsLog').innerHTML=logs.length?logs.map(l=>`<div class="plog">
+      <span style="font-size:.8rem">${esc(l.reason||'')}</span>
+      <span style="font-weight:700;color:var(--a)">+${l.points||0} পয়েন্ট</span></div>`).join('')
+    :'<p style="color:var(--t3);font-size:.8rem">কোনো ইতিহাস নেই</p>';
+  }catch(e){}
+}
+async function claimBonus(){
+  const today=new Date().toISOString().split('T')[0];
+  const btn=Q('#bonusBtn');
+  try{
+    const doc=await db.collection('loginBonuses').doc(CU.uid).get();
+    if(doc.exists&&doc.data()?.lastClaim===today)return toast('আজকের বোনাস নেওয়া হয়েছে','i');
+    const prev=doc.exists?doc.data()?.streak||0:0;
+    const prevDate=doc.exists?doc.data()?.lastClaim:'';
+    const yesterday=new Date(Date.now()-86400000).toISOString().split('T')[0];
+    const newStreak=prevDate===yesterday?prev+1:1;
+    await db.collection('loginBonuses').doc(CU.uid).set({lastClaim:today,streak:newStreak});
+    await db.collection('users').doc(CU.uid).update({points:firebase.firestore.FieldValue.increment(10),streak:newStreak});
+    await db.collection('users').doc(CU.uid).collection('pointsLog').add({reason:'দৈনিক লগইন বোনাস',points:10,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    toast(`🎉 ১০ পয়েন্ট পেয়েছেন! ধারাবাহিকতা: ${newStreak} দিন`,'s');
+    btn.disabled=true;btn.textContent='✅ আজকের বোনাস নেওয়া হয়েছে';
+    loadPts();
+  }catch(e){toast('সমস্যা: '+e.message,'e');}
+}
 
-  // Typing indicator
-  const el = Q('#cmsgs');
-  const ti = document.createElement('div');
-  ti.id = 'ctyp'; ti.className = 'cm bot';
-  ti.innerHTML = `<div class="cav2 bav">🏥</div><div class="bbl"><div class="ti-wrap"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div></div>`;
-  el.appendChild(ti); el.scrollTop = el.scrollHeight;
+// ══ TOOLS ══
+function calcAge(){
+  const bd=Q('#ageBd').value;if(!bd)return;
+  const months=ageM(bd),years=Math.floor(months/12),rem=months%12;
+  Q('#ageV').textContent=`${years} বছর ${rem} মাস`;Q('#ageRes').style.display='block';
+}
+function convW(from){
+  if(from==='kg'){const v=parseFloat(Q('#wkg').value)||0;Q('#wlb').value=(v*2.20462).toFixed(2);}
+  else{const v=parseFloat(Q('#wlb').value)||0;Q('#wkg').value=(v/2.20462).toFixed(2);}
+}
+function calcDose(){
+  const wt=parseFloat(Q('#doseWt').value)||0;if(!wt)return;
+  const dose=(wt*15)/125*5;
+  Q('#doseV').textContent=dose.toFixed(1)+' ml';Q('#doseRes').style.display='block';
+}
 
-  // Simulate thinking delay
-  setTimeout(() => {
+// ══ HELPDESK CHATBOT ══
+function fmtR(text){return text.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');}
+function addBubble(role,text,scroll=true){
+  const el=Q('#cmsgs');if(!el)return;
+  const d=document.createElement('div');d.className=`cm ${role==='user'?'u':'bot'}`;
+  const icon=role==='user'?'👩':'🏥',cls=role==='user'?'uav':'bav';
+  const content=role==='user'?esc(text):fmtR(text);
+  d.innerHTML=`<div class="ca2 ${cls}">${icon}</div><div class="bbl">${content}</div>`;
+  el.appendChild(d);if(scroll)el.scrollTop=el.scrollHeight;
+}
+function getBotReply(text){
+  const t=text.toLowerCase();
+  for(const item of KB){if(item.k.some(k=>t.includes(k)))return item.r;}
+  return `আমি বুঝতে পারিনি। নিচের বিষয়ে প্রশ্ন করুন:\n\n• জ্বর, কাশি, সর্দি, ডায়রিয়া\n• টিকা সময়সূচি\n• খাবার ও পুষ্টি গাইড\n• বৃদ্ধি ও বিকাশ মাইলস্টোন\n• স্তন্যপান পরামর্শ\n• জরুরি স্বাস্থ্য সমস্যা\n• পয়েন্ট অর্জন\n\nউদাহরণ: "শিশুর জ্বর হলে কি করব?"`;
+}
+function ckEnter(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
+function sendMsg(){
+  const inp=Q('#cinput'),text=inp.value.trim();if(!text)return;
+  inp.value='';
+  chatHist.push({role:'user',content:text});
+  addBubble('user',text);
+  const el=Q('#cmsgs');
+  const ti=document.createElement('div');ti.id='ctyp';ti.className='cm bot';
+  ti.innerHTML=`<div class="ca2 bav">🏥</div><div class="bbl"><div class="tiw"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div></div>`;
+  el.appendChild(ti);el.scrollTop=el.scrollHeight;
+  setTimeout(()=>{
     Q('#ctyp')?.remove();
-    const reply = getBotReply(text);
-    addBubble('assistant', reply);
-  }, 800);
+    const reply=getBotReply(text);
+    chatHist.push({role:'assistant',content:reply});
+    addBubble('assistant',reply);
+    localStorage.setItem('ff_chat',JSON.stringify(chatHist.slice(-40)));
+  },600);
+}
+function clrChat(){
+  chatHist=[];localStorage.removeItem('ff_chat');
+  Q('#cmsgs').innerHTML=`<div class="cm bot"><div class="ca2 bav">🏥</div><div class="bbl">চ্যাট মুছে ফেলা হয়েছে। নতুন প্রশ্ন করুন! 😊</div></div>`;
 }
 
-function clrChat() {
-  chatHist=[]; localStorage.removeItem('ff_chat');
-  Q('#cmsgs').innerHTML=`<div class="cm bot"><div class="cav2 bav">🏥</div><div class="bbl">চ্যাট মুছে ফেলা হয়েছে। নতুন প্রশ্ন করুন! 😊</div></div>`;
+// ══ MODAL & TOAST ══
+function openMo(id){Q('#'+id).classList.add('on');}
+function closeMo(id){Q('#'+id).classList.remove('on');}
+document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.target.classList.remove('on');});
+function toast(msg,type='i'){
+  const tc=Q('#tc'),t=document.createElement('div');
+  t.className=`t ${type}`;t.textContent=msg;
+  tc.appendChild(t);setTimeout(()=>t.remove(),3100);
 }
 
-// ═══════════════════════════════════
-// MODAL
-// ═══════════════════════════════════
-function openMo(id) { Q('#'+id).classList.add('on'); }
-function closeMo(id) { Q('#'+id).classList.remove('on'); }
-QA('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('on')}));
-
-// ═══════════════════════════════════
-// TOAST
-// ═══════════════════════════════════
-function toast(msg, type='i') {
-  const tc = Q('#tc'), t = document.createElement('div');
-  t.className=`t ${type}`; t.textContent=msg;
-  tc.appendChild(t);
-  setTimeout(()=>t.remove(), 3100);
-}
-
-// ═══════════════════════════════════
-// UTILS
-// ═══════════════════════════════════
-function Q(s) { return document.querySelector(s); }
-function QA(s) { return document.querySelectorAll(s); }
-function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function ageMonths(bd) {
-  if (!bd) return 0;
-  const now=new Date(), d=new Date(bd);
-  return (now.getFullYear()-d.getFullYear())*12+(now.getMonth()-d.getMonth());
-}
+// ══ UTILS ══
+function Q(s){return document.querySelector(s);}
+function QA(s){return document.querySelectorAll(s);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function ageM(bd){if(!bd)return 0;const now=new Date(),d=new Date(bd);return(now.getFullYear()-d.getFullYear())*12+(now.getMonth()-d.getMonth());}
 </script>
 </body>
 </html>

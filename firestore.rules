@@ -1,0 +1,173 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper Functions ──
+    function isAuth()  { return request.auth != null; }
+    function isMe(uid) { return request.auth.uid == uid; }
+    function isAdmin() { return request.auth.uid == 'kW8tMNo8IkejWQsMzCnnwjgVaUa2'; }
+
+    // ── USERS ──
+    match /users/{uid} {
+      allow read:   if isMe(uid) || isAdmin();
+      allow create: if isMe(uid);
+      allow update: if isAdmin() || (isMe(uid) &&
+        !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['role','userType','banned','points','balance']));
+      allow delete: if isAdmin();
+
+      // শিশুর growth data
+      match /growth/{id} {
+        allow read, write: if isMe(uid) || isAdmin();
+      }
+      // শিশুর তথ্য
+      match /children/{cid} {
+        allow read, write: if isMe(uid) || isAdmin();
+      }
+      // টিকার status
+      match /vaccines/{vid} {
+        allow read, write: if isMe(uid) || isAdmin();
+      }
+      // মাইলস্টোন
+      match /milestones/{mid} {
+        allow read, write: if isMe(uid) || isAdmin();
+      }
+      // দৈনিক লগ
+      match /logs/{lid} {
+        allow read, write: if isMe(uid) || isAdmin();
+      }
+    }
+
+    // ── BANNERS (Admin লেখে, সবাই পড়ে) ──
+    match /banners/{id} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // ── GIFTS / OFFERS (Admin লেখে, সবাই পড়ে) ──
+    match /gifts/{id} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // ── COMMUNITY POSTS ──
+    match /posts/{pid} {
+      allow read:   if isAuth();
+      allow create: if isAuth() &&
+        request.resource.data.authorId == request.auth.uid;
+      allow update: if isAdmin() ||
+        (isAuth() && resource.data.authorId == request.auth.uid);
+      allow delete: if isAdmin() ||
+        (isAuth() && resource.data.authorId == request.auth.uid);
+
+      // পোস্টের Comments
+      match /comments/{cid} {
+        allow read:   if isAuth();
+        allow create: if isAuth() &&
+          request.resource.data.authorId == request.auth.uid;
+        allow update: if isAdmin() ||
+          (isAuth() && resource.data.authorId == request.auth.uid);
+        allow delete: if isAdmin() ||
+          (isAuth() && resource.data.authorId == request.auth.uid);
+      }
+
+      // পোস্টের Likes
+      match /likes/{lid} {
+        allow read:   if isAuth();
+        allow write:  if isAuth() && lid == request.auth.uid;
+      }
+    }
+
+    // ── PRODUCTS (Admin লেখে, login করা সবাই পড়ে) ──
+    match /products/{id} {
+      allow read:  if isAuth();
+      allow write: if isAdmin();
+
+      // পণ্যের Reviews
+      match /reviews/{rid} {
+        allow read:  if isAuth();
+        allow create: if isAuth() &&
+          request.resource.data.userId == request.auth.uid;
+        allow update, delete: if isAdmin() ||
+          (isAuth() && resource.data.userId == request.auth.uid);
+      }
+    }
+
+    // ── ORDERS ──
+    match /orders/{id} {
+      allow read:   if isAdmin() ||
+        (isAuth() && resource.data.userId == request.auth.uid);
+      allow create: if isAuth() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'pending';
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── EBOOKS / PDFs (Admin লেখে, সবাই পড়ে) ──
+    match /ebooks/{id} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // ── EARN / POINTS ──
+    match /points/{uid} {
+      allow read:  if isMe(uid) || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /pointsLog/{id} {
+      allow read:  if isAuth() && resource.data.userId == request.auth.uid;
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    match /loginBonuses/{uid} {
+      allow read:  if isMe(uid) || isAdmin();
+      allow write: if isMe(uid) || isAdmin();
+    }
+
+    // ── NOTIFICATIONS ──
+    match /notifications/{id} {
+      allow read:   if isAuth() &&
+        resource.data.userId == request.auth.uid;
+      allow create: if isAdmin();
+      allow update: if isAuth() &&
+        resource.data.userId == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    // ── TRANSACTIONS ──
+    match /transactions/{id} {
+      allow read:   if isAdmin() ||
+        (isAuth() && resource.data.userId == request.auth.uid);
+      allow create: if isAuth() &&
+        request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // ── REFERRALS ──
+    match /referrals/{id} {
+      allow read:   if isAdmin() || isAuth();
+      allow create: if isAuth();
+      allow update, delete: if isAdmin();
+    }
+
+    // ── TOOLS / APP CONTENT ──
+    match /healthTips/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /newsletter/{id} {
+      allow read:  if isAdmin();
+      allow create: if isAuth();
+      allow update, delete: if isAdmin();
+    }
+
+    match /appSettings/{id} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+  }
+}
