@@ -1,8 +1,0 @@
-{
-  "version": 2,
-  "routes": [
-    { "src": "/admin", "dest": "/admin.html" },
-    { "src": "/admin/", "dest": "/admin.html" },
-    { "src": "/((?!admin\\.html|favicon\\.ico).*)", "dest": "/index.html" }
-  ]
-}
