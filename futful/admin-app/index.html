@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FutFul Admin Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="admin-style.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="login-screen">
+  <div class="lg-bg"><div class="lb1"></div><div class="lb2"></div></div>
+  <div class="lg-wrap">
+    <div class="lg-logo">
+      <div style="font-size:56px">🌸</div>
+      <h1>FutFul Admin</h1>
+      <p>অ্যাডমিন প্যানেল — সুরক্ষিত লগইন</p>
+    </div>
+    <div class="lg-card">
+      <div class="fg"><label>অ্যাডমিন ইমেইল</label><input type="email" id="aEmail" class="ai" placeholder="mhtotul9@gmail.com"></div>
+      <div class="fg"><label>পাসওয়ার্ড</label>
+        <div style="position:relative">
+          <input type="password" id="aPass" class="ai" placeholder="পাসওয়ার্ড দিন" onkeypress="if(event.key==='Enter')aLogin()" style="padding-right:40px">
+          <button onclick="tgPass()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:16px" id="eyeBtn">👁</button>
+        </div>
+      </div>
+      <button onclick="aLogin()" class="abtn-p w100" id="loginBtn">লগইন করুন</button>
+      <p id="lgErr" style="color:#ff4757;font-size:13px;margin-top:10px;text-align:center;min-height:18px"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="adminApp" class="admin-app hidden">
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sb-logo">
+      <span>🌸</span>
+      <span class="sb-txt">FutFul Admin</span>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-grp">প্রধান</div>
+      <a class="si active" id="si-dashboard" onclick="aPage('dashboard')"><span>📊</span><span class="si-txt">ড্যাশবোর্ড</span></a>
+      <a class="si" id="si-users" onclick="aPage('users')"><span>👥</span><span class="si-txt">ব্যবহারকারী</span></a>
+      <a class="si" id="si-community" onclick="aPage('community')"><span>💬</span><span class="si-txt">কমিউনিটি</span></a>
+
+      <div class="sb-grp">পণ্য ও বিক্রয়</div>
+      <a class="si" id="si-products" onclick="aPage('products')"><span>🛍️</span><span class="si-txt">পণ্য ব্যবস্থাপনা</span></a>
+      <a class="si" id="si-orders" onclick="aPage('orders')"><span>📦</span><span class="si-txt">অর্ডার</span></a>
+      <a class="si" id="si-ebooks" onclick="aPage('ebooks')"><span>📚</span><span class="si-txt">ই-বুক</span></a>
+      <a class="si" id="si-revenue" onclick="aPage('revenue')"><span>💰</span><span class="si-txt">রাজস্ব</span></a>
+
+      <div class="sb-grp">কন্টেন্ট</div>
+      <a class="si" id="si-banners" onclick="aPage('banners')"><span>🖼️</span><span class="si-txt">ব্যানার</span></a>
+      <a class="si" id="si-notifications" onclick="aPage('notifications')"><span>🔔</span><span class="si-txt">বিজ্ঞপ্তি</span></a>
+      <a class="si" id="si-health" onclick="aPage('health')"><span>🏥</span><span class="si-txt">স্বাস্থ্য ও টিকা</span></a>
+
+      <div class="sb-grp">পয়েন্ট</div>
+      <a class="si" id="si-points" onclick="aPage('points')"><span>⭐</span><span class="si-txt">পয়েন্ট ব্যবস্থাপনা</span></a>
+
+      <div class="sb-grp">সিস্টেম</div>
+      <a class="si" id="si-analytics" onclick="aPage('analytics')"><span>📈</span><span class="si-txt">বিশ্লেষণ</span></a>
+      <a class="si" id="si-settings" onclick="aPage('settings')"><span>⚙️</span><span class="si-txt">সেটিংস</span></a>
+    </nav>
+    <div class="sb-foot">
+      <div class="sb-user">
+        <div class="sb-av" id="sbAv">A</div>
+        <div class="sb-uinfo">
+          <div id="sbName" style="font-size:13px;font-weight:600">অ্যাডমিন</div>
+          <div style="font-size:10px;opacity:.5">Super Admin</div>
+        </div>
+      </div>
+      <button onclick="aLogout()" class="sb-logout" title="লগআউট">⏻</button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-wrap">
+    <header class="a-header">
+      <button onclick="toggleSB()" class="menu-ico">☰</button>
+      <div class="ah-title" id="pageTitle">ড্যাশবোর্ড</div>
+      <div class="ah-right">
+        <span id="ahClock" class="ah-clock"></span>
+        <button class="ah-btn" onclick="aPage('notifications')">🔔<span class="abd hidden" id="nBadge">0</span></button>
+        <button class="ah-btn" onclick="aLogout()">⏻</button>
+      </div>
+    </header>
+    <div id="aContent" class="a-content"></div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="aModal" class="a-modal-bg hidden" onclick="closeAModal()">
+  <div class="a-modal-box" onclick="event.stopPropagation()">
+    <button onclick="closeAModal()" class="a-modal-close">✕</button>
+    <div id="aModalBody"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="aToast" class="a-toast hidden"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
