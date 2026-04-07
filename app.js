@@ -20,6 +20,12 @@ const auth    = firebase.auth();
 const db      = firebase.database();
 const storage = firebase.storage();
 
+// ── Firebase Auth Persistence: ইমেইল/পাসওয়ার্ড Browser-এ সেভ থাকবে ──
+// LOCAL = ব্রাউজার বন্ধ করলেও সেশন থাকবে, বার বার লগইন লাগবে না
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+// ── NO localStorage/sessionStorage/cookie — সব data Firebase-এ ──
+
 // ── App State ─────────────────────────────────────────
 let cUser       = null;   // current Firebase user
 let cPage       = 'home';
@@ -82,6 +88,7 @@ async function doLogin() {
   toast('লগইন হচ্ছে...');
   try {
     await auth.signInWithEmailAndPassword(email, pass);
+    // Firebase auth persistence handles browser credential saving automatically
   } catch(e) { toast(authErr(e.code), 'error'); }
 }
 
@@ -90,21 +97,25 @@ async function doRegister() {
   const email = document.getElementById('rEmail')?.value.trim();
   const phone = document.getElementById('rPhone')?.value.trim();
   const pass  = document.getElementById('rPass')?.value;
-  if (!name)  return toast('নাম দিন', 'error');
+  if (!name)  return toast('আপনার নাম দিন', 'error');
   if (!email) return toast('ইমেইল দিন', 'error');
-  if (!pass || pass.length < 6) return toast('পাসওয়ার্ড কমপক্ষে ৬ অক্ষর', 'error');
+  if (!pass || pass.length < 6) return toast('পাসওয়ার্ড কমপক্ষে ৬ অক্ষর হতে হবে', 'error');
   toast('রেজিস্ট্রেশন হচ্ছে...');
   try {
     const c = await auth.createUserWithEmailAndPassword(email, pass);
     await c.user.updateProfile({ displayName: name });
+    // সব ডেটা Firebase-এ সেভ হবে — কোনো localStorage নয়
     await db.ref('users/' + c.user.uid).set({
-      name, email, phone: phone || '',
-      createdAt: Date.now(), role: 'user'
+      name, email,
+      phone: phone || '',
+      createdAt: Date.now(),
+      role: 'user'
     });
-    toast('রেজিস্ট্রেশন সফল ✓', 'success');
+    toast('রেজিস্ট্রেশন সফল হয়েছে ✓', 'success');
   } catch(e) { toast(authErr(e.code), 'error'); }
 }
 
+// Google login সরানো হয়েছে — শুধু ম্যানুয়াল Email/Password
 
 function authErr(code) {
   const m = {
@@ -126,7 +137,6 @@ async function bootApp() {
   show('chatFab');
   await loadUserData();
   goPage('home');
-  checkDailyBonusAlert();
   loadNotifBadge();
 }
 
@@ -732,101 +742,67 @@ async function placeOrder() {
 //  EARN PAGE
 // ══════════════════════════════════════════════════════
 async function earn(el) {
-  let bonusClaimed = false, streak = 0;
-  try {
-    const bSnap = await db.ref('dailyBonus/' + cUser.uid).once('value');
-    if (bSnap.exists()) {
-      const bd = bSnap.val();
-      streak = bd.streak || 0;
-      bonusClaimed = bd.lastLoginDate === new Date().toDateString();
-    }
-  } catch(e) {}
-
   el.innerHTML = `
   <div class="pad">
-    <div class="pts-hero" style="background:linear-gradient(135deg,#ff6b9d,#c850c0);border-radius:20px;padding:24px;margin-bottom:18px;text-align:center">
-      <div style="font-size:40px;margin-bottom:8px">💰</div>
-      <h2 style="color:#fff;font-size:20px;margin-bottom:4px">উপার্জন সেকশন</h2>
-      <p style="color:rgba(255,255,255,.75);font-size:13px">প্রতিদিন লগইন করুন ও গেম খেলুন</p>
-      <div style="margin-top:12px;color:#fff;font-size:14px">🔥 ধারাবাহিক: <strong>${streak} দিন</strong></div>
+
+    <!-- Hero Banner -->
+    <div style="background:linear-gradient(135deg,#ff6b9d,#c77dff,#06d6a0);border-radius:var(--R);padding:26px 20px;text-align:center;margin-bottom:20px;box-shadow:0 12px 32px rgba(255,107,157,.28)">
+      <div style="font-size:52px;margin-bottom:8px">💸</div>
+      <div style="color:#fff;font-size:22px;font-weight:700;margin-bottom:6px">উপার্জন করুন</div>
+      <div style="color:rgba(255,255,255,.8);font-size:14px;line-height:1.6">গেম খেলুন অথবা ব্যবসা শুরু করুন<br>এবং আপনার আয় বাড়ান</div>
     </div>
 
-    <!-- Daily Bonus -->
-    <div class="earn-card daily" id="dailyCard">
-      <div class="earn-hdr">
-        <div class="earn-ico">🎁</div>
-        <div class="earn-inf">
-          <h3>দৈনিক লগইন বোনাস</h3>
-          <p>প্রতিদিন লগইন করুন এবং বোনাস পান</p>
-        </div>
-        <div class="earn-tag ${bonusClaimed ? 'green' : ''}">
-          ${bonusClaimed ? '✓ নেওয়া হয়েছে' : 'নিন'}
-        </div>
-      </div>
-      <div class="streak-row">
-        <div class="streak-lbl"><span>🔥 ধারা: ${streak} দিন</span></div>
-        <div class="prog-track"><div class="prog-fill" style="width:${Math.min((streak%7)/7*100,100)}%"></div></div>
-      </div>
-      ${bonusClaimed
-        ? '<div class="claimed-ov"><span>✅ আজকের বোনাস নেওয়া হয়েছে</span></div>'
-        : `<button onclick="claimBonus()" class="btn-main w100" style="margin-top:13px">🎁 দৈনিক বোনাস নিন</button>`}
-    </div>
-
-    <!-- Play Game -->
-    <div class="earn-card game" onclick="window.open('https://fut-ful-earning.vercel.app/','_blank')" style="cursor:pointer">
+    <!-- Play Game Button -->
+    <div class="earn-card game" style="cursor:pointer" onclick="window.open('https://fut-ful-earning.vercel.app/','_blank')">
       <div class="earn-hdr">
         <div class="earn-ico">🎮</div>
         <div class="earn-inf">
           <h3>Play Game</h3>
-          <p>মজার গেম খেলুন এবং পুরস্কার অর্জন করুন</p>
+          <p>গেম খেলুন এবং আয় করুন — মজার সাথে উপার্জন</p>
         </div>
-        <div class="earn-tag green">খেলুন ↗</div>
+        <div class="earn-tag" style="background:var(--or)">খুলুন ↗</div>
       </div>
-      <div style="margin-top:9px;color:rgba(255,255,255,.55);font-size:12px">🎯 কুইজ, পাজল ও বিভিন্ন গেম উপভোগ করুন</div>
+      <div style="margin-top:12px">
+        <button onclick="event.stopPropagation();window.open('https://fut-ful-earning.vercel.app/','_blank')" 
+          style="width:100%;padding:11px;background:linear-gradient(135deg,#ff9f43,#ff6b9d);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;letter-spacing:.5px">
+          🎮 Play Game — এখনই শুরু করুন
+        </button>
+      </div>
     </div>
 
-    <!-- Start Your Business -->
-    <div class="earn-card tele" onclick="window.open('https://new-start-business.vercel.app/','_blank')" style="cursor:pointer">
+    <!-- Start Your Business Button -->
+    <div class="earn-card tele" style="cursor:pointer" onclick="window.open('https://new-start-business.vercel.app/','_blank')">
       <div class="earn-hdr">
         <div class="earn-ico">💼</div>
         <div class="earn-inf">
           <h3>Start Your Business</h3>
-          <p>নিজের ব্যবসা শুরু করুন এবং আয় করুন</p>
+          <p>আপনার নিজের ব্যবসা শুরু করুন — সফলতার পথে এগিয়ে যান</p>
         </div>
-        <div class="earn-tag">শুরু করুন ↗</div>
+        <div class="earn-tag green">খুলুন ↗</div>
       </div>
-      <div style="margin-top:9px;color:rgba(255,255,255,.55);font-size:12px">📈 উদ্যোক্তা হোন, সফলতার পথে এগিয়ে যান</div>
+      <div style="margin-top:12px">
+        <button onclick="event.stopPropagation();window.open('https://new-start-business.vercel.app/','_blank')" 
+          style="width:100%;padding:11px;background:linear-gradient(135deg,#06d6a0,#4dabf7);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;letter-spacing:.5px">
+          💼 Start Your Business — এখনই শুরু করুন
+        </button>
+      </div>
+    </div>
+
+    <!-- Info Cards -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px">
+      <div style="background:rgba(255,107,157,.1);border:1px solid rgba(255,107,157,.2);border-radius:var(--R);padding:16px;text-align:center">
+        <div style="font-size:30px;margin-bottom:7px">🎯</div>
+        <div style="color:#fff;font-size:13px;font-weight:700">গেম খেলুন</div>
+        <div style="color:rgba(255,255,255,.55);font-size:11px;margin-top:3px;line-height:1.5">মজার গেম খেলে প্রতিদিন আয় করুন</div>
+      </div>
+      <div style="background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.2);border-radius:var(--R);padding:16px;text-align:center">
+        <div style="font-size:30px;margin-bottom:7px">🚀</div>
+        <div style="color:#fff;font-size:13px;font-weight:700">ব্যবসা শুরু করুন</div>
+        <div style="color:rgba(255,255,255,.55);font-size:11px;margin-top:3px;line-height:1.5">নিজের ব্যবসা গড়ে তুলুন সহজেই</div>
+      </div>
     </div>
 
   </div>`;
-}
-
-async function claimBonus() {
-  if (!cUser) return;
-  const today = new Date().toDateString();
-  const ref = db.ref('dailyBonus/' + cUser.uid);
-  try {
-    const snap = await ref.once('value');
-    if (snap.exists() && snap.val().lastLoginDate === today) {
-      return toast('আজ ইতিমধ্যে বোনাস নিয়েছেন', 'warn');
-    }
-    const yesterday = new Date(Date.now() - 86400000).toDateString();
-    const curStreak = (snap.exists() && snap.val().lastLoginDate === yesterday) ? (snap.val().streak || 0) + 1 : 1;
-    await ref.set({ lastLoginDate: today, streak: curStreak, updatedAt: Date.now() });
-    toast('🎉 বোনাস নেওয়া হয়েছে!', 'success');
-    earn(document.getElementById('pageArea'));
-  } catch(e) { toast('বোনাস নিতে সমস্যা হয়েছে', 'error'); }
-}
-
-
-async function checkDailyBonusAlert() {
-  if (!cUser) return;
-  try {
-    const snap = await db.ref('dailyBonus/' + cUser.uid).once('value');
-    if (!snap.exists() || snap.val().lastLoginDate !== new Date().toDateString()) {
-      setTimeout(() => toast('🎁 আজকের দৈনিক বোনাস নিন! উপার্জন সেকশনে যান', 'warn'), 4000);
-    }
-  } catch(e) {}
 }
 
 // ══════════════════════════════════════════════════════
@@ -1057,9 +1033,8 @@ async function subNewsletter() {
 async function profile(el) {
   const nm  = cUser?.displayName || 'ব্যবহারকারী';
   const em  = cUser?.email || '';
-  let pts=0, kids=0, ords=0;
+  let kids=0, ords=0;
   try {
-    const us = await db.ref('users/'+cUser.uid).once('value');
     const ks = await db.ref('users/'+cUser.uid+'/children').once('value');
     if(ks.exists()) kids=Object.keys(ks.val()).length;
     const os = await db.ref('orders').orderByChild('userId').equalTo(cUser.uid).once('value');
@@ -1077,8 +1052,9 @@ async function profile(el) {
       <div class="prof-em">${em}</div>
     </div>
     <div class="prof-stats">
-      <div class="ps-card"><div class="ps-val">${kids}</div><div class="ps-lbl">শিশু</div></div>
-      <div class="ps-card"><div class="ps-val">${ords}</div><div class="ps-lbl">অর্ডার</div></div>
+      <div class="ps-card"><div class="ps-val">${kids}</div><div class="ps-lbl">শিশু প্রোফাইল</div></div>
+      <div class="ps-card"><div class="ps-val">${ords}</div><div class="ps-lbl">মোট অর্ডার</div></div>
+      <div class="ps-card" onclick="goPage('earn')" style="cursor:pointer"><div class="ps-val">💰</div><div class="ps-lbl">উপার্জন</div></div>
     </div>
 
     <div class="sec-hdr" style="margin-top:6px">
@@ -1091,6 +1067,7 @@ async function profile(el) {
     <div class="menu-list">
       <div class="menu-item" onclick="editProf()"><span class="m-ico">✏️</span><span class="m-txt">প্রোফাইল সম্পাদনা</span><span class="m-arr">›</span></div>
       <div class="menu-item" onclick="changePass()"><span class="m-ico">🔒</span><span class="m-txt">পাসওয়ার্ড পরিবর্তন</span><span class="m-arr">›</span></div>
+      <div class="menu-item" onclick="goPage('earn')"><span class="m-ico">💰</span><span class="m-txt">উপার্জন সেকশন</span><span class="m-arr">›</span></div>
       <div class="menu-item" onclick="openOrderHist()"><span class="m-ico">📦</span><span class="m-txt">অর্ডার ইতিহাস</span><span class="m-arr">›</span></div>
       <div class="menu-item" onclick="openNotifications()"><span class="m-ico">🔔</span><span class="m-txt">নোটিফিকেশন</span><span class="m-arr">›</span></div>
       <div class="menu-item" onclick="openPrivacy()"><span class="m-ico">🛡️</span><span class="m-txt">গোপনীয়তা নীতি</span><span class="m-arr">›</span></div>
@@ -1683,7 +1660,7 @@ async function sendMsg() {
   const loadId='load'+Date.now();
   appendMsg('টাইপ করছে...','bot',loadId);
   try {
-    const sysPrompt=`আপনি FutFul Help Desk, একটি বাংলা ভাষার বিশেষজ্ঞ AI সহকারী। আপনি বিশেষভাবে শিশু যত্ন, মাতৃস্বাস্থ্য, শিশু পুষ্টি, টিকাদান কার্যক্রম, শিশু বিকাশ এবং মায়ের মানসিক স্বাস্থ্য বিষয়ে পরামর্শ দেন। সর্বদা বাংলায় উত্তর দিন। সংক্ষিপ্ত, স্পষ্ট এবং বন্ধুসুলভ হন। গুরুতর স্বাস্থ্য সমস্যায় সর্বদা ডাক্তারের পরামর্শ নেওয়ার কথা বলুন।`;
+    const sysPrompt=`আপনি FutFul Help Desk, একটি বাংলা ভাষার বিশেষজ্ঞ AI সহকারী। আপনি বিশেষভাবে শিশু যত্ন, মাতৃস্বাস্থ্য, শিশু পুষ্টি, টিকাদান কার্যক্রম, শিশু বিকাশ এবং মায়ের মানসিক স্বাস্থ্য বিষয়ে পরামর্শ দেন। সর্বদা বাংলায় উত্তর দিন। সালাম দিয়ে শুরু করুন (আস-সালামু আলাইকুম বা ওয়া আলাইকুমুস সালাম)। সংক্ষিপ্ত, স্পষ্ট এবং বন্ধুসুলভ হন। গুরুতর স্বাস্থ্য সমস্যায় সর্বদা ডাক্তারের পরামর্শ নেওয়ার কথা বলুন।`;
     const resp=await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_KEY}`,
       { method:'POST', headers:{'Content-Type':'application/json'},
@@ -1699,10 +1676,10 @@ async function sendMsg() {
 
 function fallbackReply(msg) {
   const f=[
-    'শিশুর স্বাস্থ্য বিষয়ে আপনার প্রশ্নের জন্য ধন্যবাদ। গুরুতর কোনো সমস্যায় অবশ্যই একজন শিশু বিশেষজ্ঞের পরামর্শ নিন। 👩‍⚕️',
-    'নিয়মিত টিকাদান শিশুকে অনেক রোগ থেকে রক্ষা করে। বাংলাদেশের EPI কর্মসূচি অনুসরণ করুন। 💉',
-    '৬ মাস পর্যন্ত শুধু বুকের দুধ শিশুর জন্য সর্বোত্তম। এরপর বয়স অনুযায়ী পরিপূরক খাবার শুরু করুন। 🍼',
-    'শিশুর জ্বর ৩৮°C এর বেশি হলে বা ৩ মাসের কম বয়সে যেকোনো জ্বরে দ্রুত ডাক্তার দেখান। 🌡️',
+    'ওয়া আলাইকুমুস সালাম! শিশুর স্বাস্থ্য বিষয়ে আপনার প্রশ্নের জন্য ধন্যবাদ। গুরুতর কোনো সমস্যায় অবশ্যই একজন শিশু বিশেষজ্ঞের পরামর্শ নিন। 👩‍⚕️',
+    'আস-সালামু আলাইকুম! নিয়মিত টিকাদান শিশুকে অনেক রোগ থেকে রক্ষা করে। বাংলাদেশের EPI কর্মসূচি অনুসরণ করুন। 💉',
+    'ওয়া আলাইকুমুস সালাম! ৬ মাস পর্যন্ত শুধু বুকের দুধ শিশুর জন্য সর্বোত্তম। এরপর বয়স অনুযায়ী পরিপূরক খাবার শুরু করুন। 🍼',
+    'আস-সালামু আলাইকুম! শিশুর জ্বর ৩৮°C এর বেশি হলে বা ৩ মাসের কম বয়সে যেকোনো জ্বরে দ্রুত ডাক্তার দেখান। 🌡️',
   ];
   return f[Math.floor(Math.random()*f.length)];
 }

@@ -36,19 +36,20 @@
     </div>
     <!-- Login Card -->
     <div id="loginBox" class="auth-card">
-      <h2>স্বাগতম 👋</h2>
-      <div class="field"><span class="fi">📧</span><input type="email" id="loginEmail" placeholder="ইমেইল ঠিকানা" class="f-inp" autocomplete="username"></div>
+      <h2>আস-সালামু আলাইকুম 👋</h2>
+      <p style="color:rgba(255,255,255,.6);font-size:13px;text-align:center;margin-bottom:16px">আপনার অ্যাকাউন্টে লগইন করুন</p>
+      <div class="field"><span class="fi">📧</span><input type="email" id="loginEmail" placeholder="ইমেইল ঠিকানা" class="f-inp" autocomplete="email"></div>
       <div class="field"><span class="fi">🔒</span><input type="password" id="loginPass" placeholder="পাসওয়ার্ড" class="f-inp" autocomplete="current-password" onkeypress="if(event.key==='Enter')doLogin()"><button class="eye-btn" onclick="togglePass('loginPass',this)">👁</button></div>
       <button class="btn-main w100" onclick="doLogin()">লগইন করুন</button>
-<p class="auth-switch">নতুন? <a onclick="showReg()">রেজিস্ট্রেশন করুন</a></p>
+      <p class="auth-switch">নতুন? <a onclick="showReg()">রেজিস্ট্রেশন করুন</a></p>
     </div>
     <!-- Register Card -->
     <div id="regBox" class="auth-card hidden">
       <h2>নতুন অ্যাকাউন্ট 🌸</h2>
       <div class="field"><span class="fi">👤</span><input type="text" id="rName" placeholder="আপনার পুরো নাম" class="f-inp"></div>
-      <div class="field"><span class="fi">📧</span><input type="email" id="rEmail" placeholder="ইমেইল ঠিকানা" class="f-inp" autocomplete="username"></div>
+      <div class="field"><span class="fi">📧</span><input type="email" id="rEmail" placeholder="ইমেইল ঠিকানা" class="f-inp"></div>
       <div class="field"><span class="fi">📱</span><input type="tel" id="rPhone" placeholder="মোবাইল নম্বর" class="f-inp"></div>
-      <div class="field"><span class="fi">🔒</span><input type="password" id="rPass" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)" class="f-inp" autocomplete="new-password"><button class="eye-btn" onclick="togglePass('rPass',this)">👁</button></div>
+      <div class="field"><span class="fi">🔒</span><input type="password" id="rPass" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)" class="f-inp"><button class="eye-btn" onclick="togglePass('rPass',this)">👁</button></div>
       <button class="btn-main w100" onclick="doRegister()">রেজিস্ট্রেশন করুন</button>
       <p class="auth-switch">ইতিমধ্যে অ্যাকাউন্ট আছে? <a onclick="showLogin()">লগইন করুন</a></p>
     </div>
