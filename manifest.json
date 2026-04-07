@@ -1,0 +1,16 @@
+{
+  "name": "FutFul - মাতৃত্ব ও শিশু যত্ন",
+  "short_name": "FutFul",
+  "description": "বাংলাদেশের মায়েদের জন্য সম্পূর্ণ শিশু যত্ন অ্যাপ",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1a0a2e",
+  "theme_color": "#ff6b9d",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "categories": ["health", "lifestyle"],
+  "lang": "bn"
+}
