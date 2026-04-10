@@ -40,8 +40,8 @@ const adminDB   = adminApp.database();
 // Browser-এ email/password সেভ থাকবে
 adminAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-const ADMIN_UID   = "kW8tMNo8IkejWQsMzCnnwjgVaUa2";
-const ADMIN_EMAIL = "totul01744@gmail.com";
+const ADMIN_UID   = "HwOGRjEQqQP95ultAQbbSKNkpHn1";
+const ADMIN_EMAIL = "mhtotul9@gmail.com";
 </script>
 
 <style>
@@ -966,6 +966,142 @@ function exportOrdersAdmin() {
   dlCSV(rows, 'futful_orders');
 }
 
+
+// ══════════════════════════════════════════════════════
+//  PAYMENTS — ই-বুক পেমেন্ট যাচাই
+// ══════════════════════════════════════════════════════
+async function pgPayments(el) {
+  el.innerHTML = `
+    <div class="pg-hdr">
+      <h2>💳 পেমেন্ট যাচাই</h2>
+      <div class="flex-row">
+        <span id="pendCount" class="bdg bdg-o">লোড হচ্ছে...</span>
+        <button class="btn btn-s btn-sm" onclick="pgPayments(document.getElementById('aContent'))">🔄 রিফ্রেশ</button>
+      </div>
+    </div>
+    <div class="fbar">
+      <select class="fsel" id="payFlt" onchange="filterPaymentsAdmin('')">
+        <option value="all">সব পেমেন্ট</option>
+        <option value="pending">যাচাই বাকি</option>
+        <option value="approved">অনুমোদিত</option>
+        <option value="rejected">বাতিল</option>
+      </select>
+      <input type="text" class="srch-inp" placeholder="TX ID বা নাম..." oninput="filterPaymentsAdmin(this.value)">
+    </div>
+    <div class="panel"><div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>রেফারেন্স</th><th>ই-বুক</th><th>ক্রেতা</th><th>TX ID</th><th>মাধ্যম</th><th>পরিমাণ</th><th>তারিখ</th><th>স্ট্যাটাস</th><th>অ্যাকশন</th></tr></thead>
+      <tbody id="payTbl"><tr><td colspan="9" class="spin-c"><div class="spinner"></div></td></tr></tbody>
+    </table></div></div>`;
+  await loadPaymentsAdmin();
+}
+
+let allPaymentsA = [];
+async function loadPaymentsAdmin() {
+  try {
+    const snap = await adminDB.ref('ebookPayments').orderByChild('createdAt').limitToLast(100).once('value');
+    allPaymentsA = [];
+    if (snap.exists()) snap.forEach(c => allPaymentsA.push({id:c.key,...c.val()}));
+    allPaymentsA.reverse();
+    const pending = allPaymentsA.filter(p => p.status==='pending').length;
+    const el = document.getElementById('pendCount');
+    if (el) el.textContent = pending + ' টি অপেক্ষমান';
+    filterPaymentsAdmin('');
+  } catch(e) { console.error(e); }
+}
+
+function filterPaymentsAdmin(term) {
+  const f = document.getElementById('payFlt')?.value || 'all';
+  let list = f==='all' ? allPaymentsA : allPaymentsA.filter(p => p.status===f);
+  if (term) list = list.filter(p =>
+    (p.txId||'').toLowerCase().includes(term.toLowerCase()) ||
+    (p.userName||'').includes(term) ||
+    (p.fromPhone||'').includes(term)
+  );
+  const t = document.getElementById('payTbl'); if(!t) return;
+  if (!list.length) { t.innerHTML = '<tr><td colspan="9" class="empty-s">কোনো পেমেন্ট নেই</td></tr>'; return; }
+  t.innerHTML = list.map(p => `<tr>
+    <td class="text-pk fw7" style="font-size:12px">#${p.id.slice(-8).toUpperCase()}</td>
+    <td style="font-size:12px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escA(p.ebookTitle||'')}</td>
+    <td>
+      <div style="font-weight:600;font-size:13px">${escA(p.userName||'অজানা')}</div>
+      <div style="color:var(--txt2);font-size:11px">${p.fromPhone||''}</div>
+    </td>
+    <td><span style="background:rgba(77,171,247,.12);color:var(--bl);padding:3px 8px;border-radius:6px;font-size:12px;font-weight:700;font-family:monospace">${p.txId||'—'}</span></td>
+    <td>${p.method==='bkash'?'<span class="bdg" style="background:rgba(255,107,157,.15);color:var(--pk)">💗 bKash</span>':'<span class="bdg" style="background:rgba(255,159,67,.15);color:var(--or)">🟠 Nagad</span>'}</td>
+    <td class="text-te fw7">৳${p.amount||0}</td>
+    <td style="color:var(--txt2);font-size:11px">${fmtDateA(p.createdAt)}</td>
+    <td>${payStatusBdg(p.status)}</td>
+    <td>
+      <div class="flex-row">
+        <button class="btn btn-b btn-xs" onclick="viewPaymentAdmin('${p.id}')">বিবরণ</button>
+        ${p.status==='pending' ? `
+        <button class="btn btn-s btn-xs" onclick="approvePayment('${p.id}')">✓ অনুমোদন</button>
+        <button class="btn btn-d btn-xs" onclick="rejectPayment('${p.id}')">✕ বাতিল</button>
+        ` : ''}
+      </div>
+    </td>
+  </tr>`).join('');
+}
+
+function payStatusBdg(s) {
+  const m = { pending:'<span class="bdg bdg-o">⏳ যাচাই বাকি</span>', approved:'<span class="bdg bdg-g">✅ অনুমোদিত</span>', rejected:'<span class="bdg bdg-r">❌ বাতিল</span>' };
+  return m[s] || `<span class="bdg bdg-o">${s}</span>`;
+}
+
+function viewPaymentAdmin(id) {
+  const p = allPaymentsA.find(x => x.id===id); if(!p) return;
+  openAModal(`
+    <div class="a-modal-title">💳 পেমেন্ট বিবরণ</div>
+    <div class="ir"><span class="ir-l">রেফারেন্স ID</span><span class="ir-r text-pk fw7">#${p.id.slice(-8).toUpperCase()}</span></div>
+    <div class="ir"><span class="ir-l">ই-বুক</span><span class="ir-r">${escA(p.ebookTitle||'')}</span></div>
+    <div class="ir"><span class="ir-l">মূল্য</span><span class="ir-r text-te fw7">৳${p.ebookPrice||0}</span></div>
+    <div class="ir"><span class="ir-l">ক্রেতার নাম</span><span class="ir-r">${escA(p.userName||'')}</span></div>
+    <div class="ir"><span class="ir-l">ইমেইল</span><span class="ir-r" style="font-size:12px">${p.userEmail||'—'}</span></div>
+    <div class="ir"><span class="ir-l">যে নম্বর থেকে</span><span class="ir-r fw7">${p.fromPhone||'—'}</span></div>
+    <div class="ir"><span class="ir-l">Transaction ID</span><span class="ir-r" style="color:var(--bl);font-weight:700;font-family:monospace">${p.txId||'—'}</span></div>
+    <div class="ir"><span class="ir-l">পেমেন্ট মাধ্যম</span><span class="ir-r">${p.method==='bkash'?'💗 bKash':'🟠 Nagad'}</span></div>
+    <div class="ir"><span class="ir-l">পাঠানো পরিমাণ</span><span class="ir-r text-te fw7">৳${p.amount||0}</span></div>
+    <div class="ir"><span class="ir-l">তারিখ</span><span class="ir-r">${fmtDateA(p.createdAt)}</span></div>
+    <div class="ir"><span class="ir-l">স্ট্যাটাস</span><span class="ir-r">${payStatusBdg(p.status)}</span></div>
+    ${p.fileUrl ? `<div class="ir"><span class="ir-l">ই-বুক লিংক</span><span class="ir-r"><a href="${p.fileUrl}" target="_blank" style="color:var(--bl)">ডাউনলোড লিংক</a></span></div>` : ''}
+    ${p.status==='pending' ? `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px">
+      <button class="btn btn-s w100" onclick="approvePayment('${p.id}');closeAModal()">✅ অনুমোদন দিন</button>
+      <button class="btn btn-d w100" onclick="rejectPayment('${p.id}');closeAModal()">❌ বাতিল করুন</button>
+    </div>` : ''}
+    <button class="btn btn-o w100 mt8" onclick="closeAModal()">বন্ধ করুন</button>`);
+}
+
+async function approvePayment(id) {
+  try {
+    await adminDB.ref('ebookPayments/'+id).update({ status:'approved', approvedAt:Date.now(), approvedBy:adminUser?.uid });
+    const p = allPaymentsA.find(x => x.id===id);
+    if (p) {
+      p.status = 'approved';
+      // Grant ebook access in Firebase
+      if (p.userId) {
+        await adminDB.ref('users/'+p.userId+'/ebookAccess/'+p.ebookId).set({
+          title: p.ebookTitle, fileUrl: p.fileUrl, grantedAt: Date.now(), txId: p.txId
+        });
+      }
+    }
+    filterPaymentsAdmin('');
+    aTst('পেমেন্ট অনুমোদিত হয়েছে ✅','ok');
+    const el = document.getElementById('pendCount');
+    if (el) el.textContent = allPaymentsA.filter(p=>p.status==='pending').length + ' টি অপেক্ষমান';
+  } catch(e) { aTst('সমস্যা হয়েছে','err'); }
+}
+
+async function rejectPayment(id) {
+  const reason = prompt('বাতিলের কারণ লিখুন (ঐচ্ছিক):') || '';
+  try {
+    await adminDB.ref('ebookPayments/'+id).update({ status:'rejected', rejectedAt:Date.now(), rejectedBy:adminUser?.uid, rejectReason:reason });
+    const p = allPaymentsA.find(x => x.id===id); if(p) p.status = 'rejected';
+    filterPaymentsAdmin('');
+    aTst('পেমেন্ট বাতিল করা হয়েছে','ok');
+  } catch(e) { aTst('সমস্যা হয়েছে','err'); }
+}
+
 // ══════════════════════════════════════════════════════
 //  EBOOKS
 // ══════════════════════════════════════════════════════
@@ -1299,8 +1435,11 @@ async function exportReportAdmin() {
 //  SETTINGS
 // ══════════════════════════════════════════════════════
 async function pgSettings(el) {
-  let cfg = {};
-  try { const s=await adminDB.ref('config/app').once('value'); if(s.exists()) cfg=s.val(); } catch(e) {}
+  let cfg = {}, payCfg = {};
+  try {
+    const s=await adminDB.ref('config/app').once('value'); if(s.exists()) cfg=s.val();
+    const ps=await adminDB.ref('config/payment').once('value'); if(ps.exists()) payCfg=ps.val();
+  } catch(e) {}
   el.innerHTML = `
     <div class="pg-hdr"><h2>⚙️ সেটিংস</h2></div>
     <div class="g2">
@@ -1324,6 +1463,20 @@ async function pgSettings(el) {
         </div>
       </div>
     </div>
+    <div class="panel mt12"><div class="ph"><span class="ph-title">💳 পেমেন্ট নম্বর কনফিগারেশন</span><span style="color:var(--txt2);font-size:12px">ই-বুক কেনার জন্য</span></div>
+      <div class="pb">
+        <div style="background:rgba(255,107,157,.07);border:1px solid rgba(255,107,157,.15);border-radius:10px;padding:12px;margin-bottom:14px;color:rgba(255,255,255,.65);font-size:13px;line-height:1.7">
+          💡 এই নম্বরগুলো ইউজার দেখতে পাবেন যখন পেইড ই-বুক কিনতে যাবেন।<br>
+          bKash ও Nagad উভয় নম্বর দিন।
+        </div>
+        <div class="frow">
+          <div class="fg2"><label>💗 bKash নম্বর</label><input type="tel" class="ai" id="cfBkash" value="${escA(payCfg.bkash||'')}" placeholder="01XXXXXXXXX"></div>
+          <div class="fg2"><label>🟠 Nagad নম্বর</label><input type="tel" class="ai" id="cfNagad" value="${escA(payCfg.nagad||'')}" placeholder="01XXXXXXXXX"></div>
+        </div>
+        <div class="fg2"><label>অ্যাকাউন্টের নাম (bKash/Nagad এ যে নামে রেজিস্টার)</label><input type="text" class="ai" id="cfPayName" value="${escA(payCfg.accountName||'')}" placeholder="আপনার নাম"></div>
+        <button class="btn btn-p" onclick="savePayCfgAdmin()">✅ পেমেন্ট নম্বর সংরক্ষণ</button>
+      </div>
+    </div>
     <div class="panel mt12"><div class="ph"><span class="ph-title">📜 নীতিমালা</span></div>
       <div class="pb">
         <div class="fg2"><label>গোপনীয়তা নীতি</label><textarea class="ai" id="cfPv" rows="4">${escA(cfg.privacyPolicy||'')}</textarea></div>
@@ -1335,6 +1488,17 @@ async function pgSettings(el) {
 
 async function saveAppCfgAdmin() {
   try { await adminDB.ref('config/app').update({name:document.getElementById('cfNm')?.value.trim(),email:document.getElementById('cfEm')?.value.trim(),phone:document.getElementById('cfPh')?.value.trim(),updatedAt:Date.now()}); aTst('সংরক্ষণ হয়েছে ✓','ok'); } catch(e) { aTst('সমস্যা হয়েছে','err'); }
+}
+
+async function savePayCfgAdmin() {
+  const bkash   = document.getElementById('cfBkash')?.value.trim();
+  const nagad   = document.getElementById('cfNagad')?.value.trim();
+  const accName = document.getElementById('cfPayName')?.value.trim();
+  if (!bkash && !nagad) return aTst('কমপক্ষে একটি নম্বর দিন','warn');
+  try {
+    await adminDB.ref('config/payment').update({ bkash, nagad, accountName:accName, updatedAt:Date.now() });
+    aTst('পেমেন্ট নম্বর সংরক্ষণ হয়েছে ✓','ok');
+  } catch(e) { aTst('সমস্যা হয়েছে','err'); }
 }
 async function savePolicyAdmin() {
   try { await adminDB.ref('config/app').update({privacyPolicy:document.getElementById('cfPv')?.value.trim(),termsOfService:document.getElementById('cfTs')?.value.trim(),updatedAt:Date.now()}); aTst('সংরক্ষণ হয়েছে ✓','ok'); } catch(e) { aTst('সমস্যা হয়েছে','err'); }
