@@ -13,7 +13,7 @@ const firebaseConfig = {
   appId: "1:396666924900:web:77a22669bd6c3e3ce6d471"
 };
 const GEMINI_KEY = "AIzaSyBHQsv6Sxuhy9i6BbhRqE_iVExkVgRnnuE"; // Gemini API Key
-const ADMIN_UID  = "HwOGRjEQqQP95ultAQbbSKNkpHn1";
+const ADMIN_UID  = "kW8tMNo8IkejWQsMzCnnwjgVaUa2";
 
 firebase.initializeApp(firebaseConfig);
 const auth    = firebase.auth();
@@ -774,7 +774,7 @@ async function openEbookPayment(ebookId, title, price, fileUrl, emoji) {
         <div style="color:rgba(255,255,255,.65);font-size:12px;line-height:1.7">
           • সঠিক Transaction ID না দিলে ই-বুক অ্যাক্সেস দেওয়া সম্ভব হবে না<br>
           • পেমেন্ট যাচাইয়ের পর ২৪ ঘণ্টার মধ্যে অ্যাক্সেস দেওয়া হবে<br>
-          • সমস্যায়: mhtotul9@gmail.com
+          • সমস্যায়: totul01744@gmail.com
         </div>
       </div>
 
@@ -880,7 +880,7 @@ async function submitEbookPayment(ebookId, title, price, fileUrl) {
           <div class="info-row"><span class="ir-lbl">স্ট্যাটাস</span><span class="ir-val" style="color:var(--or)">⏳ যাচাই বাকি</span></div>
         </div>
         <div style="background:rgba(255,159,67,.08);border:1px solid rgba(255,159,67,.2);border-radius:10px;padding:11px;margin-bottom:18px;text-align:left;font-size:12px;color:rgba(255,255,255,.65);line-height:1.7">
-          📧 যোগাযোগ: mhtotul9@gmail.com<br>
+          📧 যোগাযোগ: totul01744@gmail.com<br>
           📱 Reference: #${payRef.key.slice(-8).toUpperCase()} উল্লেখ করুন
         </div>
         <button onclick="closeFPM()" class="btn-main w100">ঠিক আছে</button>
@@ -1642,7 +1642,7 @@ function openPrivacy() {
       <p><strong style="color:#fff">🔒 আমরা যা সংগ্রহ করি:</strong> ইমেইল, নাম, ফোন নম্বর, শিশুর তথ্য — শুধুমাত্র আপনার সুবিধার জন্য।</p><br>
       <p><strong style="color:#fff">🚫 আমরা শেয়ার করি না:</strong> তৃতীয় পক্ষের কাছে আপনার কোনো ব্যক্তিগত তথ্য বিক্রি বা শেয়ার করা হয় না।</p><br>
       <p><strong style="color:#fff">🔐 নিরাপত্তা:</strong> Firebase-এর সর্বোচ্চ নিরাপত্তা এনক্রিপশন ব্যবহার করা হয়।</p><br>
-      <p>📧 যোগাযোগ: mhtotul9@gmail.com</p>
+      <p>📧 যোগাযোগ: totul01744@gmail.com</p>
     </div>`);
 }
 
@@ -1657,7 +1657,7 @@ function openAbout() {
       </div>
     </div>
     <div class="info-row"><span class="ir-lbl">ডেভেলপার</span><span class="ir-val">FutFul Team</span></div>
-    <div class="info-row"><span class="ir-lbl">ইমেইল</span><span class="ir-val">mhtotul9@gmail.com</span></div>
+    <div class="info-row"><span class="ir-lbl">ইমেইল</span><span class="ir-val">totul01744@gmail.com</span></div>
     <div class="info-row"><span class="ir-lbl">সংস্করণ</span><span class="ir-val">1.0.0</span></div>`);
 }
 
