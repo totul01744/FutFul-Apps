@@ -13,7 +13,7 @@ const firebaseConfig = {
   appId: "1:396666924900:web:77a22669bd6c3e3ce6d471"
 };
 const GEMINI_KEY = "AIzaSyBHQsv6Sxuhy9i6BbhRqE_iVExkVgRnnuE"; // Gemini API Key
-const ADMIN_UID  = "HwOGRjEQqQP95ultAQbbSKNkpHn1";
+const ADMIN_UID  = "kW8tMNo8IkejWQsMzCnnwjgVaUa2";
 
 firebase.initializeApp(firebaseConfig);
 const auth    = firebase.auth();
@@ -1259,7 +1259,7 @@ function openPrivacy() {
       <p><strong style="color:#fff">🔒 আমরা যা সংগ্রহ করি:</strong> ইমেইল, নাম, ফোন নম্বর, শিশুর তথ্য — শুধুমাত্র আপনার সুবিধার জন্য।</p><br>
       <p><strong style="color:#fff">🚫 আমরা শেয়ার করি না:</strong> তৃতীয় পক্ষের কাছে আপনার কোনো ব্যক্তিগত তথ্য বিক্রি বা শেয়ার করা হয় না।</p><br>
       <p><strong style="color:#fff">🔐 নিরাপত্তা:</strong> Firebase-এর সর্বোচ্চ নিরাপত্তা এনক্রিপশন ব্যবহার করা হয়।</p><br>
-      <p>📧 যোগাযোগ: mhtotul9@gmail.com</p>
+      <p>📧 যোগাযোগ: totul01744@gmail.com</p>
     </div>`);
 }
 
@@ -1274,7 +1274,7 @@ function openAbout() {
       </div>
     </div>
     <div class="info-row"><span class="ir-lbl">ডেভেলপার</span><span class="ir-val">FutFul Team</span></div>
-    <div class="info-row"><span class="ir-lbl">ইমেইল</span><span class="ir-val">mhtotul9@gmail.com</span></div>
+    <div class="info-row"><span class="ir-lbl">ইমেইল</span><span class="ir-val">totul01744@gmail.com</span></div>
     <div class="info-row"><span class="ir-lbl">সংস্করণ</span><span class="ir-val">1.0.0</span></div>`);
 }
 

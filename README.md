@@ -46,7 +46,7 @@ futful/
 Firebase Console → Authentication → Sign-in method → Email/Password সক্রিয় করুন
 
 **Admin লগইন:**
-- Email: `mhtotul9@gmail.com`
+- Email: `totul01744@gmail.com`
 - Password: আপনার Firebase পাসওয়ার্ড
 
 ## 📱 HopWeb দিয়ে Android অ্যাপ
