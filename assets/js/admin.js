@@ -11,8 +11,8 @@ const firebaseConfig = {
   messagingSenderId: "396666924900",
   appId: "1:396666924900:web:77a22669bd6c3e3ce6d471"
 };
-const ADMIN_UID   = "HwOGRjEQqQP95ultAQbbSKNkpHn1";
-const ADMIN_EMAIL = "mhtotul9@gmail.com";
+const ADMIN_UID   = "kW8tMNo8IkejWQsMzCnnwjgVaUa2";
+const ADMIN_EMAIL = "totul01744@gmail.com";
 
 firebase.initializeApp(firebaseConfig);
 const auth    = firebase.auth();
@@ -1319,7 +1319,7 @@ async function pgSettings(el) {
         <div class="pb">
           <div class="fg2"><label>অ্যাপের নাম</label><input type="text" class="ai" id="cfgAppNm" value="${esc(cfg.name||'FutFul')}"></div>
           <div class="fg2"><label>অ্যাপের বিবরণ</label><textarea class="ai" id="cfgAppDs" rows="2">${esc(cfg.description||'মাতৃত্ব ও শিশু যত্ন অ্যাপ')}</textarea></div>
-          <div class="fg2"><label>যোগাযোগ ইমেইল</label><input type="email" class="ai" id="cfgEmail" value="${esc(cfg.email||'mhtotul9@gmail.com')}"></div>
+          <div class="fg2"><label>যোগাযোগ ইমেইল</label><input type="email" class="ai" id="cfgEmail" value="${esc(cfg.email||'totul01744@gmail.com')}"></div>
           <div class="fg2"><label>যোগাযোগ ফোন</label><input type="tel" class="ai" id="cfgPhone" value="${esc(cfg.phone||'')}"></div>
           <button class="btn btn-p w100" onclick="saveAppCfg()">✅ সেটিংস সংরক্ষণ করুন</button>
         </div>
