@@ -4,8 +4,13 @@
   status = 200
 
 [[redirects]]
-  from = "/admin/"
+  from = "/admin/*"
   to = "/admin/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/help"
+  to = "/help.html"
   status = 200
 
 [[headers]]
@@ -13,7 +18,4 @@
   [headers.values]
     X-Frame-Options = "SAMEORIGIN"
     X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-
-[build]
-  publish = "."
+    Cache-Control = "public, max-age=0, must-revalidate"
