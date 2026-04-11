@@ -30,18 +30,26 @@ const firebaseConfig = {
 };
 
 // Admin panel এর নিজের Firebase app instance
-const adminApp = firebase.apps.length === 0
-  ? firebase.initializeApp(firebaseConfig, 'adminApp')
-  : firebase.app('adminApp') || firebase.initializeApp(firebaseConfig, 'adminApp');
+// ── Firebase Init — Admin Panel ──
+// Named app 'adminApp' ব্যবহার করছি যাতে conflict না হয়
+let adminApp;
+try {
+  adminApp = firebase.app('adminApp');
+} catch(e) {
+  adminApp = firebase.initializeApp(firebaseConfig, 'adminApp');
+}
 
 const adminAuth = adminApp.auth();
 const adminDB   = adminApp.database();
 
-// Browser-এ email/password সেভ থাকবে
-adminAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+// Browser-এ credential সেভ থাকবে
+adminAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+  .catch(e => console.log('Persistence:', e.message));
 
-const ADMIN_UID   = "kW8tMNo8IkejWQsMzCnnwjgVaUa2";
-const ADMIN_EMAIL = "totul01744@gmail.com";
+console.log('✅ Firebase Admin initialized, DB:', adminDB.app.options.databaseURL);
+
+const ADMIN_UID   = "HwOGRjEQqQP95ultAQbbSKNkpHn1";
+const ADMIN_EMAIL = "mhtotul9@gmail.com";
 </script>
 
 <style>
@@ -276,7 +284,7 @@ canvas{max-height:210px}
     <div class="lg-card">
       <div class="fg">
         <label>অ্যাডমিন ইমেইল</label>
-        <input type="email" id="aEmail" class="ai" placeholder="totul01744@gmail.com"
+        <input type="email" id="aEmail" class="ai" placeholder="mhtotul9@gmail.com"
                autocomplete="email" onkeypress="if(event.key==='Enter')document.getElementById('aPass').focus()">
       </div>
       <div class="fg">
@@ -886,84 +894,268 @@ async function toggleProductAdmin(id, active) {
 // ══════════════════════════════════════════════════════
 //  ORDERS
 // ══════════════════════════════════════════════════════
+// ── Orders listener handle ──
+let _ordersListener = null;
+
 async function pgOrders(el) {
+  // Detach old listener
+  if (_ordersListener) {
+    adminDB.ref('orders').off('value', _ordersListener);
+    _ordersListener = null;
+  }
+
   el.innerHTML = `
-    <div class="pg-hdr"><h2>📦 অর্ডার ব্যবস্থাপনা</h2><button class="btn btn-s" onclick="exportOrdersAdmin()">📥 CSV</button></div>
-    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)" id="ordStats"></div>
+    <div class="pg-hdr">
+      <h2>📦 অর্ডার ব্যবস্থাপনা</h2>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="liveTag" style="background:rgba(6,214,160,.15);color:var(--te);font-size:11px;padding:3px 9px;border-radius:20px;font-weight:700">🔴 লাইভ</span>
+        <button class="btn btn-s btn-sm" onclick="exportOrdersAdmin()">📥 CSV</button>
+      </div>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(5,1fr)" id="ordStats">
+      <div class="sc or"><div class="sc-ico">⏳</div><div class="sc-val" id="sCnt0">0</div><div class="sc-lbl">অপেক্ষমান</div></div>
+      <div class="sc bl"><div class="sc-ico">⚙️</div><div class="sc-val" id="sCnt1">0</div><div class="sc-lbl">প্রক্রিয়াধীন</div></div>
+      <div class="sc pu"><div class="sc-ico">🚚</div><div class="sc-val" id="sCnt2">0</div><div class="sc-lbl">শিপড</div></div>
+      <div class="sc te"><div class="sc-ico">✅</div><div class="sc-val" id="sCnt3">0</div><div class="sc-lbl">ডেলিভারড</div></div>
+      <div class="sc re"><div class="sc-ico">❌</div><div class="sc-val" id="sCnt4">0</div><div class="sc-lbl">বাতিল</div></div>
+    </div>
     <div class="fbar">
-      <input type="text" class="srch-inp" placeholder="অর্ডার ID, নাম বা ফোন..." oninput="filterOrdersAdmin(this.value)">
-      <select class="fsel" id="ordFlt" onchange="filterOrdersAdmin('')">
+      <input type="text" class="srch-inp" id="ordSrch" placeholder="অর্ডার ID, নাম বা ফোন নম্বর দিয়ে খুঁজুন..." oninput="filterOrdersAdmin(this.value)">
+      <select class="fsel" id="ordFlt" onchange="filterOrdersAdmin(document.getElementById('ordSrch')?.value||'')">
         <option value="all">সব স্ট্যাটাস</option>
-        <option value="pending">অপেক্ষমান</option>
-        <option value="processing">প্রক্রিয়াধীন</option>
-        <option value="shipped">শিপড</option>
-        <option value="delivered">ডেলিভারড</option>
-        <option value="cancelled">বাতিল</option>
+        <option value="pending">⏳ অপেক্ষমান</option>
+        <option value="processing">⚙️ প্রক্রিয়াধীন</option>
+        <option value="shipped">🚚 শিপড</option>
+        <option value="delivered">✅ ডেলিভারড</option>
+        <option value="cancelled">❌ বাতিল</option>
       </select>
     </div>
-    <div class="panel"><div class="tbl-wrap"><table class="tbl">
-      <thead><tr><th>অর্ডার ID</th><th>ক্রেতা</th><th>পণ্যসমূহ</th><th>মোট</th><th>ফোন</th><th>ঠিকানা</th><th>তারিখ</th><th>স্ট্যাটাস পরিবর্তন করুন</th></tr></thead>
-      <tbody id="ordTbl"><tr><td colspan="8" class="spin-c"><div class="spinner"></div></td></tr></tbody>
-    </table></div></div>`;
+    <div class="panel">
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>অর্ডার ID</th>
+              <th>ক্রেতার নাম</th>
+              <th>ফোন</th>
+              <th>পণ্যসমূহ</th>
+              <th>মোট মূল্য</th>
+              <th>ঠিকানা</th>
+              <th>তারিখ</th>
+              <th>স্ট্যাটাস পরিবর্তন</th>
+              <th>বিবরণ</th>
+            </tr>
+          </thead>
+          <tbody id="ordTbl">
+            <tr><td colspan="9" class="spin-c"><div class="spinner"></div> লোড হচ্ছে...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>`;
 
-  try {
-    const snap = await adminDB.ref('orders').orderByChild('createdAt').limitToLast(200).once('value');
-    allOrdersA = [];
-    if (snap.exists()) snap.forEach(c => allOrdersA.push({id:c.key,...c.val()}));
-    allOrdersA.reverse();
+  // Real-time listener — নতুন order আসলে সাথে সাথে দেখাবে
+  _ordersListener = adminDB.ref('orders').orderByChild('createdAt').on('value',
+    snap => {
+      allOrdersA = [];
+      if (snap.exists()) snap.forEach(c => allOrdersA.push({id:c.key,...c.val()}));
+      allOrdersA.reverse();
 
-    const cnt = s => allOrdersA.filter(o => o.status===s).length;
-    document.getElementById('ordStats').innerHTML = [
-      {ico:'⏳',val:cnt('pending'),   lbl:'অপেক্ষমান',  cls:'or'},
-      {ico:'⚙️',val:cnt('processing'),lbl:'প্রক্রিয়াধীন',cls:'bl'},
-      {ico:'🚚',val:cnt('shipped'),   lbl:'শিপড',        cls:'pu'},
-      {ico:'✅',val:cnt('delivered'), lbl:'ডেলিভারড',    cls:'te'},
-    ].map(s => `<div class="sc ${s.cls}"><div class="sc-ico">${s.ico}</div><div class="sc-val">${s.val}</div><div class="sc-lbl">${s.lbl}</div></div>`).join('');
+      // Update stats
+      const cnt = s => allOrdersA.filter(o => (o.status||'pending')===s).length;
+      const setV = (id, v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
+      setV('sCnt0', cnt('pending'));
+      setV('sCnt1', cnt('processing'));
+      setV('sCnt2', cnt('shipped'));
+      setV('sCnt3', cnt('delivered'));
+      setV('sCnt4', cnt('cancelled'));
 
-    filterOrdersAdmin('');
-  } catch(e) { console.error(e); }
+      // Live indicator blink
+      const liveTag = document.getElementById('liveTag');
+      if (liveTag) { liveTag.style.background='rgba(6,214,160,.35)'; setTimeout(()=>{ if(liveTag) liveTag.style.background='rgba(6,214,160,.15)'; },500); }
+
+      filterOrdersAdmin(document.getElementById('ordSrch')?.value || '');
+    },
+    err => {
+      console.error('Orders listener error:', err);
+      const t = document.getElementById('ordTbl');
+      if (t) t.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--re)">
+        ❌ ডেটা লোড করতে সমস্যা: ${err.message}<br>
+        <small style="color:var(--txt2)">Firebase Rules চেক করুন</small>
+      </td></tr>`;
+    }
+  );
 }
 
 function filterOrdersAdmin(term) {
-  const f = document.getElementById('ordFlt')?.value || 'all';
-  let list = f === 'all' ? allOrdersA : allOrdersA.filter(o => o.status===f);
-  if (term) list = list.filter(o =>
-    o.id.toLowerCase().includes(term.toLowerCase()) ||
-    (o.userName||'').includes(term) ||
-    (o.phone||'').includes(term)
-  );
-  const t = document.getElementById('ordTbl'); if(!t) return;
-  if (!list.length) { t.innerHTML = '<tr><td colspan="8" class="empty-s">কোনো অর্ডার নেই</td></tr>'; return; }
-  t.innerHTML = list.map(o => `<tr>
-    <td class="text-pk fw7" style="font-size:12px">#${o.id.slice(-6).toUpperCase()}</td>
-    <td style="font-weight:600;font-size:13px">${escA(o.userName||'অজানা')}</td>
-    <td style="font-size:11px;color:var(--txt2);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(o.products||[]).map(p=>p.name).join(', ')}</td>
-    <td class="text-te fw7">৳${o.totalPrice||0}</td>
-    <td style="font-size:12px;color:var(--txt2)">${o.phone||'-'}</td>
-    <td style="font-size:11px;color:var(--txt2);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escA(o.address||'-')}</td>
-    <td style="font-size:11px;color:var(--txt2)">${fmtDateA(o.createdAt)}</td>
-    <td>
-      <select class="fsel" style="padding:4px 8px;font-size:11px" onchange="updateOrderAdmin('${o.id}',this.value)">
-        ${['pending','processing','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${o.status===s?'selected':''}>${{pending:'অপেক্ষমান',processing:'প্রক্রিয়াধীন',shipped:'শিপড',delivered:'ডেলিভারড',cancelled:'বাতিল'}[s]}</option>`).join('')}
-      </select>
-    </td>
-  </tr>`).join('');
+  const f    = document.getElementById('ordFlt')?.value || 'all';
+  let   list = f==='all' ? allOrdersA : allOrdersA.filter(o => (o.status||'pending')===f);
+  if (term) {
+    const t = term.toLowerCase();
+    list = list.filter(o =>
+      o.id.toLowerCase().includes(t) ||
+      (o.userName||'').toLowerCase().includes(t) ||
+      (o.phone||'').includes(t) ||
+      (o.userEmail||'').toLowerCase().includes(t)
+    );
+  }
+
+  const tbl = document.getElementById('ordTbl');
+  if (!tbl) return;
+
+  if (!list.length) {
+    tbl.innerHTML = `<tr><td colspan="9" class="empty-s">
+      ${term || f!=='all' ? '🔍 কোনো ফলাফল পাওয়া যায়নি' : '📭 এখনো কোনো অর্ডার নেই'}
+    </td></tr>`;
+    return;
+  }
+
+  tbl.innerHTML = list.map(o => {
+    const prods = (o.products||[]);
+    const prodNames = prods.map(p=>`${p.name||''} ×${p.qty||1}`).join(', ');
+    const isNew = (Date.now() - (o.createdAt||0)) < 300000; // 5 min
+    return `<tr style="${isNew ? 'background:rgba(255,107,157,.04)' : ''}">
+      <td>
+        <div class="text-pk fw7" style="font-size:12px">#${o.id.slice(-6).toUpperCase()}</div>
+        ${isNew ? '<span style="background:rgba(255,107,157,.2);color:var(--pk);font-size:9px;padding:1px 6px;border-radius:9px;font-weight:700">নতুন</span>' : ''}
+      </td>
+      <td>
+        <div style="font-weight:600;font-size:13px">${escA(o.userName||'অজানা')}</div>
+        <div style="color:var(--txt2);font-size:11px">${escA(o.userEmail||'')}</div>
+      </td>
+      <td style="font-size:13px;font-weight:600;color:var(--bl)">${o.phone||'-'}</td>
+      <td style="font-size:11px;color:var(--txt2);max-width:150px">
+        ${prods.slice(0,2).map(p=>`<div>${escA(p.name||'')} ×${p.qty||1}</div>`).join('')}
+        ${prods.length>2?`<div style="color:var(--txt2)">+${prods.length-2} আরো...</div>`:''}
+      </td>
+      <td class="text-te fw7" style="font-size:15px">৳${o.totalPrice||0}</td>
+      <td style="font-size:11px;color:var(--txt2);max-width:120px;line-height:1.4">${escA((o.address||'-').slice(0,50))}${(o.address||'').length>50?'...':''}</td>
+      <td style="font-size:11px;color:var(--txt2)">${fmtDateA(o.createdAt)}</td>
+      <td>
+        <select class="fsel" style="padding:5px 9px;font-size:12px;min-width:120px"
+          onchange="updateOrderAdmin('${o.id}',this.value)"
+          title="স্ট্যাটাস পরিবর্তন করুন">
+          ${[
+            ['pending',    '⏳ অপেক্ষমান'],
+            ['processing', '⚙️ প্রক্রিয়াধীন'],
+            ['shipped',    '🚚 শিপড'],
+            ['delivered',  '✅ ডেলিভারড'],
+            ['cancelled',  '❌ বাতিল']
+          ].map(([val,lbl])=>`<option value="${val}" ${(o.status||'pending')===val?'selected':''}>${lbl}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <button class="btn btn-b btn-xs" onclick="viewOrderAdmin('${o.id}')">📋 দেখুন</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── View full order detail ──
+function viewOrderAdmin(oid) {
+  const o = allOrdersA.find(x => x.id===oid);
+  if (!o) return;
+  const prods = o.products || [];
+  openAModal(`
+    <div class="a-modal-title">📦 অর্ডার বিবরণ</div>
+
+    <!-- Status Banner -->
+    <div style="text-align:center;padding:14px;border-radius:12px;margin-bottom:16px;background:${
+      o.status==='delivered' ? 'rgba(6,214,160,.12)' :
+      o.status==='cancelled' ? 'rgba(255,71,87,.12)' :
+      o.status==='shipped'   ? 'rgba(199,125,255,.12)' :
+      o.status==='processing'? 'rgba(77,171,247,.12)' :
+      'rgba(255,159,67,.12)'
+    }">
+      <div style="font-size:28px;margin-bottom:4px">${
+        o.status==='delivered'?'✅':o.status==='cancelled'?'❌':o.status==='shipped'?'🚚':o.status==='processing'?'⚙️':'⏳'
+      }</div>
+      <div style="font-weight:700;font-size:15px">${statusLabelBn(o.status)}</div>
+      <div style="color:var(--txt2);font-size:12px;margin-top:3px">${fmtDateA(o.createdAt)}</div>
+    </div>
+
+    <!-- Order ID -->
+    <div style="background:rgba(255,107,157,.08);border:1px solid rgba(255,107,157,.2);border-radius:10px;padding:11px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
+      <span style="color:rgba(255,255,255,.6);font-size:12px">অর্ডার ID</span>
+      <span style="color:var(--pk);font-weight:700;font-size:16px">#${o.id.slice(-8).toUpperCase()}</span>
+    </div>
+
+    <!-- Customer Info -->
+    <div style="font-weight:700;color:#fff;font-size:13px;margin-bottom:9px">👤 ক্রেতার তথ্য</div>
+    <div class="ir"><span class="ir-l">নাম</span><span class="ir-r fw7">${escA(o.userName||'অজানা')}</span></div>
+    <div class="ir"><span class="ir-l">ফোন</span><span class="ir-r" style="color:var(--bl);font-weight:700">${o.phone||'-'}</span></div>
+    <div class="ir"><span class="ir-l">ইমেইল</span><span class="ir-r" style="font-size:12px">${o.userEmail||'-'}</span></div>
+    <div class="ir"><span class="ir-l">ঠিকানা</span><span class="ir-r" style="max-width:200px;text-align:right;line-height:1.5">${escA(o.address||'-')}</span></div>
+
+    <!-- Products -->
+    <div style="font-weight:700;color:#fff;font-size:13px;margin:14px 0 9px">🛍️ পণ্যসমূহ</div>
+    <div style="background:rgba(255,255,255,.04);border-radius:10px;overflow:hidden">
+      ${prods.map(p=>`
+        <div style="display:flex;align-items:center;gap:12px;padding:11px 13px;border-bottom:1px solid rgba(255,255,255,.05)">
+          <div style="font-size:28px;flex-shrink:0">${p.emoji||'🛍️'}</div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:13px">${escA(p.name||'')}</div>
+            <div style="color:var(--txt2);font-size:11px">৳${p.price||0} × ${p.qty||1}</div>
+          </div>
+          <div style="color:var(--pk);font-weight:700;font-size:14px">৳${(p.price||0)*(p.qty||1)}</div>
+        </div>`).join('')}
+      <div style="display:flex;justify-content:space-between;padding:12px 13px;font-weight:700">
+        <span style="color:#fff">মোট</span>
+        <span style="color:var(--te);font-size:18px">৳${o.totalPrice||0}</span>
+      </div>
+    </div>
+
+    <!-- Status Update -->
+    <div style="font-weight:700;color:#fff;font-size:13px;margin:14px 0 9px">🔄 স্ট্যাটাস পরিবর্তন করুন</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px">
+      ${[
+        ['pending',    '⏳','অপেক্ষমান',  'rgba(255,159,67,.15)','var(--or)'],
+        ['processing', '⚙️','প্রক্রিয়াধীন','rgba(77,171,247,.15)','var(--bl)'],
+        ['shipped',    '🚚','শিপড',       'rgba(199,125,255,.15)','var(--pu)'],
+        ['delivered',  '✅','ডেলিভারড',   'rgba(6,214,160,.15)','var(--te)'],
+        ['cancelled',  '❌','বাতিল',      'rgba(255,71,87,.15)','var(--re)'],
+      ].map(([val,ico,lbl,bg,col])=>`
+        <button onclick="updateOrderAdmin('${o.id}','${val}');closeAModal()"
+          style="padding:9px 6px;background:${(o.status||'pending')===val?bg.replace(',.15',',0.35'):bg};border:1px solid ${col};border-radius:9px;color:${col};font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .2s;${(o.status||'pending')===val?'box-shadow:0 0 0 2px '+col+';':''}">
+          ${ico} ${lbl}
+        </button>`).join('')}
+    </div>
+
+    <button class="btn btn-o w100" onclick="closeAModal()">বন্ধ করুন</button>
+  `);
+}
+
+function statusLabelBn(s) {
+  const m = { pending:'অপেক্ষমান', processing:'প্রক্রিয়াধীন', shipped:'শিপড', delivered:'ডেলিভারড', cancelled:'বাতিল' };
+  return m[s] || s || 'অজানা';
 }
 
 async function updateOrderAdmin(oid, status) {
   try {
     await adminDB.ref('orders/'+oid+'/status').set(status);
-    const o = allOrdersA.find(x => x.id===oid); if(o) o.status = status;
-    aTst('অর্ডার স্ট্যাটাস আপডেট হয়েছে ✓','ok');
-    filterOrdersAdmin('');
-  } catch(e) { aTst('আপডেট করতে সমস্যা','err'); }
+    // Real-time listener will update the list automatically
+    aTst('✓ ' + statusLabelBn(status) + ' করা হয়েছে', 'ok');
+  } catch(e) {
+    console.error('Update order error:', e);
+    aTst('স্ট্যাটাস আপডেট করতে সমস্যা: ' + e.message, 'err');
+  }
 }
 
 function exportOrdersAdmin() {
   if (!allOrdersA.length) return aTst('কোনো অর্ডার নেই','warn');
-  const rows = [['ID','ক্রেতা','মোট মূল্য','স্ট্যাটাস','তারিখ']];
-  allOrdersA.forEach(o => rows.push(['#'+o.id.slice(-6).toUpperCase(), o.userName||'', o.totalPrice||0, o.status||'', fmtDateA(o.createdAt)]));
+  const rows = [['ID','ক্রেতার নাম','ফোন','ইমেইল','পণ্য','মোট মূল্য','স্ট্যাটাস','ঠিকানা','তারিখ']];
+  allOrdersA.forEach(o => rows.push([
+    '#'+o.id.slice(-6).toUpperCase(),
+    o.userName||'',
+    o.phone||'',
+    o.userEmail||'',
+    (o.products||[]).map(p=>`${p.name}x${p.qty}`).join(' | '),
+    o.totalPrice||0,
+    statusLabelBn(o.status),
+    (o.address||'').replace(/,/g,' '),
+    fmtDateA(o.createdAt)
+  ]));
   dlCSV(rows, 'futful_orders');
+  aTst('CSV ডাউনলোড হচ্ছে ✓','ok');
 }
 
 

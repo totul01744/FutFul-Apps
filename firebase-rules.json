@@ -1,0 +1,81 @@
+{
+  "rules": {
+    // ══ USERS ══
+    "users": {
+      "$uid": {
+        ".read":  "$uid === auth.uid || auth.uid === 'HwOGRjEQqQP95ultAQbbSKNkpHn1'",
+        ".write": "$uid === auth.uid || auth.uid === 'HwOGRjEQqQP95ultAQbbSKNkpHn1'"
+      }
+    },
+
+    // ══ ORDERS — ইউজার লিখবে, অ্যাডমিন সব পড়বে ও আপডেট করবে ══
+    "orders": {
+      ".read":  "auth != null && (auth.uid === 'HwOGRjEQqQP95ultAQbbSKNkpHn1' || auth.token.email === 'mhtotul9@gmail.com')",
+      ".write": "auth != null",
+      "$orderId": {
+        ".read":  "auth != null && (auth.uid === 'HwOGRjEQqQP95ultAQbbSKNkpHn1' || data.child('userId').val() === auth.uid)",
+        ".write": "auth != null"
+      }
+    },
+
+    // ══ PRODUCTS — সবাই পড়বে, অ্যাডমিন লিখবে ══
+    "products": {
+      ".read":  true,
+      ".write": "auth != null && (auth.uid === 'HwOGRjEQqQP95ultAQbbSKNkpHn1' || auth.token.email === 'mhtotul9@gmail.com')"
+    },
+
+    // ══ POSTS ══
+    "posts": {
+      ".read":  true,
+      ".write": "auth != null"
+    },
+
+    // ══ BANNERS ══
+    "banners": {
+      ".read":  true,
+      ".write": "auth != null && (auth.uid === 'HwOGRjEQqQP95ultAQbbSKNkpHn1' || auth.token.email === 'mhtotul9@gmail.com')"
+    },
+
+    // ══ NOTIFICATIONS ══
+    "notifications": {
+      ".read":  "auth != null",
+      ".write": "auth != null && (auth.uid === 'HwOGRjEQqQP95ultAQbbSKNkpHn1' || auth.token.email === 'mhtotul9@gmail.com')"
+    },
+
+    // ══ EBOOKS ══
+    "ebooks": {
+      ".read":  true,
+      ".write": "auth != null && (auth.uid === 'HwOGRjEQqQP95ultAQbbSKNkpHn1' || auth.token.email === 'mhtotul9@gmail.com')"
+    },
+
+    // ══ EBOOK PAYMENTS ══
+    "ebookPayments": {
+      ".read":  "auth != null && (auth.uid === 'HwOGRjEQqQP95ultAQbbSKNkpHn1' || auth.token.email === 'mhtotul9@gmail.com')",
+      ".write": "auth != null",
+      "$payId": {
+        ".read":  "auth != null && (auth.uid === 'HwOGRjEQqQP95ultAQbbSKNkpHn1' || data.child('userId').val() === auth.uid)"
+      }
+    },
+
+    // ══ HEALTH ══
+    "vaccines":      { ".read": true, ".write": "auth != null && auth.uid === 'HwOGRjEQqQP95ultAQbbSKNkpHn1'" },
+    "healthCenters": { ".read": true, ".write": "auth != null && auth.uid === 'HwOGRjEQqQP95ultAQbbSKNkpHn1'" },
+
+    // ══ CONFIG ══
+    "config": {
+      ".read":  true,
+      ".write": "auth != null && (auth.uid === 'HwOGRjEQqQP95ultAQbbSKNkpHn1' || auth.token.email === 'mhtotul9@gmail.com')"
+    },
+
+    // ══ DAILY BONUS ══
+    "dailyBonus": {
+      "$uid": {
+        ".read":  "$uid === auth.uid || auth.uid === 'HwOGRjEQqQP95ultAQbbSKNkpHn1'",
+        ".write": "$uid === auth.uid || auth.uid === 'HwOGRjEQqQP95ultAQbbSKNkpHn1'"
+      }
+    },
+
+    // ══ NEWSLETTER ══
+    "newsletter": { ".read": "auth != null && auth.uid === 'HwOGRjEQqQP95ultAQbbSKNkpHn1'", ".write": "auth != null" }
+  }
+}
