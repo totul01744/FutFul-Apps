@@ -10,10 +10,6 @@
       "dest": "/admin/index.html"
     },
     {
-      "src": "/help$",
-      "dest": "/help.html"
-    },
-    {
       "src": "/(.*)",
       "dest": "/$1"
     }

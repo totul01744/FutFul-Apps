@@ -1,111 +1,59 @@
-# 🌸 FutFul — মাতৃত্ব ও শিশু যত্ন অ্যাপ
-
-বাংলাদেশের মায়েদের জন্য সম্পূর্ণ শিশু যত্ন ওয়েব অ্যাপ্লিকেশন।
-
----
+# 🌸 FutFul — মাতৃত্ব ও শিশু যত্ন
 
 ## 📁 প্রজেক্ট স্ট্রাকচার
 
 ```
 futful/
-│
-├── 📁 admin/
-│   └── index.html              ← অ্যাডমিন প্যানেল
-│
-├── 📁 assets/
-│   ├── 📁 css/
-│   │   ├── style.css           ← ইউজার অ্যাপ CSS
-│   │   └── admin-style.css     ← অ্যাডমিন CSS
-│   └── 📁 js/
-│       ├── app.js              ← ইউজার অ্যাপ JavaScript
-│       └── admin.js            ← অ্যাডমিন JavaScript
-│
-├── index.html                  ← ইউজার অ্যাপ (মূল পেজ)
-├── admin_index.html            ← অ্যাডমিন রিডাইরেক্ট
-├── help.html                   ← সাহায্য পেজ
-├── app.js                      ← রুট JS হেল্পার
-├── netlify.toml                ← Netlify কনফিগ
-├── vercel.json                 ← Vercel কনফিগ
-└── README.md                   ← এই ফাইল
+├── admin/
+│   └── index.html          ← অ্যাডমিন প্যানেল
+├── assets/
+│   ├── css/
+│   │   └── style.css       ← ইউজার অ্যাপ CSS
+│   └── js/
+│       └── app.js          ← ইউজার অ্যাপ JavaScript
+├── README.md
+├── admin_index.html        ← Admin redirect
+├── app.js                  ← (legacy - assets/js/app.js ব্যবহার করুন)
+├── help.html               ← সাহায্য পেজ
+├── index.html              ← ইউজার অ্যাপ (মূল পেজ)
+├── manifest.json           ← PWA কনফিগারেশন
+├── netlify.toml            ← Netlify কনফিগ
+└── vercel.json             ← Vercel কনফিগ
 ```
-
----
-
-## 🔑 Firebase তথ্য
-
-| তথ্য | মান |
-|---|---|
-| Firebase Project | earning-bot-31c7d |
-| Admin UID | HwOGRjEQqQP95ultAQbbSKNkpHn1 |
-| Admin Email | mhtotul9@gmail.com |
-
----
 
 ## 🚀 Deploy করার নিয়ম
 
-### GitHub → Vercel
-1. সব ফাইল GitHub repository তে আপলোড করুন
-2. Vercel.com → New Project → GitHub repo connect করুন
-3. Deploy করুন
+### GitHub Pages:
+1. GitHub-এ নতুন repository তৈরি করুন
+2. সব ফাইল আপলোড করুন (ফোল্ডার সহ)
+3. Settings → Pages → Branch: main → Save
+4. ইউজার অ্যাপ: `https://username.github.io/futful/`
+5. অ্যাডমিন: `https://username.github.io/futful/admin/`
 
-**URL:**
-- ইউজার অ্যাপ: `https://yoursite.vercel.app/`
-- অ্যাডমিন: `https://yoursite.vercel.app/admin`
+### Netlify (সবচেয়ে সহজ):
+1. [netlify.com](https://netlify.com) এ যান
+2. "Deploy manually" বেছে নিন
+3. পুরো ফোল্ডার drag & drop করুন
+4. Instant deploy!
 
-### GitHub → Netlify
-1. Netlify.com → New site from Git
-2. GitHub repo select করুন
-3. Deploy করুন
+### Vercel:
+1. [vercel.com](https://vercel.com) এ যান
+2. GitHub repository connect করুন
+3. Auto deploy!
 
----
+## 🔑 Firebase Setup
 
-## 🔧 Firebase Realtime Database Rules
+Firebase Console → Authentication → Sign-in method → Email/Password সক্রিয় করুন
 
-```json
-{
-  "rules": {
-    ".read": "auth != null",
-    ".write": "auth != null",
-    "users": {
-      "$uid": {
-        ".read": "$uid === auth.uid || root.child('adminUsers/' + auth.uid).exists()",
-        ".write": "$uid === auth.uid || root.child('adminUsers/' + auth.uid).exists()"
-      }
-    },
-    "posts": { ".read": true, ".write": "auth != null" },
-    "products": { ".read": true, ".write": "root.child('adminUsers/' + auth.uid).exists()" },
-    "banners": { ".read": true, ".write": "root.child('adminUsers/' + auth.uid).exists()" },
-    "orders": { ".read": "auth != null", ".write": "auth != null" }
-  }
-}
-```
+**Admin লগইন:**
+- Email: `mhtotul9@gmail.com`
+- Password: আপনার Firebase পাসওয়ার্ড
+
+## 📱 HopWeb দিয়ে Android অ্যাপ
+
+1. HopWeb অ্যাপ খুলুন
+2. URL: `https://your-site.netlify.app/`
+3. App build করুন → APK ডাউনলোড
 
 ---
-
-## ✅ ফিচার তালিকা
-
-### ইউজার অ্যাপ
-- ✅ Email/Password লগইন (Google বাদ)
-- ✅ FutFul Help Desk (আস-সালামু আলাইকুম সহ)
-- ✅ ব্যানার স্লাইডার
-- ✅ স্বাস্থ্য কেন্দ্র — টিকা ও বৃদ্ধি ট্র্যাকিং
-- ✅ পুষ্টি গাইড
-- ✅ কমিউনিটি — পোস্ট, লাইক, কমেন্ট
-- ✅ পণ্য — কার্ট, চেকআউট, অর্ডার
-- ✅ Play Game → fut-ful-earning.vercel.app
-- ✅ Start Your Business → new-start-business.vercel.app
-- ✅ প্রোফাইল ও অর্ডার ইতিহাস
-
-### অ্যাডমিন প্যানেল
-- ✅ সুরক্ষিত লগইন (UID & Email যাচাই)
-- ✅ ড্যাশবোর্ড — রিয়েল-টাইম পরিসংখ্যান
-- ✅ **পণ্য যোগ/সম্পাদনা/মুছে দেওয়া**
-- ✅ **অর্ডার দেখা ও স্ট্যাটাস আপডেট**
-- ✅ ব্যবহারকারী ব্যবস্থাপনা
-- ✅ কমিউনিটি মডারেশন
-- ✅ ব্যানার ব্যবস্থাপনা
-- ✅ বিজ্ঞপ্তি পাঠানো
-
----
-
 *FutFul — আপনার শিশুর সেরা যত্নসঙ্গী 🌸*
