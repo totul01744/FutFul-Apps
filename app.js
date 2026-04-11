@@ -1259,7 +1259,7 @@ function openPrivacy() {
       <p><strong style="color:#fff">🔒 আমরা যা সংগ্রহ করি:</strong> ইমেইল, নাম, ফোন নম্বর, শিশুর তথ্য — শুধুমাত্র আপনার সুবিধার জন্য।</p><br>
       <p><strong style="color:#fff">🚫 আমরা শেয়ার করি না:</strong> তৃতীয় পক্ষের কাছে আপনার কোনো ব্যক্তিগত তথ্য বিক্রি বা শেয়ার করা হয় না।</p><br>
       <p><strong style="color:#fff">🔐 নিরাপত্তা:</strong> Firebase-এর সর্বোচ্চ নিরাপত্তা এনক্রিপশন ব্যবহার করা হয়।</p><br>
-      <p>📧 যোগাযোগ: totul01744@gmail.com</p>
+      <p>📧 যোগাযোগ: totul0174@gmail.com</p>
     </div>`);
 }
 
