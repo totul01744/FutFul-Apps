@@ -13,7 +13,7 @@ const firebaseConfig = {
   appId: "1:396666924900:web:77a22669bd6c3e3ce6d471"
 };
 const GEMINI_KEY = "AIzaSyBHQsv6Sxuhy9i6BbhRqE_iVExkVgRnnuE"; // Gemini API Key
-const ADMIN_UID  = "HwOGRjEQqQP95ultAQbbSKNkpHn1";
+const ADMIN_UID  = "kW8tMNo8IkejWQsMzCnnwjgVaUa2";
 
 firebase.initializeApp(firebaseConfig);
 const auth    = firebase.auth();
@@ -1274,7 +1274,7 @@ function openAbout() {
       </div>
     </div>
     <div class="info-row"><span class="ir-lbl">ডেভেলপার</span><span class="ir-val">FutFul Team</span></div>
-    <div class="info-row"><span class="ir-lbl">ইমেইল</span><span class="ir-val">totu01744@gmail.com</span></div>
+    <div class="info-row"><span class="ir-lbl">ইমেইল</span><span class="ir-val">totul01744@gmail.com</span></div>
     <div class="info-row"><span class="ir-lbl">সংস্করণ</span><span class="ir-val">1.0.0</span></div>`);
 }
 

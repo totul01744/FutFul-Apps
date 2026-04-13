@@ -901,34 +901,48 @@ async function toggleProductAdmin(id, active) {
 //  ORDERS
 // ══════════════════════════════════════════════════════
 // ── Orders listener handle ──
-let _ordersListener = null;
+// ══════════════════════════════════════════════════════
+//  ORDERS — সম্পূর্ণ অর্ডার ব্যবস্থাপনা
+// ══════════════════════════════════════════════════════
+let _ordersRef = null;
 
 async function pgOrders(el) {
-  // Detach old listener
-  if (_ordersListener) {
-    adminDB.ref('orders').off('value', _ordersListener);
-    _ordersListener = null;
-  }
+  // Detach previous listener
+  if (_ordersRef) { try { _ordersRef.off(); } catch(e){} _ordersRef = null; }
 
   el.innerHTML = `
     <div class="pg-hdr">
       <h2>📦 অর্ডার ব্যবস্থাপনা</h2>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span id="liveTag" style="background:rgba(6,214,160,.15);color:var(--te);font-size:11px;padding:3px 9px;border-radius:20px;font-weight:700">🔴 লাইভ</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span id="liveDot" style="background:rgba(255,159,67,.15);color:var(--or);font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700">⏳ লোড হচ্ছে...</span>
+        <button class="btn btn-b btn-sm" onclick="pgOrders(document.getElementById('aContent'))">🔄 রিফ্রেশ</button>
         <button class="btn btn-s btn-sm" onclick="exportOrdersAdmin()">📥 CSV</button>
       </div>
     </div>
-    <div class="stats-grid" style="grid-template-columns:repeat(5,1fr)" id="ordStats">
-      <div class="sc or"><div class="sc-ico">⏳</div><div class="sc-val" id="sCnt0">0</div><div class="sc-lbl">অপেক্ষমান</div></div>
-      <div class="sc bl"><div class="sc-ico">⚙️</div><div class="sc-val" id="sCnt1">0</div><div class="sc-lbl">প্রক্রিয়াধীন</div></div>
-      <div class="sc pu"><div class="sc-ico">🚚</div><div class="sc-val" id="sCnt2">0</div><div class="sc-lbl">শিপড</div></div>
-      <div class="sc te"><div class="sc-ico">✅</div><div class="sc-val" id="sCnt3">0</div><div class="sc-lbl">ডেলিভারড</div></div>
-      <div class="sc re"><div class="sc-ico">❌</div><div class="sc-val" id="sCnt4">0</div><div class="sc-lbl">বাতিল</div></div>
+
+    <!-- ── Stat cards ── -->
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:15px" id="ordStatRow">
+      <div class="sc or" style="cursor:pointer" onclick="setOrdFilter('all')">
+        <div class="sc-ico">📦</div><div class="sc-val" id="sAll">—</div><div class="sc-lbl">সব</div></div>
+      <div class="sc or" style="cursor:pointer" onclick="setOrdFilter('pending')">
+        <div class="sc-ico">⏳</div><div class="sc-val" id="sPend">—</div><div class="sc-lbl">অপেক্ষমান</div></div>
+      <div class="sc bl" style="cursor:pointer" onclick="setOrdFilter('processing')">
+        <div class="sc-ico">⚙️</div><div class="sc-val" id="sProc">—</div><div class="sc-lbl">প্রক্রিয়াধীন</div></div>
+      <div class="sc pu" style="cursor:pointer" onclick="setOrdFilter('shipped')">
+        <div class="sc-ico">🚚</div><div class="sc-val" id="sShip">—</div><div class="sc-lbl">শিপড</div></div>
+      <div class="sc te" style="cursor:pointer" onclick="setOrdFilter('delivered')">
+        <div class="sc-ico">✅</div><div class="sc-val" id="sDlvr">—</div><div class="sc-lbl">ডেলিভারড</div></div>
+      <div class="sc re" style="cursor:pointer" onclick="setOrdFilter('cancelled')">
+        <div class="sc-ico">❌</div><div class="sc-val" id="sCanc">—</div><div class="sc-lbl">বাতিল</div></div>
     </div>
+
+    <!-- ── Filter bar ── -->
     <div class="fbar">
-      <input type="text" class="srch-inp" id="ordSrch" placeholder="অর্ডার ID, নাম বা ফোন নম্বর দিয়ে খুঁজুন..." oninput="filterOrdersAdmin(this.value)">
-      <select class="fsel" id="ordFlt" onchange="filterOrdersAdmin(document.getElementById('ordSrch')?.value||'')">
-        <option value="all">সব স্ট্যাটাস</option>
+      <input id="ordSrch" type="text" class="srch-inp"
+        placeholder="🔍 অর্ডার ID, ক্রেতার নাম, ফোন বা ইমেইল..."
+        oninput="renderOrdTable()">
+      <select id="ordFlt" class="fsel" onchange="renderOrdTable()">
+        <option value="all" selected>📋 সব স্ট্যাটাস</option>
         <option value="pending">⏳ অপেক্ষমান</option>
         <option value="processing">⚙️ প্রক্রিয়াধীন</option>
         <option value="shipped">🚚 শিপড</option>
@@ -936,108 +950,152 @@ async function pgOrders(el) {
         <option value="cancelled">❌ বাতিল</option>
       </select>
     </div>
+
+    <!-- ── Table ── -->
     <div class="panel">
       <div class="tbl-wrap">
         <table class="tbl">
-          <thead>
-            <tr>
-              <th>অর্ডার ID</th>
-              <th>ক্রেতার নাম</th>
-              <th>ফোন</th>
-              <th>পণ্যসমূহ</th>
-              <th>মোট মূল্য</th>
-              <th>ঠিকানা</th>
-              <th>তারিখ</th>
-              <th>স্ট্যাটাস পরিবর্তন</th>
-              <th>বিবরণ</th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th>অর্ডার ID</th>
+            <th>ক্রেতার নাম</th>
+            <th>ফোন</th>
+            <th>পণ্যসমূহ</th>
+            <th>মোট মূল্য</th>
+            <th>ঠিকানা</th>
+            <th>তারিখ</th>
+            <th>স্ট্যাটাস</th>
+            <th>অ্যাকশন</th>
+          </tr></thead>
           <tbody id="ordTbl">
-            <tr><td colspan="9" class="spin-c"><div class="spinner"></div> লোড হচ্ছে...</td></tr>
+            <tr><td colspan="9" class="spin-c"><div class="spinner"></div> Firebase থেকে লোড হচ্ছে...</td></tr>
           </tbody>
         </table>
       </div>
     </div>`;
 
-  // Real-time listener — নতুন order আসলে সাথে সাথে দেখাবে
-  _ordersListener = adminDB.ref('orders').orderByChild('createdAt').on('value',
-    snap => {
-      allOrdersA = [];
-      if (snap.exists()) snap.forEach(c => allOrdersA.push({id:c.key,...c.val()}));
-      allOrdersA.reverse();
+  // ── Load from Firebase ──
+  _ordersRef = adminDB.ref('orders');
 
-      // Update stats
-      const cnt = s => allOrdersA.filter(o => (o.status||'pending')===s).length;
-      const setV = (id, v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
-      setV('sCnt0', cnt('pending'));
-      setV('sCnt1', cnt('processing'));
-      setV('sCnt2', cnt('shipped'));
-      setV('sCnt3', cnt('delivered'));
-      setV('sCnt4', cnt('cancelled'));
+  try {
+    const snap = await _ordersRef.once('value');
+    allOrdersA = [];
 
-      // Live indicator blink
-      const liveTag = document.getElementById('liveTag');
-      if (liveTag) { liveTag.style.background='rgba(6,214,160,.35)'; setTimeout(()=>{ if(liveTag) liveTag.style.background='rgba(6,214,160,.15)'; },500); }
+    if (snap.exists()) {
+      snap.forEach(c => {
+        const d = c.val();
+        if (!d.status) d.status = 'pending';
+        allOrdersA.push({ id: c.key, ...d });
+      });
+      allOrdersA.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    }
 
-      filterOrdersAdmin(document.getElementById('ordSrch')?.value || '');
-    },
-    err => {
-      console.error('Orders listener error:', err.code, err.message);
-      const t = document.getElementById('ordTbl');
-      if (t) t.innerHTML = `<tr><td colspan="9" style="padding:20px">
-        <div style="background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.3);border-radius:12px;padding:16px">
-          <div style="color:var(--re);font-weight:700;font-size:14px;margin-bottom:10px">❌ অর্ডার লোড হচ্ছে না</div>
-          <div style="color:rgba(255,255,255,.7);font-size:13px;line-height:1.8">
-            কারণ: Firebase Rules-এ admin-কে orders পড়ার permission দেওয়া নেই।<br>
-            <strong style="color:#fff">সমাধান:</strong> নিচের steps অনুসরণ করুন:
-          </div>
-          <div style="background:rgba(0,0,0,.3);border-radius:9px;padding:12px;margin-top:10px;font-size:12px;line-height:2">
-            1️⃣ <a href="https://console.firebase.google.com" target="_blank" style="color:var(--bl)">console.firebase.google.com</a> খুলুন<br>
-            2️⃣ আপনার project → <strong style="color:#fff">Realtime Database</strong> → <strong style="color:#fff">Rules</strong> tab<br>
-            3️⃣ নিচের rules paste করুন → <strong style="color:var(--te)">Publish</strong> করুন
-          </div>
-          <div style="background:#000;border-radius:9px;padding:12px;margin-top:10px;font-family:monospace;font-size:11px;color:#06d6a0;white-space:pre-wrap;overflow-x:auto">{
-  "rules": {
-    "orders": {
-      ".read": "auth != null",
-      ".write": "auth != null"
-    },
-    "users": {
-      "$uid": {
-        ".read": "auth != null",
-        ".write": "$uid === auth.uid"
+    console.log('✅ Orders loaded:', allOrdersA.length, allOrdersA.map(o => o.id + ':' + o.status));
+
+    // Update live dot
+    const dot = document.getElementById('liveDot');
+    if (dot) {
+      dot.style.background = 'rgba(6,214,160,.15)';
+      dot.style.color = 'var(--te)';
+      dot.textContent = '● লাইভ — ' + allOrdersA.length + 'টি অর্ডার';
+    }
+
+    updateOrdStats();
+    renderOrdTable();
+
+    // Real-time updates
+    _ordersRef.on('value', snap2 => {
+      const upd = [];
+      if (snap2.exists()) {
+        snap2.forEach(c => {
+          const d = c.val();
+          if (!d.status) d.status = 'pending';
+          upd.push({ id: c.key, ...d });
+        });
       }
-    },
-    "products": { ".read": true, ".write": "auth != null" },
-    "posts": { ".read": true, ".write": "auth != null" },
-    "banners": { ".read": true, ".write": "auth != null" },
-    "notifications": { ".read": "auth != null", ".write": "auth != null" },
-    "ebooks": { ".read": true, ".write": "auth != null" },
-    "ebookPayments": { ".read": "auth != null", ".write": "auth != null" },
-    "vaccines": { ".read": true, ".write": "auth != null" },
-    "healthCenters": { ".read": true, ".write": "auth != null" },
-    "config": { ".read": true, ".write": "auth != null" },
-    "dailyBonus": { ".read": "auth != null", ".write": "auth != null" },
-    "newsletter": { ".read": "auth != null", ".write": "auth != null" }
+      upd.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      allOrdersA = upd;
+      updateOrdStats();
+      renderOrdTable();
+      const dot2 = document.getElementById('liveDot');
+      if (dot2) dot2.textContent = '● লাইভ — ' + allOrdersA.length + 'টি অর্ডার';
+    }, err => console.warn('Listener:', err.message));
+
+  } catch (err) {
+    console.error('Orders error:', err.code, err.message);
+    const tbl = document.getElementById('ordTbl');
+    if (tbl) tbl.innerHTML = `
+      <tr><td colspan="9" style="padding:18px">
+        <div style="background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.3);border-radius:12px;padding:18px">
+          <div style="color:var(--re);font-size:15px;font-weight:700;margin-bottom:10px">
+            ❌ Firebase Rules সমস্যা: ${err.code}
+          </div>
+          <div style="color:rgba(255,255,255,.8);font-size:13px;line-height:1.9;margin-bottom:14px">
+            Firebase Console → Realtime Database → Rules-এ নিচের code paste করুন:
+          </div>
+          <div style="background:#0a0a0a;border-radius:8px;padding:14px;font-family:monospace;font-size:12px;color:#06d6a0;white-space:pre;overflow-x:auto">{
+  "rules": {
+    "orders":   { ".read": "auth != null", ".write": "auth != null" },
+    "users":    { ".read": "auth != null", ".write": "auth != null" },
+    "products": { ".read": true,           ".write": "auth != null" },
+    "posts":    { ".read": true,           ".write": "auth != null" },
+    "banners":  { ".read": true,           ".write": "auth != null" },
+    "config":   { ".read": true,           ".write": "auth != null" },
+    "notifications":  { ".read": "auth != null", ".write": "auth != null" },
+    "ebooks":         { ".read": true,           ".write": "auth != null" },
+    "ebookPayments":  { ".read": "auth != null", ".write": "auth != null" },
+    "dailyBonus":     { ".read": "auth != null", ".write": "auth != null" },
+    "vaccines":       { ".read": true,           ".write": "auth != null" },
+    "healthCenters":  { ".read": true,           ".write": "auth != null" }
   }
 }</div>
-          <button onclick="pgOrders(document.getElementById('aContent'))" class="btn btn-p" style="margin-top:12px;width:100%">🔄 Rules দেওয়ার পর এখানে ক্লিক করুন</button>
+          <button onclick="pgOrders(document.getElementById('aContent'))"
+            class="btn btn-p" style="width:100%;margin-top:12px;padding:12px">
+            🔄 Rules দেওয়ার পর আবার চেষ্টা করুন
+          </button>
         </div>
       </td></tr>`;
-    }
-  );
+
+    const dot = document.getElementById('liveDot');
+    if (dot) { dot.style.background='rgba(255,71,87,.15)'; dot.style.color='var(--re)'; dot.textContent='❌ লোড ব্যর্থ'; }
+  }
 }
 
-function filterOrdersAdmin(term) {
-  const f    = document.getElementById('ordFlt')?.value || 'all';
-  let   list = f==='all' ? allOrdersA : allOrdersA.filter(o => (o.status||'pending')===f);
+// ── Update stat counters ──
+function updateOrdStats() {
+  const c = s => allOrdersA.filter(o => (o.status||'pending') === s).length;
+  const sv = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  sv('sAll',  allOrdersA.length);
+  sv('sPend', c('pending'));
+  sv('sProc', c('processing'));
+  sv('sShip', c('shipped'));
+  sv('sDlvr', c('delivered'));
+  sv('sCanc', c('cancelled'));
+}
+
+// ── Set filter and re-render ──
+function setOrdFilter(s) {
+  const sel = document.getElementById('ordFlt');
+  if (sel) sel.value = s;
+  const srch = document.getElementById('ordSrch');
+  if (srch) srch.value = '';
+  renderOrdTable();
+}
+
+// ── Render table ──
+function renderOrdTable() {
+  const flt  = document.getElementById('ordFlt')?.value || 'all';
+  const term = (document.getElementById('ordSrch')?.value || '').toLowerCase().trim();
+
+  let list = flt === 'all' ? [...allOrdersA]
+    : allOrdersA.filter(o => (o.status || 'pending') === flt);
+
   if (term) {
-    const t = term.toLowerCase();
     list = list.filter(o =>
-      o.id.toLowerCase().includes(t) ||
-      (o.userName||'').toLowerCase().includes(t) ||
-      (o.phone||'').includes(t) ||
-      (o.userEmail||'').toLowerCase().includes(t)
+      (o.id || '').toLowerCase().includes(term) ||
+      (o.userName || '').toLowerCase().includes(term) ||
+      (o.phone || '').includes(term) ||
+      (o.userEmail || '').toLowerCase().includes(term) ||
+      (o.address || '').toLowerCase().includes(term)
     );
   }
 
@@ -1045,54 +1103,112 @@ function filterOrdersAdmin(term) {
   if (!tbl) return;
 
   if (!list.length) {
-    tbl.innerHTML = `<tr><td colspan="9" class="empty-s">
-      ${term || f!=='all' ? '🔍 কোনো ফলাফল পাওয়া যায়নি' : '📭 এখনো কোনো অর্ডার নেই'}
-    </td></tr>`;
+    let msg;
+    if (allOrdersA.length === 0) {
+      msg = '📭 Firebase-এ এখনো কোনো অর্ডার নেই — অথবা Rules সমস্যা আছে';
+    } else {
+      const labels = { pending:'অপেক্ষমান', processing:'প্রক্রিয়াধীন', shipped:'শিপড', delivered:'ডেলিভারড', cancelled:'বাতিল' };
+      msg = flt !== 'all'
+        ? `🔍 "${labels[flt]||flt}" filter-এ কোনো অর্ডার নেই (মোট: ${allOrdersA.length}) — <a onclick="setOrdFilter('all')" style="color:var(--bl);cursor:pointer;text-decoration:underline">সব দেখুন</a>`
+        : `🔍 "${term}" এ কোনো ফলাফল নেই`;
+    }
+    tbl.innerHTML = `<tr><td colspan="9" class="empty-s">${msg}</td></tr>`;
     return;
   }
 
   tbl.innerHTML = list.map(o => {
-    const prods = (o.products||[]);
-    const prodNames = prods.map(p=>`${p.name||''} ×${p.qty||1}`).join(', ');
-    const isNew = (Date.now() - (o.createdAt||0)) < 300000; // 5 min
+    const prods   = o.products || [];
+    const st      = o.status || 'pending';
+    const isNew   = (Date.now() - (o.createdAt || 0)) < 600000;
+    const stLabels = { pending:'⏳ অপেক্ষমান', processing:'⚙️ প্রক্রিয়াধীন', shipped:'🚚 শিপড', delivered:'✅ ডেলিভারড', cancelled:'❌ বাতিল' };
+
     return `<tr style="${isNew ? 'background:rgba(255,107,157,.04)' : ''}">
       <td>
-        <div class="text-pk fw7" style="font-size:12px">#${o.id.slice(-6).toUpperCase()}</div>
-        ${isNew ? '<span style="background:rgba(255,107,157,.2);color:var(--pk);font-size:9px;padding:1px 6px;border-radius:9px;font-weight:700">নতুন</span>' : ''}
+        <div style="font-family:monospace;font-weight:700;color:var(--pk);font-size:13px">
+          #${o.id.slice(-6).toUpperCase()}
+        </div>
+        ${isNew ? '<div style="color:var(--pk);font-size:10px;font-weight:700">🆕 নতুন</div>' : ''}
       </td>
       <td>
-        <div style="font-weight:600;font-size:13px">${escA(o.userName||'অজানা')}</div>
-        <div style="color:var(--txt2);font-size:11px">${escA(o.userEmail||'')}</div>
+        <div style="font-weight:600;font-size:13px">${escA(o.userName || 'অজানা')}</div>
+        <div style="color:var(--txt2);font-size:11px">${escA(o.userEmail || '')}</div>
       </td>
-      <td style="font-size:13px;font-weight:600;color:var(--bl)">${o.phone||'-'}</td>
-      <td style="font-size:11px;color:var(--txt2);max-width:150px">
-        ${prods.slice(0,2).map(p=>`<div>${escA(p.name||'')} ×${p.qty||1}</div>`).join('')}
-        ${prods.length>2?`<div style="color:var(--txt2)">+${prods.length-2} আরো...</div>`:''}
+      <td style="font-size:13px;font-weight:600;color:var(--bl)">${o.phone || '—'}</td>
+      <td style="font-size:11px;color:var(--txt2);max-width:160px">
+        ${prods.slice(0, 2).map(p =>
+          `<div>${escA(p.name || '')} <span style="color:var(--pk)">×${p.qty || 1}</span></div>`
+        ).join('')}
+        ${prods.length > 2 ? `<div style="color:var(--txt2)">+${prods.length - 2} আরো</div>` : ''}
+        ${prods.length === 0 ? '<div style="color:var(--txt2)">—</div>' : ''}
       </td>
-      <td class="text-te fw7" style="font-size:15px">৳${o.totalPrice||0}</td>
-      <td style="font-size:11px;color:var(--txt2);max-width:120px;line-height:1.4">${escA((o.address||'-').slice(0,50))}${(o.address||'').length>50?'...':''}</td>
-      <td style="font-size:11px;color:var(--txt2)">${fmtDateA(o.createdAt)}</td>
+      <td style="font-size:16px;font-weight:700;color:var(--te)">৳${o.totalPrice || 0}</td>
+      <td style="font-size:11px;color:var(--txt2);max-width:120px;line-height:1.5">
+        ${escA((o.address || '—').slice(0, 50))}
+      </td>
+      <td style="font-size:11px;color:var(--txt2);white-space:nowrap">${fmtDateA(o.createdAt)}</td>
       <td>
-        <select class="fsel" style="padding:5px 9px;font-size:12px;min-width:120px"
-          onchange="updateOrderAdmin('${o.id}',this.value)"
-          title="স্ট্যাটাস পরিবর্তন করুন">
-          ${[
-            ['pending',    '⏳ অপেক্ষমান'],
-            ['processing', '⚙️ প্রক্রিয়াধীন'],
-            ['shipped',    '🚚 শিপড'],
-            ['delivered',  '✅ ডেলিভারড'],
-            ['cancelled',  '❌ বাতিল']
-          ].map(([val,lbl])=>`<option value="${val}" ${(o.status||'pending')===val?'selected':''}>${lbl}</option>`).join('')}
+        <select class="fsel" style="padding:5px 8px;font-size:11px;min-width:130px"
+          onchange="updateOrderAdmin('${o.id}', this.value)">
+          ${[['pending','⏳ অপেক্ষমান'],['processing','⚙️ প্রক্রিয়াধীন'],
+             ['shipped','🚚 শিপড'],['delivered','✅ ডেলিভারড'],['cancelled','❌ বাতিল']]
+            .map(([v, l]) => `<option value="${v}" ${st===v?'selected':''}>${l}</option>`).join('')}
         </select>
       </td>
       <td>
-        <button class="btn btn-b btn-xs" onclick="viewOrderAdmin('${o.id}')">📋 দেখুন</button>
+        <div class="flex-row">
+          <button class="btn btn-b btn-xs" onclick="viewOrderAdmin('${o.id}')">📋 দেখুন</button>
+          <button class="btn btn-d btn-xs" onclick="deleteOrderAdmin('${o.id}')">🗑️</button>
+        </div>
       </td>
     </tr>`;
   }).join('');
 }
 
-// ── View full order detail ──
+// ── Update order status ──
+async function updateOrderAdmin(oid, status) {
+  try {
+    await adminDB.ref('orders/' + oid + '/status').set(status);
+    const labels = { pending:'অপেক্ষমান', processing:'প্রক্রিয়াধীন', shipped:'শিপড', delivered:'ডেলিভারড', cancelled:'বাতিল' };
+    aTst('✅ ' + (labels[status] || status) + ' করা হয়েছে', 'ok');
+  } catch (e) {
+    aTst('❌ আপডেট করতে সমস্যা: ' + e.message, 'err');
+  }
+}
+
+// ── Delete order ──
+async function deleteOrderAdmin(oid) {
+  const o = allOrdersA.find(x => x.id === oid);
+  const name = o ? (o.userName || '#' + oid.slice(-6).toUpperCase()) : '#' + oid.slice(-6).toUpperCase();
+  if (!confirm(`"${name}" এর অর্ডার মুছে ফেলবেন?
+
+এই কাজ পূর্বাবস্থায় ফেরানো যাবে না।`)) return;
+  try {
+    await adminDB.ref('orders/' + oid).remove();
+    aTst('🗑️ অর্ডার মুছে ফেলা হয়েছে', 'ok');
+    // Real-time listener will auto-update the table
+  } catch (e) {
+    aTst('❌ মুছতে সমস্যা: ' + e.message, 'err');
+  }
+}
+
+// ── Export CSV ──
+function exportOrdersAdmin() {
+  if (!allOrdersA.length) return aTst('কোনো অর্ডার নেই', 'warn');
+  const rows = [['অর্ডার ID', 'ক্রেতার নাম', 'ফোন', 'ইমেইল', 'পণ্য', 'মোট মূল্য', 'স্ট্যাটাস', 'ঠিকানা', 'তারিখ']];
+  allOrdersA.forEach(o => rows.push([
+    '#' + o.id.slice(-6).toUpperCase(),
+    o.userName || '', o.phone || '', o.userEmail || '',
+    (o.products || []).map(p => `${p.name} ×${p.qty}`).join(' | '),
+    o.totalPrice || 0,
+    { pending:'অপেক্ষমান', processing:'প্রক্রিয়াধীন', shipped:'শিপড', delivered:'ডেলিভারড', cancelled:'বাতিল' }[o.status] || o.status || '',
+    (o.address || '').replace(/,/g, ' '),
+    fmtDateA(o.createdAt)
+  ]));
+  dlCSV(rows, 'futful_orders');
+  aTst('📥 CSV ডাউনলোড হচ্ছে ✓', 'ok');
+}
+
+
 function viewOrderAdmin(oid) {
   const o = allOrdersA.find(x => x.id===oid);
   if (!o) return;
@@ -1162,7 +1278,10 @@ function viewOrderAdmin(oid) {
         </button>`).join('')}
     </div>
 
-    <button class="btn btn-o w100" onclick="closeAModal()">বন্ধ করুন</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+      <button class="btn btn-d w100" onclick="deleteOrderAdmin('${o.id}');closeAModal()">🗑️ অর্ডার মুছুন</button>
+      <button class="btn btn-o w100" onclick="closeAModal()">বন্ধ করুন</button>
+    </div>
   `);
 }
 

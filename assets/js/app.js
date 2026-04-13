@@ -13,7 +13,7 @@ const firebaseConfig = {
   appId: "1:396666924900:web:77a22669bd6c3e3ce6d471"
 };
 const GEMINI_KEY = "AIzaSyBHQsv6Sxuhy9i6BbhRqE_iVExkVgRnnuE"; // Gemini API Key
-const ADMIN_UID  = "kW8tMNo8IkejWQsMzCnnwjgVaUa2";
+const ADMIN_UID  = "HwOGRjEQqQP95ultAQbbSKNkpHn1";
 
 firebase.initializeApp(firebaseConfig);
 const auth    = firebase.auth();
