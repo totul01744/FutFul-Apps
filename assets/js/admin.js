@@ -238,15 +238,16 @@ async function loadRecentOrders() {
     const ords = [];
     snap.forEach(c => ords.push({ id:c.key, ...c.val() }));
     ords.reverse();
-    el.innerHTML = `<table class="tbl"><thead><tr><th>অর্ডার</th><th>ক্রেতা</th><th>মূল্য</th><th>স্ট্যাটাস</th></tr></thead><tbody>
+    el.innerHTML = `<table class="tbl"><thead><tr><th>অর্ডার</th><th>ক্রেতা</th><th>📱 ফোন</th><th>মূল্য</th><th>স্ট্যাটাস</th></tr></thead><tbody>
       ${ords.map(o => `<tr>
-        <td>#${o.id.slice(-5).toUpperCase()}</td>
+        <td style="font-weight:700;color:var(--pk)">#${o.id.slice(-5).toUpperCase()}</td>
         <td>${esc(o.userName||'অজানা')}</td>
-        <td>৳${o.totalPrice||0}</td>
+        <td style="font-size:12px">${esc(o.phone||'—')}</td>
+        <td style="color:#2ed573;font-weight:700">৳${o.totalPrice||0}</td>
         <td>${statusBdg(o.status)}</td>
       </tr>`).join('')}
     </tbody></table>`;
-  } catch(e) { el.innerHTML = '<div class="empty-s">লোড করতে সমস্যা হয়েছে</div>'; }
+  } catch(e) { el.innerHTML = '<div class="empty-s">লোড করা যায়নি</div>'; }
 }
 
 // ══════════════════════════════════════════════════════
@@ -661,12 +662,20 @@ function filterOrders(term) {
   if (!list.length) { t.innerHTML = '<tr><td colspan="8" class="empty-s">কোনো অর্ডার পাওয়া যায়নি</td></tr>'; return; }
   t.innerHTML = list.map(o => `
     <tr>
-      <td style="font-weight:700;color:var(--pk)">#${o.id.slice(-6).toUpperCase()}</td>
-      <td>${esc(o.userName||'অজানা')}</td>
-      <td style="font-size:12px;color:rgba(255,255,255,.6)">${(o.products||[]).map(p=>p.name).join(', ').slice(0,40)}...</td>
-      <td><span class="fw7 text-te">৳${o.totalPrice||0}</span></td>
-      <td style="font-size:11px;color:rgba(255,255,255,.5);max-width:120px;overflow:hidden;text-overflow:ellipsis">${esc((o.address||'').slice(0,40))}</td>
-      <td style="font-size:12px;color:rgba(255,255,255,.5)">${fmtDate(o.createdAt)}</td>
+      <td style="font-weight:700;color:var(--pk);white-space:nowrap">#${o.id.slice(-6).toUpperCase()}</td>
+      <td>
+        <div style="font-weight:600;font-size:13px">${esc(o.userName||'অজানা')}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">📱 ${esc(o.phone||'নেই')}</div>
+        ${o.userEmail ? `<div style="font-size:10px;color:rgba(255,255,255,.4)">${esc(o.userEmail)}</div>` : ''}
+      </td>
+      <td>
+        ${(o.products||[{name:o.productName||''}]).map(p=>`<div style="font-size:12px;color:rgba(255,255,255,.8)">${esc(p.name||'')} ${p.qty>1?'×'+p.qty:''}</div>`).join('')}
+      </td>
+      <td><span style="font-weight:700;color:#2ed573">৳${o.totalPrice||0}</span></td>
+      <td style="font-size:11px;color:rgba(255,255,255,.65);max-width:140px">
+        📍 ${esc(o.address||'ঠিকানা নেই')}
+      </td>
+      <td style="font-size:11px;color:rgba(255,255,255,.5);white-space:nowrap">${fmtDate(o.createdAt)}</td>
       <td>${statusBdg(o.status)}</td>
       <td>
         <select class="fsel" style="padding:4px 8px;font-size:11px" onchange="updateOrderStatus('${o.id}',this.value)">
@@ -1319,7 +1328,7 @@ async function pgSettings(el) {
         <div class="pb">
           <div class="fg2"><label>অ্যাপের নাম</label><input type="text" class="ai" id="cfgAppNm" value="${esc(cfg.name||'FutFul')}"></div>
           <div class="fg2"><label>অ্যাপের বিবরণ</label><textarea class="ai" id="cfgAppDs" rows="2">${esc(cfg.description||'মাতৃত্ব ও শিশু যত্ন অ্যাপ')}</textarea></div>
-          <div class="fg2"><label>যোগাযোগ ইমেইল</label><input type="email" class="ai" id="cfgEmail" value="${esc(cfg.email||'totul01744@gmail.com')}"></div>
+          <div class="fg2"><label>যোগাযোগ ইমেইল</label><input type="email" class="ai" id="cfgEmail" value="${esc(cfg.email||'mhtotul9@gmail.com')}"></div>
           <div class="fg2"><label>যোগাযোগ ফোন</label><input type="tel" class="ai" id="cfgPhone" value="${esc(cfg.phone||'')}"></div>
           <button class="btn btn-p w100" onclick="saveAppCfg()">✅ সেটিংস সংরক্ষণ করুন</button>
         </div>

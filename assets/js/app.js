@@ -12,8 +12,12 @@ const firebaseConfig = {
   messagingSenderId: "396666924900",
   appId: "1:396666924900:web:77a22669bd6c3e3ce6d471"
 };
-const GEMINI_KEY = "AIzaSyBHQsv6Sxuhy9i6BbhRqE_iVExkVgRnnuE"; // Gemini API Key
-const ADMIN_UID  = "HwOGRjEQqQP95ultAQbbSKNkpHn1";
+// ── OpenRouter API Config ──────────────────────────────
+// OpenRouter — Gemini এর বদলে ব্যবহার হচ্ছে (বাংলা mobile-friendly)
+const OPENROUTER_KEY = "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"; // OpenRouter.ai থেকে key নিন
+const OPENROUTER_MODEL = "google/gemini-2.0-flash-exp:free"; // Free model - বাংলা ভালো বোঝে
+const SITE_URL = window.location.origin; // আপনার site URL
+const ADMIN_UID  = "kW8tMNo8IkejWQsMzCnnwjgVaUa2";
 
 firebase.initializeApp(firebaseConfig);
 const auth    = firebase.auth();
@@ -567,12 +571,8 @@ function renderProds(list) {
         <div class="prod-nm">${p.name}</div>
         <div class="prod-rt">${'★'.repeat(Math.round(p.rating||4))}${'☆'.repeat(5-Math.round(p.rating||4))} ${p.rating||4}</div>
         <div class="prod-pr">৳${p.price||0}</div>
-        ${(p.stock||0)<=5&&(p.stock||0)>0?'<span class="prod-badge">কম স্টক</span>':''}
-        ${(p.stock||0)===0?'<span class="prod-badge" style="background:rgba(255,71,87,.12);color:#ff4757">স্টক নেই</span>':''}
-        <button class="btn-cart" style="background:linear-gradient(135deg,#06d6a0,#4dabf7);margin-top:7px"
-          onclick="event.stopPropagation();directOrder('${p.id}')">
-          🛒 Order Now
-        </button>
+        ${p.stock <= 5 ? '<span class="prod-badge">কম স্টক</span>' : ''}
+        <button class="btn-cart" onclick="event.stopPropagation();addToCart('${p.id}')">🛒 কার্টে যোগ</button>
       </div>
     </div>`).join('');
 }
@@ -602,7 +602,7 @@ function openProduct(id) {
     <div class="info-row"><span class="ir-lbl">স্টক</span><span class="ir-val">${p.stock > 0 ? p.stock + ' টি আছে' : '❌ স্টক নেই'}</span></div>
     <div class="info-row"><span class="ir-lbl">ক্যাটাগরি</span><span class="ir-val">${p.category}</span></div>
     ${p.description ? `<p style="color:rgba(255,255,255,.7);font-size:13px;margin:12px 0;line-height:1.65">${p.description}</p>` : ''}
-    <button onclick="directOrder('${p.id}');closeSheet()" class="btn-main w100" style="margin-top:14px;background:linear-gradient(135deg,#06d6a0,#4dabf7)">🛒 Order Now</button>`);
+    <button onclick="addToCart('${p.id}');closeSheet()" class="btn-main w100" style="margin-top:14px">🛒 কার্টে যোগ করুন</button>`);
 }
 
 function addToCart(id) {
@@ -621,65 +621,38 @@ function updateCartBadge() {
   if (el) { el.textContent = total; el.classList.toggle('hidden', total === 0); }
 }
 
-// ══ EBOOK RENDER HELPER ══
-function renderEbookCard(b) {
-  const isFree = b.free !== false && !b.paid;
-  const price  = b.price || 0;
-  if (isFree) {
-    // Free ebook — direct download or link
-    const dlAction = b.fileUrl
-      ? `window.open('${b.fileUrl}','_blank')`
-      : `dlEbook('${b.title}')`;
-    return `
-      <div class="ebook-card">
-        <div class="ebook-ico">${b.emoji||'📖'}</div>
-        <div class="ebook-inf">
-          <h4>${b.title}</h4>
-          <p>${b.description||b.desc||''}</p>
-          <span style="background:rgba(6,214,160,.15);color:var(--te);font-size:11px;padding:2px 8px;border-radius:9px;font-weight:700">বিনামূল্যে</span>
-        </div>
-        <button class="btn-dl" onclick="${dlAction}">⬇️ ডাউনলোড</button>
-      </div>`;
-  } else {
-    // Paid ebook — show price and payment button
-    return `
-      <div class="ebook-card">
-        <div class="ebook-ico">${b.emoji||'📖'}</div>
-        <div class="ebook-inf">
-          <h4>${b.title}</h4>
-          <p>${b.description||b.desc||''}</p>
-          <span style="background:rgba(255,107,157,.15);color:var(--pk);font-size:11px;padding:2px 8px;border-radius:9px;font-weight:700">পেইড • ৳${price}</span>
-        </div>
-        <button class="btn-dl" style="background:linear-gradient(135deg,var(--pk),var(--pu))"
-          onclick="openEbookPayment('${b.id||''}','${b.title}',${price},'${b.fileUrl||''}','${b.emoji||'📖'}')">
-          💳 ক্রয় করুন
-        </button>
-      </div>`;
-  }
-}
-
 async function loadEbooks() {
   const el = document.getElementById('ebooksWrap');
   if (!el) return;
   const def = [
-    { title:'শিশু যত্নের সম্পূর্ণ গাইড', description:'০-২ বছর বয়সী শিশুর পূর্ণাঙ্গ যত্ন', emoji:'📖', free:true },
-    { title:'মায়ের পুষ্টি গাইড', description:'গর্ভকালীন ও স্তন্যদানকালীন পুষ্টি', emoji:'🥗', free:true },
+    { title:'শিশু যত্নের সম্পূর্ণ গাইড', desc:'০-২ বছর বয়সী শিশুর পূর্ণাঙ্গ যত্ন', emoji:'📖', size:'২.৫ MB' },
+    { title:'মায়ের পুষ্টি গাইড', desc:'গর্ভকালীন ও স্তন্যদানকালীন পুষ্টি', emoji:'🥗', size:'১.৮ MB' },
   ];
   try {
     const snap = await db.ref('ebooks').once('value');
     const books = [];
     if (snap.exists()) snap.forEach(c => books.push({ id: c.key, ...c.val() }));
-    const show = books.length ? books.slice(0, 3) : def;
-    el.innerHTML = show.map(renderEbookCard).join('');
+    const show = books.length ? books.slice(0, 2) : def;
+    el.innerHTML = show.map(b => `
+      <div class="ebook-card">
+        <div class="ebook-ico">${b.emoji||'📖'}</div>
+        <div class="ebook-inf"><h4>${b.title}</h4><p>${b.desc||b.description||''} ${b.size ? '• ' + b.size : ''}</p></div>
+        <button class="btn-dl" onclick="${b.fileUrl ? `window.open('${b.fileUrl}','_blank')` : `dlEbook('${b.title}')`}">⬇️ ডাউনলোড</button>
+      </div>`).join('');
   } catch(e) {
-    el.innerHTML = def.map(renderEbookCard).join('');
+    el.innerHTML = def.map(b => `
+      <div class="ebook-card">
+        <div class="ebook-ico">${b.emoji}</div>
+        <div class="ebook-inf"><h4>${b.title}</h4><p>${b.desc} • ${b.size}</p></div>
+        <button class="btn-dl" onclick="dlEbook('${b.title}')">⬇️ ডাউনলোড</button>
+      </div>`).join('');
   }
 }
 
 function dlEbook(title) { toast(`"${title}" ডাউনলোড শুরু হয়েছে ✓`, 'success'); }
 
 async function openAllEbooks() {
-  openFPM('📚 সব ই-বুক ও গিফট');
+  openFPM('📚 সব ই-বুক');
   const el = document.getElementById('fpmBody');
   el.innerHTML = '<div class="spin-wrap"><div class="spinner"></div> লোড হচ্ছে...</div>';
   try {
@@ -687,210 +660,13 @@ async function openAllEbooks() {
     if (!snap.exists()) { el.innerHTML = '<div class="empty-state">কোনো ই-বুক পাওয়া যায়নি</div>'; return; }
     const books = [];
     snap.forEach(c => books.push({ id: c.key, ...c.val() }));
-    el.innerHTML = `
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-        <span style="background:rgba(6,214,160,.15);color:var(--te);font-size:12px;padding:4px 12px;border-radius:20px">✅ বিনামূল্যে</span>
-        <span style="background:rgba(255,107,157,.15);color:var(--pk);font-size:12px;padding:4px 12px;border-radius:20px">💳 পেইড</span>
-      </div>
-      ${books.map(renderEbookCard).join('')}`;
+    el.innerHTML = books.map(b => `
+      <div class="ebook-card">
+        <div class="ebook-ico">${b.emoji||'📖'}</div>
+        <div class="ebook-inf"><h4>${b.title}</h4><p>${b.description||''}</p></div>
+        <button class="btn-dl" onclick="${b.fileUrl ? `window.open('${b.fileUrl}','_blank')` : `dlEbook('${b.title}')`}">⬇️ ডাউনলোড</button>
+      </div>`).join('');
   } catch(e) { el.innerHTML = '<div class="empty-state">লোড করতে সমস্যা হয়েছে</div>'; }
-}
-
-// ══ EBOOK PAYMENT SYSTEM ══
-async function openEbookPayment(ebookId, title, price, fileUrl, emoji) {
-  if (!cUser) return toast('পেমেন্ট করতে প্রথমে লগইন করুন', 'error');
-
-  // Load payment number from Firebase config
-  let bkashNum = '01XXXXXXXXX';
-  let nagadNum = '01XXXXXXXXX';
-  try {
-    const cfgSnap = await db.ref('config/payment').once('value');
-    if (cfgSnap.exists()) {
-      bkashNum = cfgSnap.val().bkash || bkashNum;
-      nagadNum = cfgSnap.val().nagad || nagadNum;
-    }
-  } catch(e) {}
-
-  openFPM(`💳 পেমেন্ট — ${title}`);
-  const el = document.getElementById('fpmBody');
-  el.innerHTML = `
-    <!-- Product Info -->
-    <div style="background:rgba(255,255,255,.06);border-radius:14px;padding:16px;margin-bottom:20px;display:flex;gap:13px;align-items:center">
-      <div style="font-size:44px">${emoji}</div>
-      <div>
-        <div style="color:#fff;font-size:16px;font-weight:700">${title}</div>
-        <div style="color:var(--pk);font-size:22px;font-weight:700;margin-top:4px">৳${price}</div>
-      </div>
-    </div>
-
-    <!-- Step 1: Payment Method -->
-    <div style="color:#fff;font-size:15px;font-weight:700;margin-bottom:12px">
-      ধাপ ১ — পেমেন্ট মাধ্যম নির্বাচন করুন
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
-      <div id="pmBkash" onclick="selectPayMethod('bkash')"
-        style="background:rgba(230,0,80,.12);border:2px solid rgba(230,0,80,.3);border-radius:12px;padding:14px;text-align:center;cursor:pointer;transition:all .2s">
-        <div style="font-size:28px;margin-bottom:5px">💗</div>
-        <div style="color:#ff6b9d;font-weight:700;font-size:14px">bKash</div>
-        <div style="color:rgba(255,255,255,.55);font-size:12px;margin-top:3px">${bkashNum}</div>
-      </div>
-      <div id="pmNagad" onclick="selectPayMethod('nagad')"
-        style="background:rgba(255,102,0,.1);border:2px solid rgba(255,102,0,.25);border-radius:12px;padding:14px;text-align:center;cursor:pointer;transition:all .2s">
-        <div style="font-size:28px;margin-bottom:5px">🟠</div>
-        <div style="color:#ff9f43;font-weight:700;font-size:14px">Nagad</div>
-        <div style="color:rgba(255,255,255,.55);font-size:12px;margin-top:3px">${nagadNum}</div>
-      </div>
-    </div>
-
-    <!-- Step 2: How to pay -->
-    <div id="payInstructions" style="display:none;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px;margin-bottom:16px">
-      <div style="color:#fff;font-size:14px;font-weight:700;margin-bottom:10px">📋 পেমেন্টের নিয়ম:</div>
-      <div id="paySteps" style="color:rgba(255,255,255,.75);font-size:13px;line-height:1.9"></div>
-    </div>
-
-    <!-- Step 3: Transaction ID -->
-    <div id="payFormSection" style="display:none">
-      <div style="color:#fff;font-size:15px;font-weight:700;margin-bottom:12px">ধাপ ২ — পেমেন্ট তথ্য দিন</div>
-      <div class="input-group">
-        <label style="color:rgba(255,255,255,.6);font-size:12px;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px">আপনার নাম *</label>
-        <input type="text" class="dark-inp" id="ebPayName" placeholder="আপনার পূর্ণ নাম" value="${cUser.displayName||''}">
-      </div>
-      <div class="input-group">
-        <label style="color:rgba(255,255,255,.6);font-size:12px;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px">যে নম্বর থেকে পাঠিয়েছেন *</label>
-        <input type="tel" class="dark-inp" id="ebPayFrom" placeholder="01XXXXXXXXX" value="${cUser.dbData?.phone||''}">
-      </div>
-      <div class="input-group">
-        <label style="color:rgba(255,255,255,.6);font-size:12px;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px">ট্রানজ্যাকশন ID *</label>
-        <input type="text" class="dark-inp" id="ebPayTxId" placeholder="যেমন: 8FG3HJ2K9L (bKash/Nagad থেকে পাওয়া)" style="text-transform:uppercase">
-        <div style="color:rgba(255,255,255,.4);font-size:11px;margin-top:4px">পেমেন্ট সম্পন্ন হলে Transaction ID পাওয়া যায়</div>
-      </div>
-      <div class="input-group">
-        <label style="color:rgba(255,255,255,.6);font-size:12px;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px">পাঠানো পরিমাণ (৳) *</label>
-        <input type="number" class="dark-inp" id="ebPayAmount" value="${price}" placeholder="${price}">
-      </div>
-
-      <div style="background:rgba(255,159,67,.08);border:1px solid rgba(255,159,67,.2);border-radius:10px;padding:11px;margin-bottom:14px">
-        <div style="color:var(--or);font-size:12px;font-weight:700;margin-bottom:4px">⚠️ গুরুত্বপূর্ণ নির্দেশনা</div>
-        <div style="color:rgba(255,255,255,.65);font-size:12px;line-height:1.7">
-          • সঠিক Transaction ID না দিলে ই-বুক অ্যাক্সেস দেওয়া সম্ভব হবে না<br>
-          • পেমেন্ট যাচাইয়ের পর ২৪ ঘণ্টার মধ্যে অ্যাক্সেস দেওয়া হবে<br>
-          • সমস্যায়: totul01744@gmail.com
-        </div>
-      </div>
-
-      <button onclick="submitEbookPayment('${ebookId}','${title}',${price},'${fileUrl}')"
-        class="btn-main w100" style="padding:14px;font-size:15px">
-        ✅ পেমেন্ট নিশ্চিত করুন
-      </button>
-    </div>
-
-    <!-- Selected method display -->
-    <div id="selectedMethodInfo" style="display:none;text-align:center;margin-bottom:12px"></div>
-  `;
-
-  window._selectedPayMethod = null;
-  window._payNums = { bkash: bkashNum, nagad: nagadNum };
-}
-
-function selectPayMethod(method) {
-  window._selectedPayMethod = method;
-  const nums = window._payNums || {};
-
-  // Highlight selected
-  document.getElementById('pmBkash').style.borderColor = method==='bkash' ? '#ff6b9d' : 'rgba(230,0,80,.3)';
-  document.getElementById('pmBkash').style.background  = method==='bkash' ? 'rgba(230,0,80,.22)' : 'rgba(230,0,80,.12)';
-  document.getElementById('pmNagad').style.borderColor = method==='nagad' ? '#ff9f43' : 'rgba(255,102,0,.25)';
-  document.getElementById('pmNagad').style.background  = method==='nagad' ? 'rgba(255,102,0,.2)' : 'rgba(255,102,0,.1)';
-
-  const num = method==='bkash' ? nums.bkash : nums.nagad;
-  const icon = method==='bkash' ? '💗' : '🟠';
-  const name = method==='bkash' ? 'bKash' : 'Nagad';
-
-  // Show instructions
-  document.getElementById('payInstructions').style.display = 'block';
-  document.getElementById('paySteps').innerHTML = `
-    1️⃣ আপনার ${name} অ্যাপ খুলুন<br>
-    2️⃣ <strong style="color:#fff">Send Money</strong> সিলেক্ট করুন<br>
-    3️⃣ নম্বরে পাঠান: <strong style="color:var(--pk);font-size:15px">${num}</strong>
-    <button onclick="copyPayNum('${num}')" style="background:rgba(255,107,157,.2);border:none;border-radius:6px;padding:3px 9px;color:var(--pk);font-size:11px;cursor:pointer;font-family:inherit;margin-left:6px">কপি</button><br>
-    4️⃣ Amount: <strong style="color:#fff">৳${window._currentEbookPrice||''}</strong><br>
-    5️⃣ Reference/Note-এ লিখুন: <strong style="color:var(--te)">FutFul ebook</strong><br>
-    6️⃣ পাঠানো হলে Transaction ID নোট করুন<br>
-    7️⃣ নিচের ফর্মে তথ্য দিন`;
-
-  document.getElementById('payFormSection').style.display = 'block';
-}
-
-function copyPayNum(num) {
-  navigator.clipboard?.writeText(num)
-    .then(() => toast('নম্বর কপি হয়েছে ✓', 'success'))
-    .catch(() => toast('নম্বর: ' + num, 'success'));
-}
-
-async function submitEbookPayment(ebookId, title, price, fileUrl) {
-  const name   = document.getElementById('ebPayName')?.value.trim();
-  const from   = document.getElementById('ebPayFrom')?.value.trim();
-  const txId   = document.getElementById('ebPayTxId')?.value.trim().toUpperCase();
-  const amount = parseFloat(document.getElementById('ebPayAmount')?.value) || 0;
-  const method = window._selectedPayMethod;
-
-  if (!method) return toast('পেমেন্ট মাধ্যম নির্বাচন করুন', 'error');
-  if (!name)   return toast('আপনার নাম দিন', 'error');
-  if (!from)   return toast('যে নম্বর থেকে পাঠিয়েছেন দিন', 'error');
-  if (!txId)   return toast('ট্রানজ্যাকশন ID দিন', 'error');
-  if (amount < price) return toast(`সর্বনিম্ন পেমেন্ট ৳${price} হতে হবে`, 'error');
-
-  toast('পেমেন্ট যাচাই করা হচ্ছে...', '');
-  try {
-    // Save payment request to Firebase
-    const payRef = await db.ref('ebookPayments').push({
-      userId:    cUser.uid,
-      userName:  name,
-      userEmail: cUser.email || '',
-      fromPhone: from,
-      txId:      txId,
-      amount:    amount,
-      method:    method,
-      ebookId:   ebookId,
-      ebookTitle: title,
-      ebookPrice: price,
-      fileUrl:   fileUrl,
-      status:    'pending',   // Admin যাচাই করবে
-      createdAt: Date.now()
-    });
-
-    closeFPM();
-    // Success screen
-    openFPM('✅ পেমেন্ট সাবমিট হয়েছে');
-    document.getElementById('fpmBody').innerHTML = `
-      <div style="text-align:center;padding:28px 16px">
-        <div style="font-size:65px;margin-bottom:14px">✅</div>
-        <div style="color:#fff;font-size:21px;font-weight:700;margin-bottom:8px">পেমেন্ট সাবমিট সফল!</div>
-        <div style="color:rgba(255,255,255,.6);font-size:14px;line-height:1.7;margin-bottom:22px">
-          আপনার পেমেন্ট তথ্য আমরা পেয়েছি।<br>
-          যাচাইয়ের পর <strong style="color:var(--te)">২৪ ঘণ্টার মধ্যে</strong> ই-বুক অ্যাক্সেস দেওয়া হবে।
-        </div>
-        <div style="background:rgba(6,214,160,.08);border:1px solid rgba(6,214,160,.2);border-radius:13px;padding:15px;text-align:left;margin-bottom:20px">
-          <div style="color:var(--te);font-size:13px;font-weight:700;margin-bottom:9px">📋 পেমেন্ট সারাংশ</div>
-          <div class="info-row"><span class="ir-lbl">রেফারেন্স ID</span><span class="ir-val" style="color:var(--pk)">#${payRef.key.slice(-8).toUpperCase()}</span></div>
-          <div class="info-row"><span class="ir-lbl">ই-বুক</span><span class="ir-val">${title}</span></div>
-          <div class="info-row"><span class="ir-lbl">মূল্য</span><span class="ir-val" style="color:var(--pk)">৳${price}</span></div>
-          <div class="info-row"><span class="ir-lbl">পেমেন্ট মাধ্যম</span><span class="ir-val">${method==='bkash'?'💗 bKash':'🟠 Nagad'}</span></div>
-          <div class="info-row"><span class="ir-lbl">Transaction ID</span><span class="ir-val" style="color:var(--te)">${txId}</span></div>
-          <div class="info-row"><span class="ir-lbl">স্ট্যাটাস</span><span class="ir-val" style="color:var(--or)">⏳ যাচাই বাকি</span></div>
-        </div>
-        <div style="background:rgba(255,159,67,.08);border:1px solid rgba(255,159,67,.2);border-radius:10px;padding:11px;margin-bottom:18px;text-align:left;font-size:12px;color:rgba(255,255,255,.65);line-height:1.7">
-          📧 যোগাযোগ: totul01744@gmail.com<br>
-          📱 Reference: #${payRef.key.slice(-8).toUpperCase()} উল্লেখ করুন
-        </div>
-        <button onclick="closeFPM()" class="btn-main w100">ঠিক আছে</button>
-      </div>`;
-
-    toast('পেমেন্ট সাবমিট হয়েছে ✓', 'success');
-  } catch(e) {
-    console.error('Payment error:', e);
-    toast('পেমেন্ট সাবমিট করতে সমস্যা হয়েছে', 'error');
-  }
 }
 
 // CART
@@ -930,163 +706,14 @@ function renderCart() {
 function chQty(i, d) { cart[i].qty += d; if (cart[i].qty <= 0) cart.splice(i, 1); updateCartBadge(); renderCart(); }
 function rmCart(i)   { cart.splice(i, 1); updateCartBadge(); renderCart(); }
 
-// ══ DIRECT ORDER — Order Now বাটন থেকে সরাসরি ══
-function directOrder(productId) {
-  if (!cUser) return toast('অর্ডার করতে প্রথমে লগইন করুন', 'error');
-  const p = allProds.find(x => x.id === productId);
-  if (!p) return toast('পণ্য পাওয়া যায়নি', 'error');
-  if ((p.stock||0) === 0) return toast('এই পণ্যটি স্টকে নেই', 'error');
-
-  // Pre-fill name and phone from user data
-  const userName = cUser.displayName || '';
-  const userPhone = cUser.dbData?.phone || '';
-
-  openFPM(`🛒 Order Now — ${p.name}`);
-  const el = document.getElementById('fpmBody');
-  el.innerHTML = `
-    <div style="background:rgba(255,255,255,.06);border-radius:14px;padding:16px;margin-bottom:18px;display:flex;gap:14px;align-items:center">
-      <div style="font-size:48px;flex-shrink:0">${p.emoji||'🛍️'}</div>
-      <div>
-        <div style="color:#fff;font-size:17px;font-weight:700">${p.name}</div>
-        <div style="color:var(--pk);font-size:20px;font-weight:700;margin-top:4px">৳${p.price}</div>
-        <div style="color:rgba(255,255,255,.5);font-size:12px;margin-top:2px">${p.category} • স্টক: ${p.stock||0}</div>
-      </div>
-    </div>
-
-    <div style="color:#fff;font-size:15px;font-weight:700;margin-bottom:14px">📋 আপনার তথ্য দিন</div>
-
-    <div class="input-group">
-      <label style="color:rgba(255,255,255,.6);font-size:12px;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px">আপনার নাম *</label>
-      <input type="text" class="dark-inp" id="ordName" placeholder="আপনার পূর্ণ নাম" value="${userName}" autocomplete="name">
-    </div>
-    <div class="input-group">
-      <label style="color:rgba(255,255,255,.6);font-size:12px;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px">ফোন নম্বর * (bKash/Nagad)</label>
-      <input type="tel" class="dark-inp" id="ordPhone" placeholder="01XXXXXXXXX" value="${userPhone}" autocomplete="tel">
-    </div>
-    <div class="input-group">
-      <label style="color:rgba(255,255,255,.6);font-size:12px;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px">ডেলিভারি ঠিকানা *</label>
-      <textarea class="dark-inp" id="ordAddr" placeholder="বাড়ি নং, রাস্তা, এলাকা, জেলা লিখুন..." rows="3" style="resize:none"></textarea>
-    </div>
-    <div class="input-group">
-      <label style="color:rgba(255,255,255,.6);font-size:12px;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px">পরিমাণ</label>
-      <div style="display:flex;align-items:center;gap:12px">
-        <button onclick="chDirectQty(-1)" style="background:rgba(255,255,255,.12);border:none;border-radius:50%;width:34px;height:34px;color:#fff;font-size:18px;cursor:pointer;font-weight:700">−</button>
-        <span id="directQtyVal" style="color:#fff;font-size:18px;font-weight:700;min-width:30px;text-align:center">1</span>
-        <button onclick="chDirectQty(1)" style="background:rgba(255,255,255,.12);border:none;border-radius:50%;width:34px;height:34px;color:#fff;font-size:18px;cursor:pointer;font-weight:700">+</button>
-        <span style="color:var(--pk);font-size:15px;font-weight:700" id="directTotal">মোট: ৳${p.price}</span>
-      </div>
-    </div>
-
-    <div style="background:rgba(255,107,157,.08);border:1px solid rgba(255,107,157,.2);border-radius:11px;padding:12px;margin-bottom:16px">
-      <div style="color:rgba(255,255,255,.6);font-size:12px;margin-bottom:6px">💰 মোট পরিশোধযোগ্য</div>
-      <div style="color:var(--pk);font-size:24px;font-weight:700" id="directFinalTotal">৳${p.price}</div>
-      <div style="color:rgba(255,255,255,.45);font-size:11px;margin-top:3px">ডেলিভারি চার্জ আলাদাভাবে প্রযোজ্য</div>
-    </div>
-
-    <button onclick="confirmDirectOrder('${p.id}')" class="btn-main w100" style="padding:15px;font-size:16px">
-      ✅ অর্ডার নিশ্চিত করুন
-    </button>
-    <button onclick="closeFPM()" style="width:100%;padding:12px;background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:var(--Rs);color:rgba(255,255,255,.6);font-size:14px;font-family:inherit;cursor:pointer;margin-top:8px">
-      বাতিল করুন
-    </button>`;
-
-  // Store product price for qty calculation
-  window._directOrderPrice = p.price;
-  window._directOrderMaxStock = p.stock || 99;
-  window._directOrderQty = 1;
-}
-
-function chDirectQty(delta) {
-  const max = window._directOrderMaxStock || 99;
-  window._directOrderQty = Math.max(1, Math.min(max, (window._directOrderQty||1) + delta));
-  const qty = window._directOrderQty;
-  const price = window._directOrderPrice || 0;
-  const qEl = document.getElementById('directQtyVal');
-  const tEl = document.getElementById('directTotal');
-  const fEl = document.getElementById('directFinalTotal');
-  if (qEl) qEl.textContent = qty;
-  if (tEl) tEl.textContent = `মোট: ৳${price * qty}`;
-  if (fEl) fEl.textContent = `৳${price * qty}`;
-}
-
-async function confirmDirectOrder(productId) {
-  const name  = document.getElementById('ordName')?.value.trim();
-  const phone = document.getElementById('ordPhone')?.value.trim();
-  const addr  = document.getElementById('ordAddr')?.value.trim();
-  const qty   = window._directOrderQty || 1;
-
-  if (!name)  return toast('আপনার নাম দিন', 'error');
-  if (!phone) return toast('ফোন নম্বর দিন', 'error');
-  if (!addr)  return toast('ডেলিভারি ঠিকানা দিন', 'error');
-
-  const p = allProds.find(x => x.id === productId);
-  if (!p) return toast('পণ্য পাওয়া যায়নি', 'error');
-
-  const totalPrice = p.price * qty;
-
-  toast('অর্ডার প্রক্রিয়া করা হচ্ছে...', '');
-  try {
-    // Save order to Firebase
-    const orderRef = await db.ref('orders').push({
-      userId:    cUser.uid,
-      userName:  name,
-      userEmail: cUser.email || '',
-      phone,
-      address:   addr,
-      products:  [{ id:p.id, name:p.name, price:p.price, qty, emoji:p.emoji||'🛍️' }],
-      totalPrice,
-      orderType: 'direct',
-      status:    'pending',
-      createdAt: Date.now()
-    });
-
-    // Update user's phone if not saved
-    if (!cUser.dbData?.phone && phone) {
-      await db.ref('users/' + cUser.uid + '/phone').set(phone);
-    }
-
-    closeFPM();
-    // Show success screen
-    openFPM('✅ অর্ডার সফল!');
-    document.getElementById('fpmBody').innerHTML = `
-      <div style="text-align:center;padding:30px 16px">
-        <div style="font-size:70px;margin-bottom:16px">🎉</div>
-        <div style="color:#fff;font-size:22px;font-weight:700;margin-bottom:8px">অর্ডার সফলভাবে হয়েছে!</div>
-        <div style="color:rgba(255,255,255,.6);font-size:14px;line-height:1.7;margin-bottom:24px">
-          আপনার অর্ডার আমরা পেয়েছি।<br>
-          শীঘ্রই আপনার সাথে যোগাযোগ করা হবে।
-        </div>
-        <div style="background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.25);border-radius:14px;padding:16px;margin-bottom:20px;text-align:left">
-          <div style="color:var(--te);font-size:13px;font-weight:700;margin-bottom:10px">📋 অর্ডার সারাংশ</div>
-          <div class="info-row"><span class="ir-lbl">অর্ডার ID</span><span class="ir-val" style="color:var(--pk)">#${orderRef.key.slice(-8).toUpperCase()}</span></div>
-          <div class="info-row"><span class="ir-lbl">পণ্য</span><span class="ir-val">${p.name} ×${qty}</span></div>
-          <div class="info-row"><span class="ir-lbl">মোট মূল্য</span><span class="ir-val" style="color:var(--pk)">৳${totalPrice}</span></div>
-          <div class="info-row"><span class="ir-lbl">নাম</span><span class="ir-val">${name}</span></div>
-          <div class="info-row"><span class="ir-lbl">ফোন</span><span class="ir-val">${phone}</span></div>
-          <div class="info-row"><span class="ir-lbl">ঠিকানা</span><span class="ir-val">${addr.slice(0,40)}...</span></div>
-          <div class="info-row"><span class="ir-lbl">স্ট্যাটাস</span><span class="ir-val" style="color:var(--or)">⏳ অপেক্ষমান</span></div>
-        </div>
-        <button onclick="closeFPM()" class="btn-main w100">ঠিক আছে</button>
-      </div>`;
-    toast('🎉 অর্ডার সফলভাবে দেওয়া হয়েছে!', 'success');
-  } catch(e) {
-    console.error('Order error:', e);
-    toast('অর্ডার দিতে সমস্যা হয়েছে। আবার চেষ্টা করুন।', 'error');
-  }
-}
-
-// Legacy cart checkout (cart icon থেকে)
 function startCheckout() {
   if (!cUser) return toast('প্রথমে লগইন করুন', 'error');
   if (!cart.length) return toast('কার্ট খালি', 'error');
   closeCart();
-  const userName = cUser.displayName || '';
-  const userPhone = cUser.dbData?.phone || '';
   openSheet(`
     <div class="modal-title">🛒 চেকআউট</div>
-    <div class="input-group"><label>আপনার নাম</label><input type="text" class="dark-inp" id="chkName" value="${userName}" placeholder="আপনার পূর্ণ নাম"></div>
-    <div class="input-group"><label>ফোন নম্বর</label><input type="tel" class="dark-inp" id="chkPhone" value="${userPhone}" placeholder="01XXXXXXXXX"></div>
     <div class="input-group"><label>ডেলিভারি ঠিকানা</label><textarea class="dark-inp" id="chkAddr" placeholder="সম্পূর্ণ ঠিকানা লিখুন..." rows="3"></textarea></div>
+    <div class="input-group"><label>ফোন নম্বর</label><input type="tel" class="dark-inp" id="chkPhone" placeholder="01XXXXXXXXX"></div>
     <div style="background:rgba(255,255,255,.06);border-radius:11px;padding:12px;margin-bottom:13px">
       ${cart.map(i => `<div class="info-row"><span class="ir-lbl">${i.name} ×${i.qty}</span><span class="ir-val">৳${i.price*i.qty}</span></div>`).join('')}
       <div class="info-row"><span style="color:#fff;font-weight:700">মোট</span><span style="color:var(--pk);font-weight:700;font-size:17px">৳${cart.reduce((s,i)=>s+i.price*i.qty,0)}</span></div>
@@ -1095,23 +722,17 @@ function startCheckout() {
 }
 
 async function placeOrder() {
-  const name  = document.getElementById('chkName')?.value.trim();
   const addr  = document.getElementById('chkAddr')?.value.trim();
   const phone = document.getElementById('chkPhone')?.value.trim();
-  if (!name)  return toast('নাম দিন', 'error');
-  if (!phone) return toast('ফোন নম্বর দিন', 'error');
-  if (!addr)  return toast('ঠিকানা দিন', 'error');
+  if (!addr || !phone) return toast('ঠিকানা ও ফোন নম্বর দিন', 'error');
   try {
     await db.ref('orders').push({
-      userId:    cUser.uid,
-      userName:  name,
-      userEmail: cUser.email || '',
-      phone,
-      address:   addr,
-      products:  cart.map(i => ({ id:i.id, name:i.name, price:i.price, qty:i.qty })),
+      userId: cUser.uid,
+      userName: cUser.displayName || 'ব্যবহারকারী',
+      products: cart.map(i => ({ id:i.id, name:i.name, price:i.price, qty:i.qty })),
       totalPrice: cart.reduce((s,i) => s+i.price*i.qty, 0),
-      orderType: 'cart',
-      status:    'pending',
+      address: addr, phone,
+      status: 'pending',
       createdAt: Date.now()
     });
     cart = [];
@@ -2034,27 +1655,63 @@ function toggleChat() {
   }
 }
 
+// Chat history for multi-turn conversation
+let chatHistory = [];
+
 async function sendMsg() {
-  const inp=document.getElementById('chatInput');
-  const msg=inp?.value.trim();
-  if(!msg) return;
-  inp.value='';
-  appendMsg(msg,'user');
-  const loadId='load'+Date.now();
-  appendMsg('টাইপ করছে...','bot',loadId);
+  const inp = document.getElementById('chatInput');
+  const msg = inp?.value.trim();
+  if (!msg) return;
+  inp.value = '';
+  if (inp.style) inp.style.height = 'auto';
+  appendMsg(msg, 'user');
+  
+  const loadId = 'load' + Date.now();
+  appendMsg('⌛ উত্তর লিখছি...', 'bot', loadId);
+  
+  const sysPrompt = `আপনি FutFul Help Desk — বাংলাদেশের মায়েদের জন্য বিশেষজ্ঞ AI সহকারী।
+বিশেষত্ব: শিশু যত্ন, মাতৃস্বাস্থ্য, শিশু পুষ্টি, টিকাদান, শিশু বিকাশ, মায়ের মানসিক স্বাস্থ্য।
+নিয়ম: ১) সর্বদা বাংলায় উত্তর দিন। ২) প্রথম বার্তায় "আস-সালামু আলাইকুম! 🌸" দিয়ে শুরু করুন। ৩) সংক্ষিপ্ত ও স্পষ্ট হন। ৪) গুরুতর সমস্যায় ডাক্তারের পরামর্শ নেওয়ার কথা বলুন। ৫) ইসলামিক দৃষ্টিভঙ্গি বজায় রাখুন।`;
+
+  // Add user message to history
+  chatHistory.push({ role: 'user', content: msg });
+  if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20); // keep last 20 messages
+
   try {
-    const sysPrompt=`আপনি FutFul Help Desk, একটি বাংলা ভাষার বিশেষজ্ঞ AI সহকারী। আপনি বিশেষভাবে শিশু যত্ন, মাতৃস্বাস্থ্য, শিশু পুষ্টি, টিকাদান কার্যক্রম, শিশু বিকাশ এবং মায়ের মানসিক স্বাস্থ্য বিষয়ে পরামর্শ দেন। সর্বদা বাংলায় উত্তর দিন। সালাম দিয়ে শুরু করুন (আস-সালামু আলাইকুম বা ওয়া আলাইকুমুস সালাম)। সংক্ষিপ্ত, স্পষ্ট এবং বন্ধুসুলভ হন। গুরুতর স্বাস্থ্য সমস্যায় সর্বদা ডাক্তারের পরামর্শ নেওয়ার কথা বলুন।`;
-    const resp=await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_KEY}`,
-      { method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ contents:[{role:'user',parts:[{text:sysPrompt+'\n\nপ্রশ্ন: '+msg}]}] })
-      });
-    if(resp.ok) {
-      const data=await resp.json();
-      const reply=data.candidates?.[0]?.content?.parts?.[0]?.text||fallbackReply(msg);
+    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENROUTER_KEY}`,
+        'HTTP-Referer': SITE_URL,
+        'X-Title': 'FutFul Help Desk'
+      },
+      body: JSON.stringify({
+        model: OPENROUTER_MODEL,
+        messages: [
+          { role: 'system', content: sysPrompt },
+          ...chatHistory
+        ],
+        max_tokens: 800,
+        temperature: 0.7
+      })
+    });
+
+    if (resp.ok) {
+      const data = await resp.json();
+      const reply = data.choices?.[0]?.message?.content || fallbackReply(msg);
+      // Add assistant reply to history
+      chatHistory.push({ role: 'assistant', content: reply });
       updateMsg(loadId, reply);
-    } else { updateMsg(loadId, fallbackReply(msg)); }
-  } catch(e) { updateMsg(loadId, fallbackReply(msg)); }
+    } else {
+      const errData = await resp.json().catch(() => ({}));
+      console.warn('OpenRouter error:', resp.status, errData);
+      updateMsg(loadId, fallbackReply(msg));
+    }
+  } catch(e) {
+    console.warn('Chat error:', e.message);
+    updateMsg(loadId, fallbackReply(msg));
+  }
 }
 
 function fallbackReply(msg) {
@@ -2142,4 +1799,114 @@ function calcAge(dob) {
 function esc(t) {
   if(!t) return '';
   return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+
+// ══════════════════════════════════════════════════════
+//  SCROLL TO TOP — HopWeb / Mobile WebView Fix
+// ══════════════════════════════════════════════════════
+function scrollToTop() {
+  const area = document.getElementById('pageArea');
+  if (area) {
+    area.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Show/hide scroll-to-top button based on scroll position
+function initScrollTopBtn() {
+  const area = document.getElementById('pageArea');
+  const btn  = document.getElementById('scrollTopBtn');
+  if (!area || !btn) return;
+
+  area.addEventListener('scroll', () => {
+    if (area.scrollTop > 200) {
+      btn.classList.add('visible');
+    } else {
+      btn.classList.remove('visible');
+    }
+  }, { passive: true });
+}
+
+// ══════════════════════════════════════════════════════
+//  MOBILE / HOPWEB WEBVIEW FIXES
+// ══════════════════════════════════════════════════════
+function initMobileFixes() {
+  // ১. Prevent body from scrolling (keeps page-area as the scroller)
+  document.body.addEventListener('touchmove', (e) => {
+    // Allow scroll inside page-area, sheet-box, cp-msgs
+    const allowed = e.target.closest('#pageArea, .sheet-box, .fpm-body, .cp-msgs, .a-modal-box, #aContent');
+    if (!allowed) e.preventDefault();
+  }, { passive: false });
+
+  // ২. Keyboard open/close: resize pageArea height
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+      const area = document.getElementById('pageArea');
+      if (!area) return;
+      const vh = window.visualViewport.height;
+      const totalH = window.innerHeight;
+      // When keyboard opens, viewport shrinks
+      if (vh < totalH * 0.85) {
+        // keyboard is open — adjust if needed
+        document.documentElement.style.setProperty('--kbh', (totalH - vh) + 'px');
+      } else {
+        document.documentElement.style.setProperty('--kbh', '0px');
+      }
+    });
+  }
+
+  // ৩. Double-tap to scroll top (HopWeb gesture)
+  let lastTap = 0;
+  const topBar = document.querySelector('.top-bar');
+  if (topBar) {
+    topBar.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTap < 300) {
+        scrollToTop();
+      }
+      lastTap = now;
+    });
+  }
+
+  // ৪. Pull-to-refresh prevention in WebView
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
+    const area = document.getElementById('pageArea');
+    if (area && area.scrollTop === 0) {
+      area._startY = e.touches[0].clientY;
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    const area = document.getElementById('pageArea');
+    if (!area || area._startY === undefined) return;
+    const dy = e.touches[0].clientY - area._startY;
+    // Prevent pull-down when at top (causes WebView refresh)
+    if (area.scrollTop <= 0 && dy > 0) {
+      if (e.cancelable) e.preventDefault();
+    }
+  }, { passive: false });
+
+  // ৫. Fix for iOS/Android WebView momentum scroll snap
+  document.querySelectorAll('.page-area, .sheet-box, .fpm-body, .cp-msgs').forEach(el => {
+    el.style.webkitOverflowScrolling = 'touch';
+  });
+
+  // ৬. init scroll button
+  initScrollTopBtn();
+}
+
+// ══════════════════════════════════════════════════════
+//  Re-init scroll button when page changes
+// ══════════════════════════════════════════════════════
+const _origGoPage = typeof goPage === 'function' ? goPage : null;
+// Patch bootApp to init mobile fixes once app loads
+const _origBoot = typeof bootApp === 'function' ? bootApp : null;
+
+// Run mobile fixes when DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => setTimeout(initMobileFixes, 500));
+} else {
+  setTimeout(initMobileFixes, 500);
 }

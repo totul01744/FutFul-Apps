@@ -8,7 +8,16 @@
   --HH: 58px; --NH: 68px; --R: 18px; --Rs: 11px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;font-family:'Hind Siliguri',sans-serif;background:#1a0a2e;color:#fff}
+html,body{
+  height:100%;
+  overflow:hidden;
+  font-family:'Hind Siliguri',sans-serif;
+  background:#1a0a2e;
+  color:#fff;
+  overscroll-behavior:none;
+  -webkit-text-size-adjust:100%;
+  touch-action:manipulation;
+}
 
 /* SPLASH */
 .splash{position:fixed;inset:0;background:linear-gradient(135deg,#ff6b9d,#c77dff,#06d6a0);display:flex;align-items:center;justify-content:center;z-index:9999}
@@ -61,7 +70,19 @@ html,body{height:100%;overflow:hidden;font-family:'Hind Siliguri',sans-serif;bac
 .tb-right{display:flex;gap:8px}
 .tb-btn{position:relative;background:rgba(255,255,255,.1);border:none;border-radius:50%;width:38px;height:38px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .nb{position:absolute;top:-3px;right:-3px;background:var(--pk);color:#fff;font-size:9px;width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
-.page-area{position:fixed;top:var(--HH);left:0;right:0;bottom:var(--NH);overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg)}
+.page-area{
+  position:fixed;
+  top:var(--HH);
+  left:0;
+  right:0;
+  bottom:var(--NH);
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  background:var(--bg);
+  scroll-behavior:smooth;
+}
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:var(--NH);background:rgba(16,6,30,.97);backdrop-filter:blur(20px);border-top:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-around;padding-bottom:env(safe-area-inset-bottom,0);z-index:200}
 .bn{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;padding:6px 10px;cursor:pointer;border-radius:12px;transition:all .2s;min-width:48px}
 .bn span{font-size:20px;transition:transform .2s}
@@ -363,3 +384,106 @@ select.dark-inp option{background:#2d1b4e}
 .toast.warn{border-color:rgba(255,159,67,.35)}
 
 @media(max-width:360px){.feat-grid,.prod-grid,.tools-grid,.two-col{grid-template-columns:1fr}}
+
+/* ── Order Now Button ── */
+.btn-cart {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  background: linear-gradient(135deg, #ff6b9d, #c850c0);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-cart:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(255, 107, 157, 0.4);
+}
+.btn-cart:active { transform: scale(.97); }
+
+.btn-sec {
+  background: rgba(255,255,255,.08) !important;
+  border: 1px solid rgba(255,255,255,.15) !important;
+  color: #fff !important;
+  border-radius: 50px;
+  padding: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  width: 100%;
+  margin-top: 8px;
+  transition: all 0.2s;
+}
+.btn-sec:hover { background: rgba(255,255,255,.12) !important; }
+
+/* Order form textarea */
+.f-inp[rows] {
+  height: auto;
+  padding: 12px 14px;
+}
+
+/* ── Scroll To Top Button (HopWeb Mobile Fix) ── */
+#scrollTopBtn {
+  position: fixed;
+  bottom: calc(var(--NH) + 14px);
+  right: 16px;
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, var(--pk), var(--pu));
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(255,107,157,.45);
+  opacity: 0;
+  transform: scale(0.7) translateY(10px);
+  transition: all 0.3s cubic-bezier(.4,0,.2,1);
+  pointer-events: none;
+}
+#scrollTopBtn.visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+}
+#scrollTopBtn:active { transform: scale(0.9); }
+
+/* Fix sheet/modal scroll on mobile */
+.sheet-box {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.fpm-body {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.cp-msgs {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix chat input for mobile keyboard */
+.cp-inp-row {
+  position: sticky;
+  bottom: 0;
+  background: rgba(26, 10, 46, 0.98);
+  backdrop-filter: blur(10px);
+  z-index: 10;
+  padding: 10px 14px;
+  border-top: 1px solid var(--bdr);
+}
+
+/* HopWeb / WebView fix - prevent rubber band scrolling */
+* { -webkit-overflow-scrolling: auto; }
+.page-area, .sheet-box, .fpm-body, .cp-msgs {
+  -webkit-overflow-scrolling: touch;
+}
