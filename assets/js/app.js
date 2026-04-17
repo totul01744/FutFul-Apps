@@ -14,9 +14,13 @@ const firebaseConfig = {
 };
 // ── OpenRouter API Config ──────────────────────────────
 // OpenRouter — Gemini এর বদলে ব্যবহার হচ্ছে (বাংলা mobile-friendly)
-const OPENROUTER_KEY = "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"; // OpenRouter.ai থেকে key নিন
-const OPENROUTER_MODEL = "google/gemini-2.0-flash-exp:free"; // Free model - বাংলা ভালো বোঝে
-const SITE_URL = window.location.origin; // আপনার site URL
+// ══ OpenRouter AI Config ══════════════════════════════
+// openrouter.ai → Sign in → Keys → Create Key → এখানে বসান
+const OPENROUTER_KEY   = "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"; // ← আপনার key এখানে
+// সেরা FREE মডেল যেটা বাংলা ভালো বোঝে:
+const OPENROUTER_MODEL = "mistralai/mistral-7b-instruct:free";
+// অন্য ভালো free model: "meta-llama/llama-3.1-8b-instruct:free"
+const SITE_URL = typeof window !== 'undefined' ? window.location.origin : 'https://futful.vercel.app';
 const ADMIN_UID  = "kW8tMNo8IkejWQsMzCnnwjgVaUa2";
 
 firebase.initializeApp(firebaseConfig);
@@ -1663,28 +1667,33 @@ async function sendMsg() {
   const msg = inp?.value.trim();
   if (!msg) return;
   inp.value = '';
-  if (inp.style) inp.style.height = 'auto';
-  appendMsg(msg, 'user');
-  
-  const loadId = 'load' + Date.now();
-  appendMsg('⌛ উত্তর লিখছি...', 'bot', loadId);
-  
-  const sysPrompt = `আপনি FutFul Help Desk — বাংলাদেশের মায়েদের জন্য বিশেষজ্ঞ AI সহকারী।
-বিশেষত্ব: শিশু যত্ন, মাতৃস্বাস্থ্য, শিশু পুষ্টি, টিকাদান, শিশু বিকাশ, মায়ের মানসিক স্বাস্থ্য।
-নিয়ম: ১) সর্বদা বাংলায় উত্তর দিন। ২) প্রথম বার্তায় "আস-সালামু আলাইকুম! 🌸" দিয়ে শুরু করুন। ৩) সংক্ষিপ্ত ও স্পষ্ট হন। ৪) গুরুতর সমস্যায় ডাক্তারের পরামর্শ নেওয়ার কথা বলুন। ৫) ইসলামিক দৃষ্টিভঙ্গি বজায় রাখুন।`;
 
-  // Add user message to history
+  appendMsg(msg, 'user');
+
+  const loadId = 'load' + Date.now();
+  appendMsg('⏳ লিখছি...', 'bot', loadId);
+
+  const sysPrompt = `তুমি FutFul Help Desk। তুমি বাংলাদেশের মায়েদের সাহায্যকারী AI।
+বিশেষত্ব: শিশু যত্ন, শিশু স্বাস্থ্য, পুষ্টি, টিকা, শিশু বিকাশ, মায়ের স্বাস্থ্য।
+নিয়ম:
+- সবসময় বাংলায় উত্তর দাও
+- ইসলামিক সম্ভাষণ ব্যবহার করো
+- ব্যবহারকারীর প্রশ্ন মনোযোগ দিয়ে পড়ো এবং সেই অনুযায়ী সঠিক উত্তর দাও
+- উত্তর সংক্ষিপ্ত কিন্তু তথ্যবহুল হবে
+- গুরুতর সমস্যায় ডাক্তার দেখাতে বলো`;
+
   chatHistory.push({ role: 'user', content: msg });
-  if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20); // keep last 20 messages
+  if (chatHistory.length > 14) chatHistory = chatHistory.slice(-14);
 
   try {
     const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENROUTER_KEY}`,
+        'Authorization': 'Bearer ' + OPENROUTER_KEY,
         'HTTP-Referer': SITE_URL,
-        'X-Title': 'FutFul Help Desk'
+        'X-Title': 'FutFul Help Desk',
+        'Origin': SITE_URL
       },
       body: JSON.stringify({
         model: OPENROUTER_MODEL,
@@ -1692,37 +1701,199 @@ async function sendMsg() {
           { role: 'system', content: sysPrompt },
           ...chatHistory
         ],
-        max_tokens: 800,
-        temperature: 0.7
+        max_tokens: 600,
+        temperature: 0.7,
+        stream: false
       })
     });
 
     if (resp.ok) {
       const data = await resp.json();
-      const reply = data.choices?.[0]?.message?.content || fallbackReply(msg);
-      // Add assistant reply to history
-      chatHistory.push({ role: 'assistant', content: reply });
-      updateMsg(loadId, reply);
-    } else {
-      const errData = await resp.json().catch(() => ({}));
-      console.warn('OpenRouter error:', resp.status, errData);
-      updateMsg(loadId, fallbackReply(msg));
+      const reply = data.choices?.[0]?.message?.content?.trim();
+      if (reply) {
+        chatHistory.push({ role: 'assistant', content: reply });
+        updateMsg(loadId, reply);
+        return;
+      }
     }
+
+    // API কাজ না করলে error দেখাও
+    const status = resp.status;
+    if (status === 401) {
+      updateMsg(loadId, '⚠️ API Key সঠিক নয়।\n\nopenrouter.ai → Sign in → Keys → key নিয়ে app.js এ OPENROUTER_KEY তে বসান।');
+    } else if (status === 429) {
+      updateMsg(loadId, '⏳ Rate limit! একটু অপেক্ষা করে আবার চেষ্টা করুন।');
+    } else if (status === 402) {
+      updateMsg(loadId, '💳 Free credits শেষ। openrouter.ai তে login করে free model সিলেক্ট করুন।');
+    } else {
+      // Status অন্য হলে smart local reply
+      updateMsg(loadId, getLocalReply(msg));
+    }
+
   } catch(e) {
-    console.warn('Chat error:', e.message);
-    updateMsg(loadId, fallbackReply(msg));
+    // Network error — local smart reply দাও
+    updateMsg(loadId, getLocalReply(msg));
   }
 }
 
-function fallbackReply(msg) {
-  const f=[
-    'ওয়া আলাইকুমুস সালাম! শিশুর স্বাস্থ্য বিষয়ে আপনার প্রশ্নের জন্য ধন্যবাদ। গুরুতর কোনো সমস্যায় অবশ্যই একজন শিশু বিশেষজ্ঞের পরামর্শ নিন। 👩‍⚕️',
-    'আস-সালামু আলাইকুম! নিয়মিত টিকাদান শিশুকে অনেক রোগ থেকে রক্ষা করে। বাংলাদেশের EPI কর্মসূচি অনুসরণ করুন। 💉',
-    'ওয়া আলাইকুমুস সালাম! ৬ মাস পর্যন্ত শুধু বুকের দুধ শিশুর জন্য সর্বোত্তম। এরপর বয়স অনুযায়ী পরিপূরক খাবার শুরু করুন। 🍼',
-    'আস-সালামু আলাইকুম! শিশুর জ্বর ৩৮°C এর বেশি হলে বা ৩ মাসের কম বয়সে যেকোনো জ্বরে দ্রুত ডাক্তার দেখান। 🌡️',
-  ];
-  return f[Math.floor(Math.random()*f.length)];
+// স্মার্ট লোকাল রিপ্লাই — API ছাড়াও কাজ করে
+function getLocalReply(msg) {
+  const m = msg.toLowerCase().trim();
+
+  if (/জ্বর|তাপ|গরম|fever|temp/.test(m)) {
+    return `ওয়া আলাইকুমুস সালাম! 🌡️
+
+**শিশুর জ্বরে করণীয়:**
+
+✅ হালকা পোশাক পরান, কম্বল সরিয়ে দিন
+✅ ভেজা কাপড় দিয়ে শরীর মুছুন (কুসুম পানি)
+✅ বেশি বেশি পানি ও তরল দিন
+✅ বয়স অনুযায়ী প্যারাসিটামল দিন (ডাক্তারের ডোজ মতো)
+
+⚠️ এই অবস্থায় **সাথে সাথে ডাক্তার দেখান:**
+• জ্বর ৩৯°C এর বেশি
+• ৩ মাসের কম বয়সী শিশুর জ্বর
+• খিঁচুনি বা অজ্ঞান হলে
+• ২ দিনের বেশি জ্বর থাকলে`;
+  }
+
+  if (/কাশি|সর্দি|ঠান্ডা|নাক|cough|cold/.test(m)) {
+    return `আস-সালামু আলাইকুম! 😷
+
+**শিশুর সর্দি-কাশিতে করণীয়:**
+
+✅ ঘরে আর্দ্রতা বজায় রাখুন
+✅ গরম পানির বাষ্প নিতে দিন
+✅ ১ বছর+ হলে মধু + আদার রস দিন
+✅ নাক বন্ধে স্যালাইন ড্রপ ব্যবহার করুন
+✅ মাথা সামান্য উঁচু রেখে শোয়ান
+
+⚠️ শ্বাসকষ্ট হলে বা ৭ দিনের বেশি থাকলে ডাক্তার দেখান।`;
+  }
+
+  if (/ডায়রিয়া|পাতলা|পায়খানা|বমি|diarrhea|vomit/.test(m)) {
+    return `আস-সালামু আলাইকুম! 💧
+
+**ডায়রিয়া/বমিতে করণীয়:**
+
+✅ ঘরে বানানো ওরস্যালাইন দিন (১ লিটার পানিতে ৬ চামচ চিনি + আধা চামচ লবণ)
+✅ প্রতিবার পায়খানার পর ওরস্যালাইন দিন
+✅ বুকের দুধ বন্ধ করবেন না
+✅ ২ মাস+ শিশুকে জিংক ট্যাবলেট দিন (১০-১৪ দিন)
+
+🚨 **পানিশূন্যতার লক্ষণে সাথে সাথে হাসপাতাল:**
+চোখ ডেবে যাওয়া · ৬+ ঘণ্টা প্রস্রাব নেই · ঠোঁট শুকনো`;
+  }
+
+  if (/বুকের দুধ|মায়ের দুধ|দুধ|breastfeed|স্তন/.test(m)) {
+    return `আস-সালামু আলাইকুম! 🤱
+
+**বুকের দুধ খাওয়ানো:**
+
+✅ জন্মের ১ ঘণ্টার মধ্যে শালদুধ দিন
+✅ ৬ মাস পর্যন্ত শুধু বুকের দুধ (পানিও না)
+✅ প্রতি ২-৩ ঘণ্টায় বা চাহিদা অনুযায়ী দিন
+✅ সঠিক পজিশন — শিশুর মুখ পুরো বোঁটা ধরুক
+✅ মা বেশি পানি ও পুষ্টিকর খাবার খান
+
+💡 **দুধ কম হলে:** বেশিবার খাওয়ান, দুধ বাড়বে।`;
+  }
+
+  if (/টিকা|vaccine|ভ্যাকসিন|epi/.test(m)) {
+    return `আস-সালামু আলাইকুম! 💉
+
+**বাংলাদেশ EPI টিকার সময়সূচি:**
+
+| বয়স | টিকা |
+|-----|------|
+| জন্মে | বিসিজি + ওপিভি-০ + হেপাটাইটিস-বি |
+| ৬ সপ্তাহ | পেন্টাভ্যালেন্ট-১ + ওপিভি-১ + পিসিভি-১ |
+| ১০ সপ্তাহ | পেন্টাভ্যালেন্ট-২ + ওপিভি-২ + পিসিভি-২ |
+| ১৪ সপ্তাহ | পেন্টাভ্যালেন্ট-৩ + ওপিভি-৩ + আইপিভি + পিসিভি-৩ |
+| ৯ মাস | এমআর (হাম-রুবেলা) |
+| ১৫ মাস | এমআর বুস্টার |
+
+📍 নিকটস্থ সরকারি স্বাস্থ্যকেন্দ্রে **বিনামূল্যে** পাওয়া যায়।`;
+  }
+
+  if (/খাবার|পুষ্টি|solid|ভাত|কী খাওয়াব|কখন খাওয়া/.test(m)) {
+    return `আস-সালামু আলাইকুম! 🍼
+
+**বয়স অনুযায়ী শিশুর খাবার:**
+
+🔵 **০-৬ মাস:** শুধু বুকের দুধ
+🟢 **৬ মাস থেকে:** নরম ভাত, সবজি পিউরি, কলা, মিষ্টি আলু
+🟡 **৮-৯ মাস:** ডিম, মাছ, মুরগি (ছোট টুকরো)
+🔴 **১২ মাস+:** পরিবারের খাবার (কম মশলায়)
+
+❌ **১ বছরের আগে দেবেন না:** মধু, গরুর দুধ, লবণ, চিনি`;
+  }
+
+  if (/ঘুম|রাতে|জাগে|sleep|ঘুমায় না/.test(m)) {
+    return `আস-সালামু আলাইকুম! 😴
+
+**শিশুর ঘুমের প্রয়োজন:**
+
+| বয়স | মোট ঘুম |
+|-----|--------|
+| ০-৩ মাস | ১৪-১৭ ঘণ্টা |
+| ৩-৬ মাস | ১২-১৬ ঘণ্টা |
+| ৬-১২ মাস | ১২-১৫ ঘণ্টা |
+| ১-২ বছর | ১১-১৪ ঘণ্টা |
+
+💡 **টিপস:**
+✅ প্রতিদিন একই সময়ে শোয়ান
+✅ শোয়ানোর আগে গান বা গল্প বলুন
+✅ ঘর অন্ধকার ও শান্ত রাখুন
+✅ দিনে বেশি ঘুমালে রাতে কম ঘুমাবে`;
+  }
+
+  if (/ওজন|বাড়ছে না|weight|মোটা|চিকন/.test(m)) {
+    return `আস-সালামু আলাইকুম! ⚖️
+
+**শিশুর স্বাভাবিক ওজন বৃদ্ধি:**
+
+| বয়স | গড় ওজন বৃদ্ধি |
+|-----|--------------|
+| ০-৩ মাস | মাসে ৭৫০-৯০০ গ্রাম |
+| ৩-৬ মাস | মাসে ৫০০-৬০০ গ্রাম |
+| ৬-১২ মাস | মাসে ৩০০-৪০০ গ্রাম |
+| ১-২ বছর | মাসে ১৫০-২০০ গ্রাম |
+
+⚠️ ওজন না বাড়লে বা কমলে ডাক্তার দেখান।`;
+  }
+
+  if (/হ্যালো|হাই|সালাম|hello|hi|কেমন/.test(m)) {
+    return `ওয়া আলাইকুমুস সালাম! 🌸
+
+আমি **FutFul Help Desk** — আপনার শিশুর যত্নে সবসময় পাশে আছি।
+
+আমাকে জিজ্ঞেস করুন:
+🌡️ জ্বর, সর্দি, কাশি
+💧 ডায়রিয়া, বমি
+🍼 খাবার ও পুষ্টি
+💉 টিকার সময়সূচি
+😴 ঘুমের সমস্যা
+⚖️ ওজন ও বিকাশ
+🤱 বুকের দুধ
+
+কী জানতে চান?`;
+  }
+
+  // Default — যেকোনো প্রশ্নের জন্য
+  return `আস-সালামু আলাইকুম! 🌸
+
+আপনার প্রশ্নটি পেয়েছি।
+
+নির্দিষ্ট করে জিজ্ঞেস করুন, যেমন:
+• "বাচ্চার জ্বর কত হলে ডাক্তার দেখাব?"
+• "৬ মাসে কী খাওয়াবো?"
+• "টিকার সময়সূচি কী?"
+
+⚠️ যেকোনো **গুরুতর সমস্যায়** অবশ্যই ডাক্তারের পরামর্শ নিন।`;
 }
+
+// fallbackReply replaced by getLocalReply
 
 function appendMsg(txt, type, id='') {
   const c=document.getElementById('chatMsgs');
