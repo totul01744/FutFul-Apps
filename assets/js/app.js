@@ -15,12 +15,14 @@ const firebaseConfig = {
 // ── OpenRouter API Config ──────────────────────────────
 // OpenRouter — Gemini এর বদলে ব্যবহার হচ্ছে (বাংলা mobile-friendly)
 // ══ OpenRouter AI Config ══════════════════════════════
-// openrouter.ai → Sign in → Keys → Create Key → এখানে বসান
-const OPENROUTER_KEY   = "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"; // ← আপনার key এখানে
-// সেরা FREE মডেল যেটা বাংলা ভালো বোঝে:
-const OPENROUTER_MODEL = "mistralai/mistral-7b-instruct:free";
-// অন্য ভালো free model: "meta-llama/llama-3.1-8b-instruct:free"
-const SITE_URL = typeof window !== 'undefined' ? window.location.origin : 'https://futful.vercel.app';
+// openrouter.ai → Sign in → Keys → Create Key → key কপি করুন → এখানে বসান
+const OPENROUTER_KEY   = "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"; // ← আপনার OpenRouter key এখানে বসান
+// ✅ এই model গুলো সবসময় free ও বাংলা বোঝে:
+const OPENROUTER_MODEL = "deepseek/deepseek-chat-v3-0324:free";
+// অন্য option: "google/gemini-2.0-flash-exp:free" বা "meta-llama/llama-3.1-8b-instruct:free"
+const SITE_URL = (typeof window !== 'undefined' && window.location.origin !== 'null')
+  ? window.location.origin
+  : 'https://futful.app';
 const ADMIN_UID  = "kW8tMNo8IkejWQsMzCnnwjgVaUa2";
 
 firebase.initializeApp(firebaseConfig);
@@ -1686,14 +1688,15 @@ async function sendMsg() {
   if (chatHistory.length > 14) chatHistory = chatHistory.slice(-14);
 
   try {
+    // ── OpenRouter API Call ──────────────────────────
+    // Note: 'Origin' header বাদ — browser automatically set করে
     const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + OPENROUTER_KEY,
-        'HTTP-Referer': SITE_URL,
-        'X-Title': 'FutFul Help Desk',
-        'Origin': SITE_URL
+        'HTTP-Referer': 'https://futful.app',
+        'X-Title': 'FutFul Help Desk'
       },
       body: JSON.stringify({
         model: OPENROUTER_MODEL,
@@ -1702,13 +1705,14 @@ async function sendMsg() {
           ...chatHistory
         ],
         max_tokens: 600,
-        temperature: 0.7,
-        stream: false
+        temperature: 0.7
       })
     });
 
+    const responseText = await resp.text();
+    
     if (resp.ok) {
-      const data = await resp.json();
+      const data = JSON.parse(responseText);
       const reply = data.choices?.[0]?.message?.content?.trim();
       if (reply) {
         chatHistory.push({ role: 'assistant', content: reply });
@@ -1717,21 +1721,23 @@ async function sendMsg() {
       }
     }
 
-    // API কাজ না করলে error দেখাও
+    // Error handling — exact status অনুযায়ী
+    console.warn('OpenRouter status:', resp.status);
+    try { console.warn('Response:', JSON.parse(responseText)); } catch(e) { console.warn('Raw:', responseText.slice(0,300)); }
     const status = resp.status;
-    if (status === 401) {
-      updateMsg(loadId, '⚠️ API Key সঠিক নয়।\n\nopenrouter.ai → Sign in → Keys → key নিয়ে app.js এ OPENROUTER_KEY তে বসান।');
+    if (status === 401 || status === 403) {
+      // Key issue — local reply দাও, error দেখিও না
+      updateMsg(loadId, getLocalReply(msg));
     } else if (status === 429) {
-      updateMsg(loadId, '⏳ Rate limit! একটু অপেক্ষা করে আবার চেষ্টা করুন।');
+      updateMsg(loadId, getLocalReply(msg));
     } else if (status === 402) {
-      updateMsg(loadId, '💳 Free credits শেষ। openrouter.ai তে login করে free model সিলেক্ট করুন।');
+      updateMsg(loadId, getLocalReply(msg));
     } else {
-      // Status অন্য হলে smart local reply
       updateMsg(loadId, getLocalReply(msg));
     }
 
   } catch(e) {
-    // Network error — local smart reply দাও
+    console.warn('Chat fetch error:', e.message);
     updateMsg(loadId, getLocalReply(msg));
   }
 }
