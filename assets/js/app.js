@@ -43,14 +43,33 @@ let curBanner   = 0;
 window.addEventListener('DOMContentLoaded', () => {
   updateClock();
   setInterval(updateClock, 60000);
+
+  // Splash কে force hide করার timer — যদি Firebase দেরি করে
+  const forceSplashHide = setTimeout(() => {
+    hideSplash();
+    showScreen('authScreen');
+  }, 5000); // 5 সেকেন্ডের বেশি splash থাকবে না
+
   setTimeout(() => {
     auth.onAuthStateChanged(u => {
-      hide('splash');
+      clearTimeout(forceSplashHide);
+      hideSplash();
       if (u) { cUser = u; bootApp(); }
       else     showScreen('authScreen');
     });
-  }, 2200);
+  }, 1500); // 2200 থেকে কমিয়ে 1500
 });
+
+function hideSplash() {
+  const sp = document.getElementById('splash');
+  if (sp) {
+    sp.style.display    = 'none';
+    sp.style.visibility = 'hidden';
+    sp.style.opacity    = '0';
+    sp.style.pointerEvents = 'none';
+    sp.classList.add('hidden');
+  }
+}
 
 function updateClock() {
   const now = new Date();
@@ -65,7 +84,12 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
   document.getElementById(id)?.classList.remove('hidden');
 }
-function hide(id) { document.getElementById(id)?.style ? document.getElementById(id).style.display = 'none' : null; }
+function hide(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = 'none';
+  el.classList.add('hidden');
+}
 function show(id) { document.getElementById(id)?.classList.remove('hidden'); }
 function hid(id)  { document.getElementById(id)?.classList.add('hidden'); }
 
