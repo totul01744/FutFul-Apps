@@ -12,17 +12,8 @@ const firebaseConfig = {
   messagingSenderId: "396666924900",
   appId: "1:396666924900:web:77a22669bd6c3e3ce6d471"
 };
-// ── OpenRouter API Config ──────────────────────────────
-// OpenRouter — Gemini এর বদলে ব্যবহার হচ্ছে (বাংলা mobile-friendly)
-// ══ OpenRouter AI Config ══════════════════════════════
-// openrouter.ai → Sign in → Keys → Create Key → key কপি করুন → এখানে বসান
-const OPENROUTER_KEY   = "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"; // ← আপনার OpenRouter key এখানে বসান
-// ✅ এই model গুলো সবসময় free ও বাংলা বোঝে:
-const OPENROUTER_MODEL = "deepseek/deepseek-chat-v3-0324:free";
-// অন্য option: "google/gemini-2.0-flash-exp:free" বা "meta-llama/llama-3.1-8b-instruct:free"
-const SITE_URL = (typeof window !== 'undefined' && window.location.origin !== 'null')
-  ? window.location.origin
-  : 'https://futful.app';
+const OPENROUTER_KEY = "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"; // openrouter.ai থেকে key নিন
+const OR_MODEL = "deepseek/deepseek-chat-v3-0324:free";
 const ADMIN_UID  = "kW8tMNo8IkejWQsMzCnnwjgVaUa2";
 
 firebase.initializeApp(firebaseConfig);
@@ -170,8 +161,12 @@ function goPage(pg) {
   document.getElementById('bn-' + pg)?.classList.add('active');
   const area = document.getElementById('pageArea');
   if (!area) return;
+  // HopWeb fix: scroll to top instantly on every page change
+  area.scrollTop = 0;
   const pages = { home, community, products, earn, tools, profile };
   if (pages[pg]) pages[pg](area);
+  // show scroll button after page loads
+  setTimeout(updateScrollBtn, 300);
 }
 
 // ══════════════════════════════════════════════════════
@@ -578,7 +573,7 @@ function renderProds(list) {
         <div class="prod-rt">${'★'.repeat(Math.round(p.rating||4))}${'☆'.repeat(5-Math.round(p.rating||4))} ${p.rating||4}</div>
         <div class="prod-pr">৳${p.price||0}</div>
         ${p.stock <= 5 ? '<span class="prod-badge">কম স্টক</span>' : ''}
-        <button class="btn-cart" onclick="event.stopPropagation();addToCart('${p.id}')">🛒 কার্টে যোগ</button>
+        <button class="btn-cart" style="background:linear-gradient(135deg,#ff6b9d,#c850c0)" onclick="event.stopPropagation();orderNow('${p.id}')">🛍️ Order Now</button>
       </div>
     </div>`).join('');
 }
@@ -608,7 +603,7 @@ function openProduct(id) {
     <div class="info-row"><span class="ir-lbl">স্টক</span><span class="ir-val">${p.stock > 0 ? p.stock + ' টি আছে' : '❌ স্টক নেই'}</span></div>
     <div class="info-row"><span class="ir-lbl">ক্যাটাগরি</span><span class="ir-val">${p.category}</span></div>
     ${p.description ? `<p style="color:rgba(255,255,255,.7);font-size:13px;margin:12px 0;line-height:1.65">${p.description}</p>` : ''}
-    <button onclick="addToCart('${p.id}');closeSheet()" class="btn-main w100" style="margin-top:14px">🛒 কার্টে যোগ করুন</button>`);
+    <button onclick="closeSheet();orderNow('${p.id}')" class="btn-main w100" style="margin-top:14px">🛍️ Order Now</button>\`);
 }
 
 function addToCart(id) {
@@ -1661,245 +1656,187 @@ function toggleChat() {
   }
 }
 
-// Chat history for multi-turn conversation
-let chatHistory = [];
+let _chatHist = [];
 
 async function sendMsg() {
   const inp = document.getElementById('chatInput');
   const msg = inp?.value.trim();
   if (!msg) return;
   inp.value = '';
-
   appendMsg(msg, 'user');
-
   const loadId = 'load' + Date.now();
   appendMsg('⏳ লিখছি...', 'bot', loadId);
 
-  const sysPrompt = `তুমি FutFul Help Desk। তুমি বাংলাদেশের মায়েদের সাহায্যকারী AI।
-বিশেষত্ব: শিশু যত্ন, শিশু স্বাস্থ্য, পুষ্টি, টিকা, শিশু বিকাশ, মায়ের স্বাস্থ্য।
-নিয়ম:
-- সবসময় বাংলায় উত্তর দাও
-- ইসলামিক সম্ভাষণ ব্যবহার করো
-- ব্যবহারকারীর প্রশ্ন মনোযোগ দিয়ে পড়ো এবং সেই অনুযায়ী সঠিক উত্তর দাও
-- উত্তর সংক্ষিপ্ত কিন্তু তথ্যবহুল হবে
-- গুরুতর সমস্যায় ডাক্তার দেখাতে বলো`;
+  _chatHist.push({ role: 'user', content: msg });
+  if (_chatHist.length > 10) _chatHist = _chatHist.slice(-10);
 
-  chatHistory.push({ role: 'user', content: msg });
-  if (chatHistory.length > 14) chatHistory = chatHistory.slice(-14);
+  const sys = `তুমি FutFul Help Desk। বাংলাদেশের মায়েদের শিশু যত্ন বিশেষজ্ঞ AI সহকারী।
+নিয়ম: সর্বদা বাংলায় উত্তর দাও। ইসলামিক সম্ভাষণ ব্যবহার করো। প্রশ্ন অনুযায়ী সঠিক বিস্তারিত উত্তর দাও। গুরুতর সমস্যায় ডাক্তার দেখাতে বলো।`;
+
+  // key না থাকলে সরাসরি local reply
+  if (!OPENROUTER_KEY || OPENROUTER_KEY === 'APNAR_KEY_EKHANE') {
+    updateMsg(loadId, localReply(msg));
+    return;
+  }
 
   try {
-    // ── OpenRouter API Call ──────────────────────────
-    // Note: 'Origin' header বাদ — browser automatically set করে
-    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + OPENROUTER_KEY,
         'HTTP-Referer': 'https://futful.app',
-        'X-Title': 'FutFul Help Desk'
+        'X-Title': 'FutFul'
       },
       body: JSON.stringify({
-        model: OPENROUTER_MODEL,
-        messages: [
-          { role: 'system', content: sysPrompt },
-          ...chatHistory
-        ],
-        max_tokens: 600,
+        model: OR_MODEL,
+        messages: [{ role: 'system', content: sys }, ..._chatHist],
+        max_tokens: 700,
         temperature: 0.7
       })
     });
-
-    const responseText = await resp.text();
-    
-    if (resp.ok) {
-      const data = JSON.parse(responseText);
-      const reply = data.choices?.[0]?.message?.content?.trim();
+    if (r.ok) {
+      const d = await r.json();
+      const reply = d.choices?.[0]?.message?.content?.trim();
       if (reply) {
-        chatHistory.push({ role: 'assistant', content: reply });
+        _chatHist.push({ role: 'assistant', content: reply });
         updateMsg(loadId, reply);
         return;
       }
     }
-
-    // Error handling — exact status অনুযায়ী
-    console.warn('OpenRouter status:', resp.status);
-    try { console.warn('Response:', JSON.parse(responseText)); } catch(e) { console.warn('Raw:', responseText.slice(0,300)); }
-    const status = resp.status;
-    if (status === 401 || status === 403) {
-      // Key issue — local reply দাও, error দেখিও না
-      updateMsg(loadId, getLocalReply(msg));
-    } else if (status === 429) {
-      updateMsg(loadId, getLocalReply(msg));
-    } else if (status === 402) {
-      updateMsg(loadId, getLocalReply(msg));
-    } else {
-      updateMsg(loadId, getLocalReply(msg));
-    }
-
+    console.warn('OR status:', r.status);
+    updateMsg(loadId, localReply(msg));
   } catch(e) {
-    console.warn('Chat fetch error:', e.message);
-    updateMsg(loadId, getLocalReply(msg));
+    console.warn('OR error:', e.message);
+    updateMsg(loadId, localReply(msg));
   }
 }
 
-// স্মার্ট লোকাল রিপ্লাই — API ছাড়াও কাজ করে
-function getLocalReply(msg) {
-  const m = msg.toLowerCase().trim();
+function localReply(msg) {
+  const m = msg.toLowerCase();
+  if (/জ্বর|তাপ|fever/.test(m)) return 'ওয়া আলাইকুমুস সালাম! 🌡️
 
-  if (/জ্বর|তাপ|গরম|fever|temp/.test(m)) {
-    return `ওয়া আলাইকুমুস সালাম! 🌡️
+শিশুর জ্বরে করণীয়:
+✅ ভেজা কাপড় দিয়ে শরীর মুছুন
+✅ বেশি পানি ও তরল দিন
+✅ বয়স অনুযায়ী প্যারাসিটামল দিন
 
-**শিশুর জ্বরে করণীয়:**
+⚠️ ৩৯°C+ বা ৩ মাসের কম বয়সে সাথে সাথে ডাক্তার।';
+  if (/কাশি|সর্দি|cough/.test(m)) return 'আস-সালামু আলাইকুম! 😷
 
-✅ হালকা পোশাক পরান, কম্বল সরিয়ে দিন
-✅ ভেজা কাপড় দিয়ে শরীর মুছুন (কুসুম পানি)
-✅ বেশি বেশি পানি ও তরল দিন
-✅ বয়স অনুযায়ী প্যারাসিটামল দিন (ডাক্তারের ডোজ মতো)
+সর্দি-কাশিতে:
+✅ গরম বাষ্প দিন
+✅ ১বছর+ হলে মধু দিন
+✅ নাকে স্যালাইন ড্রপ ব্যবহার করুন
 
-⚠️ এই অবস্থায় **সাথে সাথে ডাক্তার দেখান:**
-• জ্বর ৩৯°C এর বেশি
-• ৩ মাসের কম বয়সী শিশুর জ্বর
-• খিঁচুনি বা অজ্ঞান হলে
-• ২ দিনের বেশি জ্বর থাকলে`;
-  }
+⚠️ শ্বাসকষ্ট হলে সাথে সাথে ডাক্তার।';
+  if (/ডায়রিয়া|পাতলা|বমি/.test(m)) return 'আস-সালামু আলাইকুম! 💧
 
-  if (/কাশি|সর্দি|ঠান্ডা|নাক|cough|cold/.test(m)) {
-    return `আস-সালামু আলাইকুম! 😷
-
-**শিশুর সর্দি-কাশিতে করণীয়:**
-
-✅ ঘরে আর্দ্রতা বজায় রাখুন
-✅ গরম পানির বাষ্প নিতে দিন
-✅ ১ বছর+ হলে মধু + আদার রস দিন
-✅ নাক বন্ধে স্যালাইন ড্রপ ব্যবহার করুন
-✅ মাথা সামান্য উঁচু রেখে শোয়ান
-
-⚠️ শ্বাসকষ্ট হলে বা ৭ দিনের বেশি থাকলে ডাক্তার দেখান।`;
-  }
-
-  if (/ডায়রিয়া|পাতলা|পায়খানা|বমি|diarrhea|vomit/.test(m)) {
-    return `আস-সালামু আলাইকুম! 💧
-
-**ডায়রিয়া/বমিতে করণীয়:**
-
-✅ ঘরে বানানো ওরস্যালাইন দিন (১ লিটার পানিতে ৬ চামচ চিনি + আধা চামচ লবণ)
-✅ প্রতিবার পায়খানার পর ওরস্যালাইন দিন
+ডায়রিয়ায়:
+✅ ওরস্যালাইন বারবার দিন
 ✅ বুকের দুধ বন্ধ করবেন না
-✅ ২ মাস+ শিশুকে জিংক ট্যাবলেট দিন (১০-১৪ দিন)
+✅ জিংক ট্যাবলেট ১০-১৪ দিন দিন
 
-🚨 **পানিশূন্যতার লক্ষণে সাথে সাথে হাসপাতাল:**
-চোখ ডেবে যাওয়া · ৬+ ঘণ্টা প্রস্রাব নেই · ঠোঁট শুকনো`;
-  }
+🚨 চোখ ডেবে গেলে হাসপাতাল।';
+  if (/বুকের দুধ|মায়ের দুধ|স্তন/.test(m)) return 'আস-সালামু আলাইকুম! 🤱
 
-  if (/বুকের দুধ|মায়ের দুধ|দুধ|breastfeed|স্তন/.test(m)) {
-    return `আস-সালামু আলাইকুম! 🤱
+✅ ৬ মাস পর্যন্ত শুধু বুকের দুধ
+✅ প্রতি ২-৩ ঘণ্টায় খাওয়ান
+✅ মা বেশি পানি ও পুষ্টিকর খাবার খান';
+  if (/টিকা|vaccine|ভ্যাকসিন/.test(m)) return 'আস-সালামু আলাইকুম! 💉
 
-**বুকের দুধ খাওয়ানো:**
+EPI সময়সূচি:
+🔵 জন্মে: BCG + OPV
+🟢 ৬ সপ্তাহ: Penta-1 + PCV
+🟡 ১০ সপ্তাহ: Penta-2
+🔴 ১৪ সপ্তাহ: Penta-3 + IPV
+⭐ ৯ মাস: MR-1 | ১৫ মাস: MR-2
 
-✅ জন্মের ১ ঘণ্টার মধ্যে শালদুধ দিন
-✅ ৬ মাস পর্যন্ত শুধু বুকের দুধ (পানিও না)
-✅ প্রতি ২-৩ ঘণ্টায় বা চাহিদা অনুযায়ী দিন
-✅ সঠিক পজিশন — শিশুর মুখ পুরো বোঁটা ধরুক
-✅ মা বেশি পানি ও পুষ্টিকর খাবার খান
+📍 সরকারি কেন্দ্রে বিনামূল্যে।';
+  if (/খাবার|পুষ্টি|solid|কী খাওয়া/.test(m)) return 'আস-সালামু আলাইকুম! 🍼
 
-💡 **দুধ কম হলে:** বেশিবার খাওয়ান, দুধ বাড়বে।`;
-  }
+🔵 ০-৬মাস: শুধু বুকের দুধ
+🟢 ৬মাস+: নরম ভাত, সবজি, কলা
+🟡 ৮-৯মাস: ডিম, মাছ, মুরগি
+🔴 ১২মাস+: পরিবারের খাবার
 
-  if (/টিকা|vaccine|ভ্যাকসিন|epi/.test(m)) {
-    return `আস-সালামু আলাইকুম! 💉
+❌ ১বছরের আগে মধু ও গরুর দুধ নয়।';
+  if (/ঘুম|sleep|রাতে জাগে/.test(m)) return 'আস-সালামু আলাইকুম! 😴
 
-**বাংলাদেশ EPI টিকার সময়সূচি:**
+ঘুমের প্রয়োজন:
+• ০-৩মাস: ১৪-১৭ ঘণ্টা
+• ৩-৬মাস: ১২-১৬ ঘণ্টা
+• ৬-১২মাস: ১২-১৫ ঘণ্টা
 
-| বয়স | টিকা |
-|-----|------|
-| জন্মে | বিসিজি + ওপিভি-০ + হেপাটাইটিস-বি |
-| ৬ সপ্তাহ | পেন্টাভ্যালেন্ট-১ + ওপিভি-১ + পিসিভি-১ |
-| ১০ সপ্তাহ | পেন্টাভ্যালেন্ট-২ + ওপিভি-২ + পিসিভি-২ |
-| ১৪ সপ্তাহ | পেন্টাভ্যালেন্ট-৩ + ওপিভি-৩ + আইপিভি + পিসিভি-৩ |
-| ৯ মাস | এমআর (হাম-রুবেলা) |
-| ১৫ মাস | এমআর বুস্টার |
+💡 একই সময়ে শোয়ান, ঘুমের আগে গান বলুন।';
+  if (/ওজন|weight|বাড়ছে না/.test(m)) return 'আস-সালামু আলাইকুম! ⚖️
 
-📍 নিকটস্থ সরকারি স্বাস্থ্যকেন্দ্রে **বিনামূল্যে** পাওয়া যায়।`;
-  }
+স্বাভাবিক বৃদ্ধি:
+• ০-৩মাস: মাসে ৭৫০-৯০০গ্রাম
+• ৩-৬মাস: মাসে ৫০০-৬০০গ্রাম
+• ৬-১২মাস: মাসে ৩০০-৪০০গ্রাম
 
-  if (/খাবার|পুষ্টি|solid|ভাত|কী খাওয়াব|কখন খাওয়া/.test(m)) {
-    return `আস-সালামু আলাইকুম! 🍼
+⚠️ না বাড়লে ডাক্তার দেখান।';
+  if (/সালাম|hello|হ্যালো|hi/.test(m)) return 'ওয়া আলাইকুমুস সালাম! 🌸
 
-**বয়স অনুযায়ী শিশুর খাবার:**
+আমি FutFul Help Desk। জিজ্ঞেস করুন:
+🌡️ জ্বর, কাশি | 💧 ডায়রিয়া | 🍼 খাবার
+💉 টিকা | 😴 ঘুম | 🤱 বুকের দুধ';
+  return 'আস-সালামু আলাইকুম! 🌸
 
-🔵 **০-৬ মাস:** শুধু বুকের দুধ
-🟢 **৬ মাস থেকে:** নরম ভাত, সবজি পিউরি, কলা, মিষ্টি আলু
-🟡 **৮-৯ মাস:** ডিম, মাছ, মুরগি (ছোট টুকরো)
-🔴 **১২ মাস+:** পরিবারের খাবার (কম মশলায়)
-
-❌ **১ বছরের আগে দেবেন না:** মধু, গরুর দুধ, লবণ, চিনি`;
-  }
-
-  if (/ঘুম|রাতে|জাগে|sleep|ঘুমায় না/.test(m)) {
-    return `আস-সালামু আলাইকুম! 😴
-
-**শিশুর ঘুমের প্রয়োজন:**
-
-| বয়স | মোট ঘুম |
-|-----|--------|
-| ০-৩ মাস | ১৪-১৭ ঘণ্টা |
-| ৩-৬ মাস | ১২-১৬ ঘণ্টা |
-| ৬-১২ মাস | ১২-১৫ ঘণ্টা |
-| ১-২ বছর | ১১-১৪ ঘণ্টা |
-
-💡 **টিপস:**
-✅ প্রতিদিন একই সময়ে শোয়ান
-✅ শোয়ানোর আগে গান বা গল্প বলুন
-✅ ঘর অন্ধকার ও শান্ত রাখুন
-✅ দিনে বেশি ঘুমালে রাতে কম ঘুমাবে`;
-  }
-
-  if (/ওজন|বাড়ছে না|weight|মোটা|চিকন/.test(m)) {
-    return `আস-সালামু আলাইকুম! ⚖️
-
-**শিশুর স্বাভাবিক ওজন বৃদ্ধি:**
-
-| বয়স | গড় ওজন বৃদ্ধি |
-|-----|--------------|
-| ০-৩ মাস | মাসে ৭৫০-৯০০ গ্রাম |
-| ৩-৬ মাস | মাসে ৫০০-৬০০ গ্রাম |
-| ৬-১২ মাস | মাসে ৩০০-৪০০ গ্রাম |
-| ১-২ বছর | মাসে ১৫০-২০০ গ্রাম |
-
-⚠️ ওজন না বাড়লে বা কমলে ডাক্তার দেখান।`;
-  }
-
-  if (/হ্যালো|হাই|সালাম|hello|hi|কেমন/.test(m)) {
-    return `ওয়া আলাইকুমুস সালাম! 🌸
-
-আমি **FutFul Help Desk** — আপনার শিশুর যত্নে সবসময় পাশে আছি।
-
-আমাকে জিজ্ঞেস করুন:
-🌡️ জ্বর, সর্দি, কাশি
-💧 ডায়রিয়া, বমি
-🍼 খাবার ও পুষ্টি
-💉 টিকার সময়সূচি
-😴 ঘুমের সমস্যা
-⚖️ ওজন ও বিকাশ
-🤱 বুকের দুধ
-
-কী জানতে চান?`;
-  }
-
-  // Default — যেকোনো প্রশ্নের জন্য
-  return `আস-সালামু আলাইকুম! 🌸
-
-আপনার প্রশ্নটি পেয়েছি।
-
-নির্দিষ্ট করে জিজ্ঞেস করুন, যেমন:
-• "বাচ্চার জ্বর কত হলে ডাক্তার দেখাব?"
+নির্দিষ্ট করে জিজ্ঞেস করুন:
+• "বাচ্চার জ্বর হলে কী করব?"
 • "৬ মাসে কী খাওয়াবো?"
 • "টিকার সময়সূচি কী?"
 
-⚠️ যেকোনো **গুরুতর সমস্যায়** অবশ্যই ডাক্তারের পরামর্শ নিন।`;
+⚠️ গুরুতর সমস্যায় ডাক্তার দেখান।';
 }
 
-// fallbackReply replaced by getLocalReply
+
+function orderNow(id) {
+  const p = allProds.find(x => x.id === id);
+  if (!p) return toast('পণ্য পাওয়া যায়নি', 'error');
+  openSheet(`
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:52px">${p.emoji||'🛍️'}</div>
+      <div style="font-size:17px;font-weight:700;color:#fff;margin:6px 0">${p.name}</div>
+      <div style="color:var(--pk);font-size:22px;font-weight:700">৳${p.price}</div>
+    </div>
+    <div style="background:rgba(255,107,157,.1);border:1px solid rgba(255,107,157,.3);border-radius:14px;padding:14px;margin-bottom:14px">
+      <div style="font-size:13px;color:rgba(255,255,255,.7);margin-bottom:10px;font-weight:600">📦 অর্ডার তথ্য</div>
+      <input id="ordName" class="f-inp" placeholder="👤 আপনার পুরো নাম *" style="width:100%;margin-bottom:8px"><br>
+      <input id="ordPhone" type="tel" class="f-inp" placeholder="📱 মোবাইল নম্বর * (01XXXXXXXXX)" style="width:100%;margin-bottom:8px"><br>
+      <textarea id="ordAddr" class="f-inp" placeholder="📍 পূর্ণ ঠিকানা *" rows="2" style="width:100%;resize:none"></textarea>
+    </div>
+    <div style="background:rgba(255,255,255,.05);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between">
+      <span style="color:rgba(255,255,255,.7)">মোট:</span>
+      <span style="font-weight:700;color:var(--pk)">৳${p.price}</span>
+    </div>
+    <button onclick="confirmOrder('${p.id}')" class="btn-main w100">✅ অর্ডার নিশ্চিত করুন</button>
+  `);
+}
+
+async function confirmOrder(productId) {
+  const name  = document.getElementById('ordName')?.value.trim();
+  const phone = document.getElementById('ordPhone')?.value.trim();
+  const addr  = document.getElementById('ordAddr')?.value.trim();
+  if (!name)  return toast('নাম দিন', 'error');
+  if (!phone || !/^01[3-9]\d{8}$/.test(phone)) return toast('সঠিক মোবাইল নম্বর দিন', 'error');
+  if (!addr)  return toast('ঠিকানা দিন', 'error');
+  const p = allProds.find(x => x.id === productId);
+  if (!p) return;
+  try {
+    await db.ref('orders').push({
+      userId: cUser.uid, userEmail: cUser.email||'',
+      userName: name, phone, address: addr,
+      productId: p.id, productName: p.name,
+      products: [{ id:p.id, name:p.name, price:p.price, qty:1 }],
+      totalPrice: p.price, status: 'pending', createdAt: Date.now()
+    });
+    closeSheet();
+    toast('🎉 অর্ডার সফল! শীঘ্রই যোগাযোগ করা হবে।', 'success');
+  } catch(e) { toast('অর্ডার দিতে সমস্যা: '+e.message, 'error'); }
+}
 
 function appendMsg(txt, type, id='') {
   const c=document.getElementById('chatMsgs');
@@ -1980,110 +1917,67 @@ function esc(t) {
 
 
 // ══════════════════════════════════════════════════════
-//  SCROLL TO TOP — HopWeb / Mobile WebView Fix
+//  HOPWEB SCROLL FIX — নিচ থেকে উপরে যাওয়া
 // ══════════════════════════════════════════════════════
-function scrollToTop() {
-  const area = document.getElementById('pageArea');
-  if (area) {
-    area.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// Show/hide scroll-to-top button based on scroll position
-function initScrollTopBtn() {
+function updateScrollBtn() {
   const area = document.getElementById('pageArea');
   const btn  = document.getElementById('scrollTopBtn');
-  if (!area || !btn) return;
-
-  area.addEventListener('scroll', () => {
-    if (area.scrollTop > 200) {
-      btn.classList.add('visible');
-    } else {
-      btn.classList.remove('visible');
-    }
-  }, { passive: true });
+  if (!btn) return;
+  const show = area && area.scrollTop > 150;
+  btn.style.opacity        = show ? '1'    : '0';
+  btn.style.transform      = show ? 'scale(1)' : 'scale(0.5)';
+  btn.style.pointerEvents  = show ? 'auto' : 'none';
 }
 
-// ══════════════════════════════════════════════════════
-//  MOBILE / HOPWEB WEBVIEW FIXES
-// ══════════════════════════════════════════════════════
-function initMobileFixes() {
-  // ১. Prevent body from scrolling (keeps page-area as the scroller)
-  document.body.addEventListener('touchmove', (e) => {
-    // Allow scroll inside page-area, sheet-box, cp-msgs
-    const allowed = e.target.closest('#pageArea, .sheet-box, .fpm-body, .cp-msgs, .a-modal-box, #aContent');
-    if (!allowed) e.preventDefault();
-  }, { passive: false });
+function scrollToTop() {
+  const area = document.getElementById('pageArea');
+  if (area) area.scrollTop = 0;
+}
 
-  // ২. Keyboard open/close: resize pageArea height
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', () => {
-      const area = document.getElementById('pageArea');
-      if (!area) return;
-      const vh = window.visualViewport.height;
-      const totalH = window.innerHeight;
-      // When keyboard opens, viewport shrinks
-      if (vh < totalH * 0.85) {
-        // keyboard is open — adjust if needed
-        document.documentElement.style.setProperty('--kbh', (totalH - vh) + 'px');
-      } else {
-        document.documentElement.style.setProperty('--kbh', '0px');
-      }
-    });
-  }
+function initScrollFix() {
+  const area = document.getElementById('pageArea');
+  if (!area) { setTimeout(initScrollFix, 500); return; }
 
-  // ৩. Double-tap to scroll top (HopWeb gesture)
-  let lastTap = 0;
-  const topBar = document.querySelector('.top-bar');
-  if (topBar) {
-    topBar.addEventListener('touchend', (e) => {
+  // ১. scroll listener
+  area.addEventListener('scroll', updateScrollBtn, { passive: true });
+
+  // ২. header double-tap = scroll to top
+  let _tap = 0;
+  const hdr = document.querySelector('.top-bar');
+  if (hdr) {
+    hdr.addEventListener('touchend', function() {
       const now = Date.now();
-      if (now - lastTap < 300) {
-        scrollToTop();
-      }
-      lastTap = now;
-    });
+      if (now - _tap < 350) scrollToTop();
+      _tap = now;
+    }, { passive: true });
   }
 
-  // ৪. Pull-to-refresh prevention in WebView
-  document.addEventListener('touchstart', (e) => {
-    if (e.touches.length !== 1) return;
-    const area = document.getElementById('pageArea');
-    if (area && area.scrollTop === 0) {
-      area._startY = e.touches[0].clientY;
-    }
+  // ৩. prevent body scroll leak (WebView rubber-band)
+  document.addEventListener('touchmove', function(e) {
+    const inside = e.target.closest(
+      '#pageArea, .sheet-box, .fpm-body, .cp-msgs, #cmtList, .cat-scroll, .child-scroll, .htabs, #aContent'
+    );
+    if (!inside && e.cancelable) e.preventDefault();
+  }, { passive: false });
+
+  // ৪. prevent pull-to-refresh when at top of pageArea
+  let _startY = 0;
+  area.addEventListener('touchstart', function(e) {
+    _startY = e.touches[0].clientY;
   }, { passive: true });
 
-  document.addEventListener('touchmove', (e) => {
-    const area = document.getElementById('pageArea');
-    if (!area || area._startY === undefined) return;
-    const dy = e.touches[0].clientY - area._startY;
-    // Prevent pull-down when at top (causes WebView refresh)
-    if (area.scrollTop <= 0 && dy > 0) {
-      if (e.cancelable) e.preventDefault();
+  area.addEventListener('touchmove', function(e) {
+    if (this.scrollTop === 0 && e.touches[0].clientY > _startY + 8 && e.cancelable) {
+      e.preventDefault();  // block pull-down refresh
     }
   }, { passive: false });
 
-  // ৫. Fix for iOS/Android WebView momentum scroll snap
-  document.querySelectorAll('.page-area, .sheet-box, .fpm-body, .cp-msgs').forEach(el => {
-    el.style.webkitOverflowScrolling = 'touch';
-  });
-
-  // ৬. init scroll button
-  initScrollTopBtn();
+  console.log('✅ HopWeb scroll fix active');
 }
 
-// ══════════════════════════════════════════════════════
-//  Re-init scroll button when page changes
-// ══════════════════════════════════════════════════════
-const _origGoPage = typeof goPage === 'function' ? goPage : null;
-// Patch bootApp to init mobile fixes once app loads
-const _origBoot = typeof bootApp === 'function' ? bootApp : null;
-
-// Run mobile fixes when DOM ready
+// Run when app boots
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => setTimeout(initMobileFixes, 500));
+  document.addEventListener('DOMContentLoaded', () => setTimeout(initScrollFix, 800));
 } else {
-  setTimeout(initMobileFixes, 500);
+  setTimeout(initScrollFix, 800);
 }
