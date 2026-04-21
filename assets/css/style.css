@@ -11,8 +11,8 @@
 html,body{height:100%;overflow:hidden;font-family:'Hind Siliguri',sans-serif;background:#1a0a2e;color:#fff;overscroll-behavior:none;}
 
 /* SPLASH */
-.splash{position:fixed;inset:0;background:linear-gradient(135deg,#ff6b9d,#c77dff,#06d6a0);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .3s ease;}
-.splash.hidden{display:none!important;opacity:0;pointer-events:none;}
+.splash{position:fixed;inset:0;background:linear-gradient(135deg,#ff6b9d,#c77dff,#06d6a0);display:flex;align-items:center;justify-content:center;z-index:9999;}
+.splash.hidden{display:none!important;}
 .splash-inner{text-align:center;color:#fff}
 .splash-icon{font-size:80px;animation:pop 1.5s infinite alternate}
 .splash-title{font-size:44px;font-weight:700;margin:8px 0}

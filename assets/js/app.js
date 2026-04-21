@@ -12,7 +12,7 @@ const firebaseConfig = {
   messagingSenderId: "396666924900",
   appId: "1:396666924900:web:77a22669bd6c3e3ce6d471"
 };
-const OPENROUTER_KEY = "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"; // openrouter.ai থেকে key নিন
+const OPENROUTER_KEY = "APNAR_KEY_EKHANE"; // openrouter.ai থেকে key নিন
 const OR_MODEL = "deepseek/deepseek-chat-v3-0324:free";
 const ADMIN_UID  = "kW8tMNo8IkejWQsMzCnnwjgVaUa2";
 
@@ -44,20 +44,21 @@ window.addEventListener('DOMContentLoaded', () => {
   updateClock();
   setInterval(updateClock, 60000);
 
-  // Splash কে force hide করার timer — যদি Firebase দেরি করে
-  const forceSplashHide = setTimeout(() => {
+  // Firebase auth state — splash hide করবে
+  auth.onAuthStateChanged(u => {
     hideSplash();
-    showScreen('authScreen');
-  }, 5000); // 5 সেকেন্ডের বেশি splash থাকবে না
+    if (u) { cUser = u; bootApp(); }
+    else showScreen('authScreen');
+  });
 
+  // Fallback: ৩ সেকেন্ডেও splash থাকলে login দেখাও
   setTimeout(() => {
-    auth.onAuthStateChanged(u => {
-      clearTimeout(forceSplashHide);
+    const sp = document.getElementById('splash');
+    if (sp && sp.style.display !== 'none' && !sp.classList.contains('hidden')) {
       hideSplash();
-      if (u) { cUser = u; bootApp(); }
-      else     showScreen('authScreen');
-    });
-  }, 1500); // 2200 থেকে কমিয়ে 1500
+      showScreen('authScreen');
+    }
+  }, 3000);
 });
 
 function hideSplash() {

@@ -17,6 +17,27 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css">
+<style>
+/* Splash auto-hide after 1.5s */
+@keyframes splashFadeOut {
+  0%   { opacity:1; visibility:visible; }
+  80%  { opacity:1; }
+  100% { opacity:0; visibility:hidden; pointer-events:none; }
+}
+#splash {
+  animation: splashFadeOut 0.3s ease 1.5s forwards;
+}
+#splash.hidden {
+  display:none !important;
+}
+/* Ensure authScreen shows properly */
+#authScreen:not(.hidden) {
+  display:flex !important;
+}
+#mainApp:not(.hidden) {
+  display:block !important;
+}
+</style>
 </head>
 <body>
 
