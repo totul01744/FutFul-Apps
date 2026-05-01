@@ -526,7 +526,7 @@ select.dark-inp option{background:#2d1b4e}
 <button id="chatFab" class="chat-fab hidden" onclick="toggleChat()">💬</button>
 <div id="toast" class="toast hidden"></div>
 
-<!-- Firebase -->
+<!-- Firebase CDN -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -550,14 +550,12 @@ const OPENROUTER_KEY = "APNAR_KEY_EKHANE"; // openrouter.ai থেকে key ন
 const OR_MODEL = "deepseek/deepseek-chat-v3-0324:free";
 const ADMIN_UID  = "kW8tMNo8IkejWQsMzCnnwjgVaUa2";
 
-firebase.initializeApp(firebaseConfig);
-const auth    = firebase.auth();
-const db      = firebase.database();
-const storage = firebase.storage();
+// Firebase variables — DOMContentLoaded এ init হবে
+var auth, db, storage;
 
 // ── Firebase Auth Persistence: ইমেইল/পাসওয়ার্ড Browser-এ সেভ থাকবে ──
 // LOCAL = ব্রাউজার বন্ধ করলেও সেশন থাকবে, বার বার লগইন লাগবে না
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
 
 // ── NO localStorage/sessionStorage/cookie — সব data Firebase-এ ──
 
@@ -574,24 +572,37 @@ let curBanner   = 0;
 // ══════════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════════
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', function() {
   updateClock();
   setInterval(updateClock, 60000);
 
-  auth.onAuthStateChanged(u => {
-    hideSplash();
-    if (u) { cUser = u; bootApp(); }
-    else showScreen('authScreen');
-  });
+  // Firebase init
+  try {
+    try { firebase.initializeApp(firebaseConfig); } catch(e) {}
+    auth    = firebase.auth();
+    db      = firebase.database();
+    storage = firebase.storage();
+    try { auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); } catch(e) {}
 
-  // ৩ সেকেন্ড পরেও splash থাকলে force করো
-  setTimeout(() => {
-    const sp = document.getElementById('splash');
-    if (sp && getComputedStyle(sp).display !== 'none') {
+    auth.onAuthStateChanged(function(u) {
       hideSplash();
-      if (!cUser) showScreen('authScreen');
+      if (u) { cUser = u; bootApp(); }
+      else showScreen('authScreen');
+    });
+  } catch(err) {
+    console.error('Firebase error:', err);
+    hideSplash();
+    showScreen('authScreen');
+  }
+
+  // 5 সেকেন্ড fallback
+  setTimeout(function() {
+    var sp = document.getElementById('splash');
+    if (sp && sp.style.display !== 'none' && !sp.classList.contains('hidden')) {
+      hideSplash();
+      showScreen('authScreen');
     }
-  }, 3000);
+  }, 5000);
 });
 
 function hideSplash() {
